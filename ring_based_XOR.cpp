@@ -50,11 +50,8 @@ namespace Config {
     const std::string RING_BITMATRIX_FILE = "matrix_A_ring_bitmatrix.txt";
     const std::string RING_BITMATRIX_READABLE_FILE = "matrix_A_ring_bitmatrix_readable.txt";
     const std::string INVERSE_MAPPING_MATRIX_FILE = "inverse_mapping_matrix.txt";
+    const std::string INVERSE_BITMATRIX_FILE = "inverse_mapping_bitmatrix.txt";
 }
-
-enum class UberMode {
-    Intermediate = 0  // consider the intermediate result
-};
 
 // Forward declarations
 class GaloisField;
@@ -147,14 +144,14 @@ private:
  * 
  * MATHEMATICAL BASIS:
  * - Base field: GF(2^8) with irreducible polynomial x^8+x^4+x^3+x^2+1 (0x11D)
- * - Target ring: GF(2)[x] / ((x^8+x^4+x^3+x^2+1)(x^2+x+1)) = GF(2)[x] / (0x7CB)
+ * - Target ring: GF(2)[x] / ((x^8+x^4+x^3+x^2+1)(x^2+x+1)) = GF(2)[x] / (x¹⁰+x⁹+x⁸+x⁶+x⁴+x+1) = GF(2)[x] / (0x753)
  * 
  * RING MAPPING THEORY:
  * - The target modulus is REDUCIBLE: (x^8+x^4+x^3+x^2+1)(x^2+x+1)
  * - This allows proper inverse mapping via modular reduction
  * - Maps f(x) ∈ GF(2^8) to f(x) + g(x)(x^8+x^4+x^3+x^2+1) in the quotient ring
  * - Inverse mapping: reduce modulo (x^8+x^4+x^3+x^2+1) to get back to GF(2^8)
- * - g(x) ∈ {0, 1} is chosen to minimize Hamming weight
+ * - g(x) ∈ {0, 1, x, x+1} is chosen to minimize Hamming weight
  */
 class RingMapper {
 public:
@@ -1067,25 +1064,45 @@ void ErasureCodingApp::processRingMapping() {
         m_ring_bitmatrix = m_ring_mapper->generateMixedBitmatrix(m_ring_mapping_result.mapped_matrix, 
                                                                Config::MATRIX_SIZE, Config::MATRIX_SIZE);
         
-        // Calculate XOR count for inverse mapping
+        // Calculate XOR count for inverse mapping using Uber optimization
         int inverse_rows = Config::FIELD_SIZE;     // 8 rows 
         int inverse_cols = Config::RING_SIZE;      // 10 cols
         
-        int inverse_xor_count = 0;
+        // Save inverse mapping matrix as bitmatrix for Uber optimization
+        std::vector<int> inverse_bitmatrix(inverse_rows * inverse_cols);
         for (int i = 0; i < inverse_rows; ++i) {
-            int ones_in_row = 0;
             for (int j = 0; j < inverse_cols; ++j) {
-                if (m_ring_mapping_result.inverse_mapping_matrix[i * inverse_cols + j] == 1) {
-                    ones_in_row++;
-                }
-            }
-            if (ones_in_row > 1) {
-                inverse_xor_count += (ones_in_row - 1);
+                inverse_bitmatrix[i * inverse_cols + j] = 
+                    (m_ring_mapping_result.inverse_mapping_matrix[i * inverse_cols + j] == 1) ? 1 : 0;
             }
         }
         
-        int total_elements = Config::MATRIX_SIZE * Config::MATRIX_SIZE;
-        int total_inverse_xors = inverse_xor_count * total_elements;
+        FileManager::writeBitmatrixToUberFile(inverse_bitmatrix, inverse_rows, inverse_cols, Config::INVERSE_BITMATRIX_FILE);
+        
+        // Use Uber to optimize inverse mapping with level 3 (as requested)
+        auto inverse_optimization_result = m_optimizer->optimize(Config::INVERSE_BITMATRIX_FILE, 3);
+        
+        int inverse_xor_count = 0;
+        if (inverse_optimization_result.success) {
+            inverse_xor_count = inverse_optimization_result.xor_count;
+            std::cout << "Inverse mapping optimization (level 3): " << inverse_xor_count << " XORs" << std::endl;
+        } else {
+            // Fallback to direct calculation if Uber fails
+            std::cout << "Uber optimization failed for inverse mapping, using direct calculation" << std::endl;
+            for (int i = 0; i < inverse_rows; ++i) {
+                int ones_in_row = 0;
+                for (int j = 0; j < inverse_cols; ++j) {
+                    if (m_ring_mapping_result.inverse_mapping_matrix[i * inverse_cols + j] == 1) {
+                        ones_in_row++;
+                    }
+                }
+                if (ones_in_row > 1) {
+                    inverse_xor_count += (ones_in_row - 1);
+                }
+            }
+        }
+        
+        int total_inverse_xors = inverse_xor_count * Config::MATRIX_SIZE;
         
         // Save ring-mapped matrices to files
         FileManager::writeMatrixToFile(m_ring_mapping_result.mapped_matrix, Config::MATRIX_SIZE, Config::MATRIX_SIZE, 
