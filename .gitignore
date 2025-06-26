@@ -1,0 +1,11 @@
+# Ignore everything by default
+*
+
+# But track these specific files
+!ring_based_XOR.cpp
+!Uber.cpp
+!X-Sets.cpp
+
+# Also track the README and .gitignore itself
+!README.md
+!.gitignore 
