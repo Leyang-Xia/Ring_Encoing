@@ -50,7 +50,6 @@ namespace Config {
     const std::string RING_BITMATRIX_FILE = "matrix_A_ring_bitmatrix.txt";
     const std::string RING_BITMATRIX_READABLE_FILE = "matrix_A_ring_bitmatrix_readable.txt";
     const std::string INVERSE_MAPPING_MATRIX_FILE = "inverse_mapping_matrix.txt";
-    const std::string INVERSE_BITMATRIX_FILE = "inverse_mapping_bitmatrix.txt";
 }
 
 // Forward declarations
@@ -1068,19 +1067,21 @@ void ErasureCodingApp::processRingMapping() {
         int inverse_rows = Config::FIELD_SIZE;     // 8 rows 
         int inverse_cols = Config::RING_SIZE;      // 10 cols
         
-        // Save inverse mapping matrix as bitmatrix for Uber optimization
+        // Convert inverse mapping matrix to int vector for Uber (it's already 0/1)
         std::vector<int> inverse_bitmatrix(inverse_rows * inverse_cols);
         for (int i = 0; i < inverse_rows; ++i) {
             for (int j = 0; j < inverse_cols; ++j) {
                 inverse_bitmatrix[i * inverse_cols + j] = 
-                    (m_ring_mapping_result.inverse_mapping_matrix[i * inverse_cols + j] == 1) ? 1 : 0;
+                    static_cast<int>(m_ring_mapping_result.inverse_mapping_matrix[i * inverse_cols + j]);
             }
         }
         
-        FileManager::writeBitmatrixToUberFile(inverse_bitmatrix, inverse_rows, inverse_cols, Config::INVERSE_BITMATRIX_FILE);
+        // Save as bitmatrix format for Uber (reuse existing filename with .txt extension)
+        std::string inverse_bitmatrix_file = "inverse_mapping_matrix_uber.txt";
+        FileManager::writeBitmatrixToUberFile(inverse_bitmatrix, inverse_rows, inverse_cols, inverse_bitmatrix_file);
         
         // Use Uber to optimize inverse mapping with level 3 (as requested)
-        auto inverse_optimization_result = m_optimizer->optimize(Config::INVERSE_BITMATRIX_FILE, 3);
+        auto inverse_optimization_result = m_optimizer->optimize(inverse_bitmatrix_file, 3);
         
         int inverse_xor_count = 0;
         if (inverse_optimization_result.success) {
