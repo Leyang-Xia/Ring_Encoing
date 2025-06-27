@@ -609,27 +609,24 @@ std::vector<gf_val_32_t> RingMapper::generateInverseMappingMatrix(const std::vec
         inverse_matrix[i * input_size + i] = 1;  // x^i -> x^i directly
     }
     
-    // Reduction rules for x^8 and x^9 based on x^10 + x^3 + 1 = 0
-    // x^8 contributes to lower degree terms through polynomial reduction
-    // x^9 contributes to lower degree terms through polynomial reduction
+    // Reduction from GF(2^10) to GF(2^8) based on the base field polynomial
+    // Base field polynomial: x^8+x^4+x^3+x^2+1 (0x11D)
+    // We need to reduce x^8 and x^9 modulo this polynomial
     
-    // For x^8: Since x^10 = x^3 + 1, we have x^8 = (x^3 + 1)/x^2
-    // This needs to be computed properly in the polynomial arithmetic
+    // From x^8+x^4+x^3+x^2+1 = 0, we get: x^8 = x^4+x^3+x^2+1
+    // And: x^9 = x*(x^8) = x*(x^4+x^3+x^2+1) = x^5+x^4+x^3+x
     
-    // Simplified approach: x^8 and x^9 map according to the reduction polynomial
-    // Based on x^10 + x^3 + 1, the reduction can be computed as:
+    // x^8 column (index 8): x^8 = x^4+x^3+x^2+1
+    inverse_matrix[0 * input_size + 8] = 1;  // x^0 (constant term)
+    inverse_matrix[2 * input_size + 8] = 1;  // x^2
+    inverse_matrix[3 * input_size + 8] = 1;  // x^3
+    inverse_matrix[4 * input_size + 8] = 1;  // x^4
     
-    // x^8 column (index 8):
-    inverse_matrix[7 * input_size + 8] = 1;  // x^7 gets contribution from x^8
-    inverse_matrix[5 * input_size + 8] = 1;  // x^5 gets contribution from x^8  
-    inverse_matrix[4 * input_size + 8] = 1;  // x^4 gets contribution from x^8
-    inverse_matrix[3 * input_size + 8] = 1;  // x^3 gets contribution from x^8
-    
-    // x^9 column (index 9):
-    inverse_matrix[6 * input_size + 9] = 1;  // x^6 gets contribution from x^9
-    inverse_matrix[4 * input_size + 9] = 1;  // x^4 gets contribution from x^9
-    inverse_matrix[3 * input_size + 9] = 1;  // x^3 gets contribution from x^9
-    inverse_matrix[2 * input_size + 9] = 1;  // x^2 gets contribution from x^9
+    // x^9 column (index 9): x^9 = x^5+x^4+x^3+x
+    inverse_matrix[1 * input_size + 9] = 1;  // x^1
+    inverse_matrix[3 * input_size + 9] = 1;  // x^3
+    inverse_matrix[4 * input_size + 9] = 1;  // x^4
+    inverse_matrix[5 * input_size + 9] = 1;  // x^5
     
     return inverse_matrix;
 }
