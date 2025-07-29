@@ -25,11 +25,33 @@ RSAnalyzer* create_analyzer(int k, int m, int w) {
     analyzer->m = m;
     analyzer->w = w;
     
-    // Generate Reed-Solomon Vandermonde coding matrix
-    analyzer->matrix = reed_sol_vandermonde_coding_matrix(k, m, w);
+    // Create custom parity check matrix P (m×k)
+    // For RS(6,4): P = [1 1 1 1; 1 2 3 4]
+    analyzer->matrix = malloc(k * m * sizeof(int));
     if (!analyzer->matrix) {
         free(analyzer);
         return NULL;
+    }
+    
+    if (k == 4 && m == 2) {
+        // Custom P matrix: [1 1 1 1; 1 2 3 4]
+        // Row 0: [1, 1, 1, 1]
+        analyzer->matrix[0] = 1; analyzer->matrix[1] = 1; 
+        analyzer->matrix[2] = 1; analyzer->matrix[3] = 1;
+        // Row 1: [1, 2, 3, 4]
+        analyzer->matrix[4] = 1; analyzer->matrix[5] = 2; 
+        analyzer->matrix[6] = 3; analyzer->matrix[7] = 4;
+    } else {
+        // For other configurations, use default pattern
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < k; j++) {
+                if (i == 0) {
+                    analyzer->matrix[i * k + j] = 1;  // First row: all 1s
+                } else {
+                    analyzer->matrix[i * k + j] = j + 1;  // Pattern: 1,2,3,4,...
+                }
+            }
+        }
     }
     
     // Convert to bitmatrix using Jerasure function
@@ -40,7 +62,7 @@ RSAnalyzer* create_analyzer(int k, int m, int w) {
         return NULL;
     }
     
-    printf("Created RS(%d, %d) coding matrix over GF(2^%d)\n", k + m, k, w);
+    printf("Created RS(%d, %d) with custom parity matrix P over GF(2^%d)\n", k + m, k, w);
     return analyzer;
 }
 
@@ -53,9 +75,9 @@ void free_analyzer(RSAnalyzer* analyzer) {
     }
 }
 
-// Print the GF matrix
+// Print the complete generator matrix G = [I | P]
 void print_matrix(RSAnalyzer* analyzer) {
-    printf("\nCoding Matrix (GF(2^%d)):\n", analyzer->w);
+    printf("\nParity Check Matrix P (GF(2^%d), %d×%d):\n", analyzer->w, analyzer->m, analyzer->k);
     for (int i = 0; i < analyzer->m; i++) {
         for (int j = 0; j < analyzer->k; j++) {
             printf("%3x ", analyzer->matrix[i * analyzer->k + j]);
@@ -182,10 +204,11 @@ void analyze_configuration(int k, int m) {
 }
 
 int main() {
-    printf("Reed-Solomon XOR Analysis using Jerasure Bitmatrix and Uber Optimization\n");
-    printf("Using GF(2^8) with irreducible polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D)\n");
-    printf("RS codes with 2 parity symbols, optimized using Uber I 2/I 3\n");
-    printf("==========================================================================\n");
+    printf("Reed-Solomon XOR Analysis with Custom Generator Matrix\n");
+    printf("Using custom G = [I | P] where P = [1 1 1 1; 1 2 3 4] for RS(6,4)\n");
+    printf("GF(2^8) with irreducible polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D)\n");
+    printf("Optimized using Uber I 3\n");
+    printf("=================================================================\n");
     
     // Test configurations: k+2 for k = 4,5,6,7
     int k_values[] = {4, 5, 6, 7};
