@@ -112,11 +112,11 @@ int save_bitmatrix(RSAnalyzer* analyzer, const char* filename) {
     return 1;
 }
 
-// Parse Uber output to get XOR count
-int parse_uber_output(const char* filename) {
+// Parse output to get XOR count (works for both Uber and X-Sets)
+int parse_optimization_output(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
-        printf("Error: Cannot open Uber output file %s\n", filename);
+        printf("Error: Cannot open output file %s\n", filename);
         return -1;
     }
     
@@ -138,15 +138,17 @@ int parse_uber_output(const char* filename) {
     return xor_count;
 }
 
-// Run Uber optimization
+// Run Uber optimization with multiple levels
 int run_uber_optimization(RSAnalyzer* analyzer, const char* matrix_file) {
     char command[512];
     char output_file[256];
     int best_xors = INT_MAX;
-    int modes[] = {3};  // I 3
+    int modes[] = {3, 4, 5};  // I 3, I 4, I 5
     int best_mode = 3;
     
-    for (int i = 0; i < 1; i++) {
+    printf("Testing Uber optimization levels I 3, I 4, I 5:\n");
+    
+    for (int i = 0; i < 3; i++) {
         int L = modes[i];
         
         // Create command and output filename
@@ -155,17 +157,75 @@ int run_uber_optimization(RSAnalyzer* analyzer, const char* matrix_file) {
         snprintf(command, sizeof(command), "./Uber I %d < %s > %s 2>/dev/null", L, matrix_file, output_file);
         
         // Run Uber
+        printf("  Running Uber I %d... ", L);
+        fflush(stdout);
+        
         int result = system(command);
-        if (result != 0) continue;
+        if (result != 0) {
+            printf("failed\n");
+            continue;
+        }
         
         // Parse output
-        int xors = parse_uber_output(output_file);
-        printf("Uber optimized XOR count: %d (I %d)\n", xors, L);
-        return xors;
+        int xors = parse_optimization_output(output_file);
+        printf("XOR count: %d\n", xors);
+        
+        if (xors < best_xors && xors > 0) {
+            best_xors = xors;
+            best_mode = L;
+        }
     }
     
     if (best_xors < INT_MAX) {
-        printf("Uber optimized XOR count: %d (I %d)\n", best_xors, best_mode);
+        printf("Best Uber result: %d XORs (I %d)\n", best_xors, best_mode);
+        return best_xors;
+    }
+    
+    return -1;
+}
+
+// Run X-Sets optimization with multiple techniques
+int run_xsets_optimization(RSAnalyzer* analyzer, const char* matrix_file) {
+    char command[512];
+    char output_file[256];
+    int best_xors = INT_MAX;
+    const char* techniques[] = {"MW", "MW_SS", "UBER_XSET"};
+    const char* best_technique = "MW";
+    int num_techniques = 3;
+    
+    printf("Testing X-Sets optimization techniques:\n");
+    
+    for (int i = 0; i < num_techniques; i++) {
+        const char* tech = techniques[i];
+        
+        // Create command and output filename  
+        snprintf(output_file, sizeof(output_file), "xsets_output_%d_%d_%s.txt", 
+                analyzer->k, analyzer->m, tech);
+        // X-Sets parameters: thresh=10, nstart=10, give-up-when=100, technique
+        snprintf(command, sizeof(command), "./X-Sets 10 10 100 %s < %s > %s 2>/dev/null", 
+                tech, matrix_file, output_file);
+        
+        printf("  Running X-Sets %s... ", tech);
+        fflush(stdout);
+        
+        int result = system(command);
+        if (result != 0) {
+            printf("failed\n");
+            continue;
+        }
+        
+        // Parse output
+        int xors = parse_optimization_output(output_file);
+        printf("XOR count: %d\n", xors);
+        
+        if (xors < best_xors && xors > 0) {
+            best_xors = xors;
+            best_technique = tech;
+        }
+    }
+    
+    if (best_xors < INT_MAX) {
+        printf("Best X-Sets result: %d XORs (%s)\n", best_xors, best_technique);
         return best_xors;
     }
     
@@ -191,12 +251,39 @@ void analyze_configuration(int k, int m) {
     snprintf(matrix_filename, sizeof(matrix_filename), "matrix_%d_%d.txt", k, m);
     
     if (save_bitmatrix(analyzer, matrix_filename)) {
+        // Run both optimization methods
+        printf("\n--- Uber Optimization ---\n");
         int uber_xors = run_uber_optimization(analyzer, matrix_filename);
         
-        if (uber_xors >= 0) {
-            // Calculate XORs per bit using formula: XOR次数/8/(k-1)
+        printf("\n--- X-Sets Optimization ---\n");
+        int xsets_xors = run_xsets_optimization(analyzer, matrix_filename);
+        
+        // Compare results
+        printf("\n--- Comparison Results ---\n");
+        if (uber_xors >= 0 && xsets_xors >= 0) {
             double uber_per_bit = (double)uber_xors / (8.0 * (k-1));
-            printf("Uber XORs per bit: %.3f\n", uber_per_bit);
+            double xsets_per_bit = (double)xsets_xors / (8.0 * (k-1));
+            
+            printf("Uber:   %d XORs (%.3f per bit)\n", uber_xors, uber_per_bit);
+            printf("X-Sets: %d XORs (%.3f per bit)\n", xsets_xors, xsets_per_bit);
+            
+            if (uber_xors < xsets_xors) {
+                printf("Winner: Uber (%.1f%% better)\n", 
+                       100.0 * (xsets_xors - uber_xors) / xsets_xors);
+            } else if (xsets_xors < uber_xors) {
+                printf("Winner: X-Sets (%.1f%% better)\n", 
+                       100.0 * (uber_xors - xsets_xors) / uber_xors);
+            } else {
+                printf("Result: Tie\n");
+            }
+        } else if (uber_xors >= 0) {
+            double uber_per_bit = (double)uber_xors / (8.0 * (k-1));
+            printf("Only Uber succeeded: %d XORs (%.3f per bit)\n", uber_xors, uber_per_bit);
+        } else if (xsets_xors >= 0) {
+            double xsets_per_bit = (double)xsets_xors / (8.0 * (k-1));
+            printf("Only X-Sets succeeded: %d XORs (%.3f per bit)\n", xsets_xors, xsets_per_bit);
+        } else {
+            printf("Both optimization methods failed\n");
         }
     }
     
@@ -204,11 +291,11 @@ void analyze_configuration(int k, int m) {
 }
 
 int main() {
-    printf("Reed-Solomon XOR Analysis with Custom Generator Matrix\n");
+    printf("Reed-Solomon XOR Analysis: Uber vs X-Sets Comparison\n");
     printf("Using custom G = [I | P] where P = [1 1 1 1; 1 2 3 4] for RS(6,4)\n");
     printf("GF(2^8) with irreducible polynomial x^8 + x^4 + x^3 + x^2 + 1 (0x11D)\n");
-    printf("Optimized using Uber I 3\n");
-    printf("=================================================================\n");
+    printf("Uber levels: I 3, I 4, I 5 | X-Sets techniques: MW, MW_SS, UBER_XSET\n");
+    printf("====================================================================\n");
     
     // Test configurations: k+2 for k = 4,5,6,7
     int k_values[] = {4, 5, 6, 7};
