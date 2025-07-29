@@ -10,7 +10,6 @@ This project implements a novel approach to reduce XOR operations in erasure cod
 
 ### Base Field
 - **Field**: GF(2^8) with irreducible polynomial `x^8+x^4+x^3+x^2+1` (0x11D)
-- **Primitive element**: α = 2
 
 ### Ring Mapping
 - **Target Ring**: GF(2)[x] / ((x^8+x^4+x^3+x^2+1)(x^2+x+1))
