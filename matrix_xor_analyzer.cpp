@@ -20,12 +20,14 @@
 #include <sys/wait.h>
 #endif
 
-// Configuration constants for 300x200 matrix analysis
+// Configuration constants for matrix analysis
 namespace Config {
-    constexpr int MATRIX_ROWS = 300;
-    constexpr int MATRIX_COLS = 200;
+    // These will be determined from the input file
+    int MATRIX_ROWS = 0;
+    int MATRIX_COLS = 0;
     
-    const std::string BINARY_MATRIX_FILE = "matrix_300x200.txt";
+    const std::string DEFAULT_BINARY_MATRIX_FILE = "bit_matrix.txt";
+    const std::string GENERATED_MATRIX_FILE = "matrix_300x200.txt";
     const std::string XSETS_RESULT_FILE = "xsets_optimization_result.txt";
 }
 
@@ -34,6 +36,9 @@ namespace Config {
  */
 class BinaryMatrixHandler {
 public:
+    // Load matrix from file
+    std::vector<std::vector<int>> loadMatrixFromFile(const std::string& filename);
+    
     // Generate random binary matrix
     std::vector<std::vector<int>> generateRandomMatrix(int rows, int cols, double sparsity = 0.5);
     
@@ -51,6 +56,7 @@ public:
 
 private:
     int countOnesInRow(const std::vector<int>& row);
+    std::vector<int> parseMatrixRow(const std::string& line);
 };
 
 /**
@@ -99,12 +105,14 @@ class MatrixXORAnalyzer {
 public:
     MatrixXORAnalyzer();
     int run();
+    int run(const std::string& matrix_filename);
 
 private:
     void printConfiguration();
+    void loadExistingMatrix(const std::string& filename);
     void generateTestMatrix();
     void analyzeDirectXORs();
-    void runXSetsAnalysis();
+    void runXSetsAnalysis(const std::string& matrix_filename);
     void displayResults();
     void displayComparison(const XSetsOptimizer::OptimizationResult& result);
     void displayMultipleComparison(const std::vector<XSetsOptimizer::OptimizationResult>& results);
@@ -115,9 +123,74 @@ private:
     std::vector<std::vector<int>> m_binary_matrix;
     int m_direct_xor_count;
     std::vector<XSetsOptimizer::OptimizationResult> m_optimization_results;
+    std::string m_current_matrix_file;
 };
 
 // BinaryMatrixHandler implementation
+std::vector<std::vector<int>> BinaryMatrixHandler::loadMatrixFromFile(const std::string& filename) {
+    std::vector<std::vector<int>> matrix;
+    std::ifstream file(filename);
+    
+    if (!file) {
+        throw std::runtime_error("无法打开矩阵文件: " + filename);
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        
+        std::vector<int> row = parseMatrixRow(line);
+        if (!row.empty()) {
+            matrix.push_back(row);
+        }
+    }
+    
+    if (matrix.empty()) {
+        throw std::runtime_error("矩阵文件为空或格式不正确: " + filename);
+    }
+    
+    // 更新全局配置
+    Config::MATRIX_ROWS = matrix.size();
+    Config::MATRIX_COLS = matrix[0].size();
+    
+    // 验证所有行的长度相同
+    for (const auto& row : matrix) {
+        if (row.size() != Config::MATRIX_COLS) {
+            throw std::runtime_error("矩阵行长度不一致");
+        }
+    }
+    
+    return matrix;
+}
+
+std::vector<int> BinaryMatrixHandler::parseMatrixRow(const std::string& line) {
+    std::vector<int> row;
+    std::istringstream iss(line);
+    std::string token;
+    
+    // 尝试两种格式：
+    // 1. 空格分隔的0和1: "0 1 0 1 0"
+    // 2. 连续的0和1: "01010"
+    
+    if (line.find(' ') != std::string::npos) {
+        // 空格分隔格式
+        while (iss >> token) {
+            if (token == "0" || token == "1") {
+                row.push_back(std::stoi(token));
+            }
+        }
+    } else {
+        // 连续格式
+        for (char c : line) {
+            if (c == '0' || c == '1') {
+                row.push_back(c - '0');
+            }
+        }
+    }
+    
+    return row;
+}
+
 std::vector<std::vector<int>> BinaryMatrixHandler::generateRandomMatrix(int rows, int cols, double sparsity) {
     std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols, 0));
     
@@ -333,7 +406,24 @@ int MatrixXORAnalyzer::run() {
         printConfiguration();
         generateTestMatrix();
         analyzeDirectXORs();
-        runXSetsAnalysis();
+        runXSetsAnalysis(Config::GENERATED_MATRIX_FILE);
+        displayResults();
+        
+        std::cout << "\n分析完成。" << std::endl;
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "错误: " << e.what() << std::endl;
+        return 1;
+    }
+}
+
+int MatrixXORAnalyzer::run(const std::string& matrix_filename) {
+    try {
+        m_current_matrix_file = matrix_filename;
+        printConfiguration();
+        loadExistingMatrix(matrix_filename);
+        analyzeDirectXORs();
+        runXSetsAnalysis(matrix_filename);
         displayResults();
         
         std::cout << "\n分析完成。" << std::endl;
@@ -345,25 +435,46 @@ int MatrixXORAnalyzer::run() {
 }
 
 void MatrixXORAnalyzer::printConfiguration() {
-    std::cout << "=== 300x200 矩阵XOR分析配置 ===" << std::endl;
-    std::cout << "矩阵大小: " << Config::MATRIX_ROWS << " x " << Config::MATRIX_COLS << std::endl;
+    std::cout << "=== 矩阵XOR分析配置 ===" << std::endl;
+    if (Config::MATRIX_ROWS > 0 && Config::MATRIX_COLS > 0) {
+        std::cout << "矩阵大小: " << Config::MATRIX_ROWS << " x " << Config::MATRIX_COLS << std::endl;
+    }
     std::cout << "分析目标: 比较直接计算与X-Sets优化的XOR次数" << std::endl;
-    std::cout << "输出文件: " << Config::BINARY_MATRIX_FILE << std::endl;
+    if (!m_current_matrix_file.empty()) {
+        std::cout << "分析文件: " << m_current_matrix_file << std::endl;
+    }
+}
+
+void MatrixXORAnalyzer::loadExistingMatrix(const std::string& filename) {
+    std::cout << "\n=== 加载现有矩阵 ===" << std::endl;
+    std::cout << "正在加载文件: " << filename << std::endl;
+    
+    m_binary_matrix = m_matrix_handler->loadMatrixFromFile(filename);
+    
+    std::cout << "矩阵加载成功！" << std::endl;
+    std::cout << "检测到矩阵大小: " << Config::MATRIX_ROWS << " x " << Config::MATRIX_COLS << std::endl;
+    
+    // 显示矩阵统计信息
+    m_matrix_handler->printMatrixStatistics(m_binary_matrix);
 }
 
 void MatrixXORAnalyzer::generateTestMatrix() {
     std::cout << "\n=== 生成测试矩阵 ===" << std::endl;
     
+    // 设置默认大小为300x200
+    Config::MATRIX_ROWS = 300;
+    Config::MATRIX_COLS = 200;
+    
     // 生成结构化矩阵（更符合实际编码理论应用）
     m_binary_matrix = m_matrix_handler->generateStructuredMatrix(Config::MATRIX_ROWS, Config::MATRIX_COLS);
     
     // 保存矩阵到文件
-    m_matrix_handler->saveMatrixToFile(m_binary_matrix, Config::BINARY_MATRIX_FILE);
+    m_matrix_handler->saveMatrixToFile(m_binary_matrix, Config::GENERATED_MATRIX_FILE);
     
     // 显示矩阵统计信息
     m_matrix_handler->printMatrixStatistics(m_binary_matrix);
     
-    std::cout << "矩阵已生成并保存到 " << Config::BINARY_MATRIX_FILE << std::endl;
+    std::cout << "矩阵已生成并保存到 " << Config::GENERATED_MATRIX_FILE << std::endl;
 }
 
 void MatrixXORAnalyzer::analyzeDirectXORs() {
@@ -375,11 +486,11 @@ void MatrixXORAnalyzer::analyzeDirectXORs() {
     std::cout << "计算方法: 每行中1的个数减1，然后求和" << std::endl;
 }
 
-void MatrixXORAnalyzer::runXSetsAnalysis() {
+void MatrixXORAnalyzer::runXSetsAnalysis(const std::string& matrix_filename) {
     std::cout << "\n=== X-Sets优化分析 ===" << std::endl;
     
     // 运行所有可用的X-Sets技术
-    m_optimization_results = m_optimizer->optimizeAllTechniques(Config::BINARY_MATRIX_FILE);
+    m_optimization_results = m_optimizer->optimizeAllTechniques(matrix_filename);
     
     // 为每个成功的结果计算统计信息
     for (auto& result : m_optimization_results) {
@@ -460,10 +571,44 @@ void MatrixXORAnalyzer::displayMultipleComparison(const std::vector<XSetsOptimiz
               << std::fixed << std::setprecision(1) << best_result->percentage_saved << "%)" << std::endl;
 }
 
-int main() {
+void printUsage(const char* program_name) {
+    std::cout << "用法:" << std::endl;
+    std::cout << "  " << program_name << "                    # 生成300x200矩阵并分析" << std::endl;
+    std::cout << "  " << program_name << " <matrix_file>      # 分析指定的矩阵文件" << std::endl;
+    std::cout << std::endl;
+    std::cout << "示例:" << std::endl;
+    std::cout << "  " << program_name << " matrix_6_2.txt" << std::endl;
+    std::cout << "  " << program_name << " bit_matrix.txt" << std::endl;
+}
+
+int main(int argc, char* argv[]) {
     try {
         MatrixXORAnalyzer analyzer;
-        return analyzer.run();
+        
+        if (argc == 1) {
+            // 无参数：生成300x200矩阵
+            return analyzer.run();
+        } else if (argc == 2) {
+            // 一个参数：分析指定文件
+            std::string matrix_file = argv[1];
+            
+            // 检查文件是否存在
+            std::ifstream file(matrix_file);
+            if (!file) {
+                std::cerr << "错误: 无法找到矩阵文件 '" << matrix_file << "'" << std::endl;
+                std::cout << std::endl;
+                printUsage(argv[0]);
+                return 1;
+            }
+            file.close();
+            
+            return analyzer.run(matrix_file);
+        } else {
+            std::cerr << "错误: 参数数量不正确" << std::endl;
+            std::cout << std::endl;
+            printUsage(argv[0]);
+            return 1;
+        }
     } catch (const std::exception& e) {
         std::cerr << "致命错误: " << e.what() << std::endl;
         return 1;
