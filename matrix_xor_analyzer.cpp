@@ -9,6 +9,8 @@
 #include <sstream>
 #include <random>
 #include <cstring>
+// CSE optimizer header (implemented in cse_optimizer.cpp)
+int cseopt_run(const std::string& matrix_file);
 
 #ifdef _WIN32
 #define WIFEXITED(status) (((status) & 0x7f) == 0)
@@ -130,10 +132,15 @@ OptimizationResult runXSets(const std::string& matrix_file, const std::string& t
     result.technique = technique;
     result.success = false;
     
-    std::string command = "./X-Sets 10 10 100 " + technique + " < " + matrix_file;
+#ifdef _WIN32
+    std::string command = "X-Sets.exe 10 100 1000 " + technique + " < " + matrix_file;
+#else
+    std::string command = "./X-Sets 10 100 1000 " + technique + " < " + matrix_file;
+#endif
     
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
+        std::cerr << "无法执行命令: " << command << std::endl;
         return result;
     }
     
@@ -143,7 +150,17 @@ OptimizationResult runXSets(const std::string& matrix_file, const std::string& t
         output += buffer;
     }
     
-    pclose(pipe);
+    int status = pclose(pipe);
+    
+    // 检查命令执行状态
+    if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+        std::cerr << "X-Sets命令执行失败，退出状态: " << WEXITSTATUS(status) << std::endl;
+        std::cerr << "命令: " << command << std::endl;
+        if (!output.empty()) {
+            std::cerr << "输出: " << output.substr(0, 200) << std::endl;
+        }
+        return result;
+    }
     
     // 解析XOR次数
     size_t pos = output.rfind("Total XOR operations: ");
@@ -175,8 +192,17 @@ void analyzeMatrix(const std::string& matrix_file) {
         int direct_xors = calculateDirectXORs(matrix);
         std::cout << "直接计算: " << direct_xors << " XORs" << std::endl;
         
+        // 运行CSE风格优化（从new_CSE.m抽象出的贪心CSE）
+        int cse_xors = cseopt_run(matrix_file);
+        if (cse_xors > 0) {
+            int cse_saving = direct_xors - cse_xors;
+            double cse_pct = (double)cse_saving / direct_xors * 100.0;
+            std::cout << "CSE: " << cse_xors << " XORs (节省 " << cse_saving << ", "
+                      << std::fixed << std::setprecision(1) << cse_pct << "%)" << std::endl;
+        }
+        
         // 运行X-Sets优化
-        std::vector<std::string> techniques = {"MW", "MW_SS", "UBER_XSET"};
+        std::vector<std::string> techniques = {"MW_SQ"};
         std::vector<OptimizationResult> results;
         
         for (const auto& tech : techniques) {
