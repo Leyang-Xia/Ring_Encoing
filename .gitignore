@@ -6,6 +6,7 @@
 !Uber.cpp
 !X-Sets.cpp
 
-# Also track the README and .gitignore itself
+# Also track the README, .gitignore, and AGENTS.md
 !README.md
-!.gitignore 
+!.gitignore
+!AGENTS.md
