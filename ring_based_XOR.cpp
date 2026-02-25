@@ -160,6 +160,10 @@ public:
         std::vector<int> g_choices;  // Store g(x) choice for each element
         int hamming_weight_original;
         int hamming_weight_mapped;
+        int mixed_direct_xors_before_refinement;
+        int mixed_direct_xors_after_refinement;
+        int refinement_passes;
+        int refinement_updates;
         bool success;
     };
     
@@ -207,6 +211,14 @@ private:
     gf_val_32_t polynomialMod(gf_val_32_t dividend, gf_val_32_t divisor);
     gf_val_32_t multiplyRingWithField(gf_val_32_t ring_element, gf_val_32_t field_element);
     gf_val_32_t generateReductionCoefficient(int position, const std::vector<int>& g_choices);
+    int calculateDirectXorFromBitmatrix(const std::vector<int>& bitmatrix, int rows, int cols);
+    void refineGChoicesForMixedBitmatrix(const std::vector<gf_val_32_t>& original_matrix,
+                                        int rows, int cols,
+                                        std::vector<int>& g_choices,
+                                        std::vector<gf_val_32_t>& mapped_matrix,
+                                        int& best_direct_xors,
+                                        int& refinement_passes,
+                                        int& refinement_updates);
 };
 
 /**
@@ -532,6 +544,10 @@ RingMapper::MappingResult RingMapper::mapMatrix(const std::vector<gf_val_32_t>& 
     MappingResult result;
     result.mapped_matrix.resize(rows * cols);
     result.g_choices.resize(rows * cols);
+    result.mixed_direct_xors_before_refinement = -1;
+    result.mixed_direct_xors_after_refinement = -1;
+    result.refinement_passes = 0;
+    result.refinement_updates = 0;
     result.success = true;
     
     // Calculate original Hamming weight
@@ -545,6 +561,26 @@ RingMapper::MappingResult RingMapper::mapMatrix(const std::vector<gf_val_32_t>& 
         result.mapped_matrix[i] = mapElement(original_elem, optimal_g);
         result.g_choices[i] = optimal_g;
     }
+
+    // Baseline objective on mixed bitmatrix before refinement.
+    const int mixed_rows = Config::RING_SIZE * rows;
+    const int mixed_cols = Config::FIELD_SIZE * cols;
+    std::vector<int> mixed_bitmatrix_before = generateMixedBitmatrix(result.mapped_matrix, rows, cols);
+    result.mixed_direct_xors_before_refinement = calculateDirectXorFromBitmatrix(
+        mixed_bitmatrix_before, mixed_rows, mixed_cols);
+
+    // Refine g-choices with matrix-level coordinate descent objective.
+    int best_direct_xors = result.mixed_direct_xors_before_refinement;
+    refineGChoicesForMixedBitmatrix(
+        matrix,
+        rows,
+        cols,
+        result.g_choices,
+        result.mapped_matrix,
+        best_direct_xors,
+        result.refinement_passes,
+        result.refinement_updates);
+    result.mixed_direct_xors_after_refinement = best_direct_xors;
     
     // Calculate mapped Hamming weight
     result.hamming_weight_mapped = calculateHammingWeight(result.mapped_matrix, rows, cols, Config::RING_SIZE);
@@ -668,6 +704,72 @@ int RingMapper::calculateHammingWeight(const std::vector<gf_val_32_t>& matrix, i
     return total_weight;
 }
 
+int RingMapper::calculateDirectXorFromBitmatrix(const std::vector<int>& bitmatrix, int rows, int cols) {
+    int total_xors = 0;
+    for (int i = 0; i < rows; ++i) {
+        int ones = 0;
+        for (int j = 0; j < cols; ++j) {
+            ones += bitmatrix[i * cols + j];
+        }
+        if (ones > 1) {
+            total_xors += (ones - 1);
+        }
+    }
+    return total_xors;
+}
+
+void RingMapper::refineGChoicesForMixedBitmatrix(const std::vector<gf_val_32_t>& original_matrix,
+                                                int rows, int cols,
+                                                std::vector<int>& g_choices,
+                                                std::vector<gf_val_32_t>& mapped_matrix,
+                                                int& best_direct_xors,
+                                                int& refinement_passes,
+                                                int& refinement_updates) {
+    const int element_count = rows * cols;
+    const int mixed_rows = Config::RING_SIZE * rows;
+    const int mixed_cols = Config::FIELD_SIZE * cols;
+    const int max_passes = 4;
+
+    for (int pass = 0; pass < max_passes; ++pass) {
+        bool improved_this_pass = false;
+
+        for (int idx = 0; idx < element_count; ++idx) {
+            const int current_g = g_choices[idx];
+            int best_g_for_idx = current_g;
+            int best_score_for_idx = best_direct_xors;
+
+            for (int candidate_g = 0; candidate_g < 4; ++candidate_g) {
+                if (candidate_g == current_g) {
+                    continue;
+                }
+
+                g_choices[idx] = candidate_g;
+                mapped_matrix[idx] = mapElement(original_matrix[idx], candidate_g);
+
+                std::vector<int> mixed_trial = generateMixedBitmatrix(mapped_matrix, rows, cols);
+                int trial_score = calculateDirectXorFromBitmatrix(mixed_trial, mixed_rows, mixed_cols);
+                if (trial_score < best_score_for_idx) {
+                    best_score_for_idx = trial_score;
+                    best_g_for_idx = candidate_g;
+                }
+            }
+
+            g_choices[idx] = best_g_for_idx;
+            mapped_matrix[idx] = mapElement(original_matrix[idx], best_g_for_idx);
+            if (best_score_for_idx < best_direct_xors) {
+                best_direct_xors = best_score_for_idx;
+                refinement_updates++;
+                improved_this_pass = true;
+            }
+        }
+
+        refinement_passes++;
+        if (!improved_this_pass) {
+            break;
+        }
+    }
+}
+
 void RingMapper::printMappingStatistics(const MappingResult& result) {
     std::cout << "\n--- Ring Mapping Statistics ---" << std::endl;
     std::cout << "Original Hamming weight: " << result.hamming_weight_original << std::endl;
@@ -676,6 +778,15 @@ void RingMapper::printMappingStatistics(const MappingResult& result) {
     if (result.hamming_weight_original > 0) {
         double improvement = (double)(result.hamming_weight_original - result.hamming_weight_mapped) / result.hamming_weight_original * 100.0;
         std::cout << "Sparsity improvement: " << std::fixed << std::setprecision(1) << improvement << "%" << std::endl;
+    }
+
+    if (result.mixed_direct_xors_before_refinement >= 0 && result.mixed_direct_xors_after_refinement >= 0) {
+        std::cout << "Mixed bitmatrix direct XORs (before refinement): "
+                  << result.mixed_direct_xors_before_refinement << std::endl;
+        std::cout << "Mixed bitmatrix direct XORs (after refinement): "
+                  << result.mixed_direct_xors_after_refinement << std::endl;
+        std::cout << "Refinement passes: " << result.refinement_passes
+                  << ", updates accepted: " << result.refinement_updates << std::endl;
     }
 }
 
