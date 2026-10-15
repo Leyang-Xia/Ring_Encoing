@@ -11,6 +11,7 @@
 !.gitignore
 !AGENTS.md
 
-# Track the mathematical foundations document
+# Track research documentation
 !docs/
 !docs/mathematical-foundations.md
+!docs/feasibility-validation-plan.md
