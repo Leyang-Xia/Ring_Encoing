@@ -15,3 +15,9 @@
 !docs/
 !docs/mathematical-foundations.md
 !docs/feasibility-validation-plan.md
+!docs/existence-example.md
+
+# Keep the reproducible ring-lift existence example
+!experiments/
+!experiments/ring_lift_example.py
+!experiments/ring_lift_example.json
