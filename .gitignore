@@ -21,3 +21,5 @@
 !experiments/
 !experiments/ring_lift_example.py
 !experiments/ring_lift_example.json
+!experiments/compare_xsets.py
+!experiments/xsets_comparison.json

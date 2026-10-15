@@ -243,6 +243,23 @@ def verify(exhaustive):
                   uber_costs={level: circuit['cost']
                               for level, circuit in certificate['uber_certificates'].items()},
                   ring_main=main_count, ring_projection=8, ring_total=ring['cost'])
+    comparison_path = Path(__file__).with_name('xsets_comparison.json')
+    if comparison_path.exists():
+        comparison = json.loads(comparison_path.read_text())
+        best = {'direct': None, 'ring': None}
+        for record in comparison['records']:
+            if record['status'] != 'verified':
+                continue
+            assert record['path'] in best
+            verify_circuit(record['circuit'], targets if record['path'] == 'direct' else middle)
+            verify_circuit(record['full_circuit'], targets)
+            assert record['total_cost'] == record['full_circuit']['cost']
+            if record['path'] == 'ring':
+                assert record['total_cost'] == record['circuit']['cost'] + 8
+            previous = best[record['path']]
+            best[record['path']] = min(previous, record['total_cost']) if previous is not None else record['total_cost']
+        report['xsets_best_direct'] = best['direct']
+        report['xsets_best_ring_with_projection'] = best['ring']
     if exhaustive:
         count = 0
         min_distance = 7
