@@ -10,3 +10,7 @@
 !README.md
 !.gitignore
 !AGENTS.md
+
+# Track the mathematical foundations document
+!docs/
+!docs/mathematical-foundations.md
