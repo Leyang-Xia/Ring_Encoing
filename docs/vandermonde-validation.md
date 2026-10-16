@@ -18,6 +18,8 @@ $$
 
 非 Vandermonde 并不等于没有实用性：Cauchy 矩阵也常用于纠删码，而 RS 生成矩阵做系统化后，校验块通常也不再保持字面上的 Vandermonde 形式。后续可以单独验证这些真实实现；当前先把未缩放 Vandermonde 的证据做扎实。
 
+这两类实际构造已开始单独验证，见[系统化 RS 与 Cauchy 的实例和完整成本](systematic-rs-cauchy-examples.md)。其中严格区分 $A=V_PV_D^{-1}$ 与这里的未缩放 Vandermonde 校验块。
+
 ## 2. 已核验的严格 Vandermonde 实例
 
 | 域多项式 | 数据数 | 取点 | 环维度 | 环内＋投影 | 最好已完成直接电路 | 减少 |

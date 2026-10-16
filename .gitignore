@@ -19,6 +19,7 @@
 !docs/structured-ring-example.md
 !docs/structured-ring-family.md
 !docs/vandermonde-validation.md
+!docs/systematic-rs-cauchy-examples.md
 
 # Keep the reproducible ring-lift existence example
 !experiments/
@@ -30,3 +31,5 @@
 !experiments/structured_ring_example.json
 !experiments/structured_ring_family.py
 !experiments/structured_ring_family.json
+!experiments/practical_mds_examples.py
+!experiments/practical_mds_examples.json
