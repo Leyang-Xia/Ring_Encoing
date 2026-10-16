@@ -16,7 +16,7 @@ import tempfile
 import time
 
 from ring_lift_example import GreedyCircuit, remainder, verify_circuit
-from structured_ring_example import evaluate, expand, full_rank, multiply, xsets
+from structured_ring_example import evaluate, expand, full_rank, multiply, power, xsets
 
 CERTIFICATE = Path(__file__).with_suffix('.json')
 
@@ -29,11 +29,8 @@ def synthesize(targets, inputs, seed=0):
     return result
 
 
-def matrices(case):
-    """Build both paths independently; verify the composed binary matrices."""
+def coefficients(case):
     w, n, P, k, m = (case[key] for key in ('w', 'n', 'P', 'k', 'm'))
-    modulus = case.get('ring_modulus', (1 << n) | 1)
-    assert modulus.bit_length() == n + 1 and remainder(modulus, P) == 0
     slopes = case.get('slopes', list(range(m)))
     shifts = case.get('row_shifts', [0] * m)
     column_shifts = case.get('column_shifts', [0] * k)
@@ -41,6 +38,25 @@ def matrices(case):
                   for j, e in enumerate(case['exponents'])] for i in range(m)]
     lifted = [[1 << exponent for exponent in row] for row in exponents]
     A = [[remainder(a, P) for a in row] for row in lifted]
+    return A, lifted
+
+
+def is_vandermonde(A, width, modulus):
+    """Recognize actual unscaled columns (1, x, x^2, ...), not construction labels."""
+    if len(A) < 2 or not A[0] or any(a != 1 for a in A[0]):
+        return False
+    points = A[1]
+    return (all(points) and len(set(points)) == len(points) and
+            all(row == [power(x, i, width, modulus) for x in points]
+                for i, row in enumerate(A)))
+
+
+def matrices(case):
+    """Build both paths independently; verify the composed binary matrices."""
+    w, n, P, k, m = (case[key] for key in ('w', 'n', 'P', 'k', 'm'))
+    modulus = case.get('ring_modulus', (1 << n) | 1)
+    assert modulus.bit_length() == n + 1 and remainder(modulus, P) == 0
+    A, lifted = coefficients(case)
     targets = expand(A, w, w, lambda a, b: multiply(a, b, w, P))
     middle = expand(lifted, w, n, lambda a, b: multiply(a, b, n, modulus))
     virtual = list(dict.fromkeys(mask for mask in middle if mask))
@@ -116,6 +132,9 @@ def verify_example(record, samples):
                for q in range(1 << degree, 1 << (degree + 1)))
     A, lifted, T, B, V, D = matrices(case)
     assert A == record['A'] and lifted == record['lifted']
+    vandermonde = is_vandermonde(A, w, P)
+    if 'matrix_family' in record:
+        assert record['matrix_family'] == ('vandermonde' if vandermonde else 'scaled_extension')
     assert V == record['projection_input_masks']
     verify_circuit(record['main'], B)
     verify_circuit(record['projection'], D)
@@ -187,13 +206,15 @@ def verify_example(record, samples):
             expected.extend((value >> bit) & 1 for bit in range(w))
         word = sum(value << (w * j) for j, value in enumerate(data))
         assert evaluate(record['ring'], word) == expected
-    return dict(ring=rebuilt['cost'], best_completed_direct=baseline,
+    return dict(matrix_family='vandermonde' if vandermonde else 'scaled_extension',
+                ring=rebuilt['cost'], best_completed_direct=baseline,
                 percent=record['percent'], nonzero_minors=minors, random_vectors=samples)
 
 
 def verify(data, samples):
     primary = data['primary_case']
     _, _, T, B, _, D = matrices(primary)
+    assert is_vandermonde(coefficients(primary)[0], primary['w'], primary['P'])
     for r in data['primary_additional_runs']:
         check_record(r, {'direct': T, 'main': B, 'projection': D}[r['path']])
         if 'ring' in r:
@@ -232,6 +253,9 @@ def profile(data, args, binary):
 def search(data, args, binary):
     """Refine a recorded, explicitly defined configuration; no hidden input costs."""
     cases = [case for phase in data['screening'].values() for case in phase]
+    if args.family == 'vandermonde':
+        cases = [case for case in cases
+                 if is_vandermonde(coefficients(case)[0], case['w'], case['P'])]
     cases.sort(key=lambda case: case['percent'], reverse=True)
     results = []
     for case in cases[:args.limit]:
@@ -281,6 +305,8 @@ if __name__ == '__main__':
     parser.add_argument('--params', type=int, nargs=3, default=[0, 3, 0])
     parser.add_argument('--timeout', type=float, default=180)
     parser.add_argument('--limit', type=int, default=10)
+    parser.add_argument('--family', choices=['vandermonde', 'all'], default='vandermonde',
+                        help='search unscaled Vandermonde matrices by default')
     parser.add_argument('--samples', type=int, default=1000)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()

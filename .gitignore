@@ -18,6 +18,7 @@
 !docs/existence-example.md
 !docs/structured-ring-example.md
 !docs/structured-ring-family.md
+!docs/vandermonde-validation.md
 
 # Keep the reproducible ring-lift existence example
 !experiments/
