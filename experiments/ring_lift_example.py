@@ -71,8 +71,9 @@ class GreedyCircuit:
     the final fold order. Both direct and ring reconstructions use this code.
     """
 
-    def __init__(self):
-        self.masks = [1 << i for i in range(16)] + [0]
+    def __init__(self, input_count=16):
+        self.input_count = input_count
+        self.masks = [1 << i for i in range(input_count)] + [0]
         self.by_mask = {mask: i for i, mask in enumerate(self.masks)}
         self.ops = {}
 
@@ -87,7 +88,7 @@ class GreedyCircuit:
         return node
 
     def synthesize(self, expressions, seed=0):
-        expressions = [set(expression) - {16} for expression in expressions]
+        expressions = [set(expression) - {self.input_count} for expression in expressions]
         rng = random.Random(seed)
         while True:
             frequencies = Counter(pair for expression in expressions
@@ -103,7 +104,7 @@ class GreedyCircuit:
                 if a in expression and b in expression:
                     expression.remove(a)
                     expression.remove(b)
-                    if node != 16:
+                    if node != self.input_count:
                         expression.symmetric_difference_update({node})
         outputs = []
         for expression in expressions:
@@ -116,14 +117,14 @@ class GreedyCircuit:
             order = sorted(expression)
             if seed:
                 rng.shuffle(order)
-            node = 16
+            node = self.input_count
             for i in order:
                 node = self.xor(node, i)
             outputs.append(node)
         return outputs
 
     def synthesize_masks(self, targets, seed=0):
-        return self.synthesize([{j for j in range(16) if (mask >> j) & 1}
+        return self.synthesize([{j for j in range(self.input_count) if (mask >> j) & 1}
                                 for mask in targets], seed)
 
     def export(self, outputs):
@@ -138,14 +139,14 @@ class GreedyCircuit:
 
         for node in outputs:
             visit(node)
-        return dict(inputs=16, zero_node=16,
+        return dict(inputs=self.input_count, zero_node=self.input_count,
                     ops=[[node, *self.ops[node]] for node in sorted(live)],
                     outputs=outputs, cost=len(live))
 
 
 def verify_circuit(circuit, targets):
     """Verify every gate, every final output, and that no counted gate is dead."""
-    values = {j: 1 << j for j in range(16)}
+    values = {j: 1 << j for j in range(circuit['inputs'])}
     if circuit['zero_node'] is not None:
         assert circuit['zero_node'] not in values
         values[circuit['zero_node']] = 0
