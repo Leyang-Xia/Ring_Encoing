@@ -1,12 +1,15 @@
-# Ignore everything by default
-*
-
-# But track these specific files
-!ring_based_XOR.cpp
-!Uber.cpp
-!X-Sets.cpp
-
-# Also track the README, .gitignore, and AGENTS.md
-!README.md
-!.gitignore
-!AGENTS.md
+/build*/
+/.superpowers/
+*.o
+*.d
+__pycache__/
+/results/
+# Local outputs from the original demos (not source or certificates).
+/Uber
+/X-Sets
+/ring_xor
+/rs_xor_analysis
+/matrix*.txt
+/inverse_mapping_matrix*.txt
+/uber_output_*.txt
+/xsets_output_*.txt
