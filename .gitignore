@@ -17,6 +17,7 @@
 !docs/feasibility-validation-plan.md
 !docs/existence-example.md
 !docs/structured-ring-example.md
+!docs/structured-ring-family.md
 
 # Keep the reproducible ring-lift existence example
 !experiments/
@@ -26,3 +27,5 @@
 !experiments/xsets_comparison.json
 !experiments/structured_ring_example.py
 !experiments/structured_ring_example.json
+!experiments/structured_ring_family.py
+!experiments/structured_ring_family.json
