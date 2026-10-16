@@ -153,7 +153,7 @@ $$
 
 这解释了为什么带缩放的矩阵并非必然缺乏编码用途：系统化 RS 就会自然出现这种结构。但是，这里的缩放由原评价点确定。若实现显式使用 $D_c$ 的数据预处理和 $D_r$ 的后处理，它们的 XOR 必须计入，不能免费省略。
 
-脚本分别通过 $VV_D^{-1}$ 和上述 Lagrange/Cauchy 分解重建同一个矩阵，防止把另一种 MDS 编码误当作系统化 RS。
+程序分别通过 $VV_D^{-1}$ 和上述 Lagrange/Cauchy 分解重建同一个矩阵，防止把另一种 MDS 编码误当作系统化 RS。
 
 ## 4. 标准 Cauchy 例子与本轮负结果
 
@@ -191,19 +191,19 @@ F4 47 A7 7A
 
 ## 6. 核验和继续搜索
 
-[完整实验记录](../experiments/practical_mds_examples.json)保存正例、负例、备选环、参数和未决状态；[核验脚本](../experiments/practical_mds_examples.py)只依赖 Python 标准库。
+[完整实验记录](../data/certificates/practical_mds_examples.json)保存正例、负例、备选环、参数和未决状态；[C++ 核验实现](../src/verification.cpp)与共享核心一起编译为 `ringlab`，运行不依赖 Python。
 
 ```bash
-python3 experiments/practical_mds_examples.py
+make -j3
+./build/ringlab verify --group practical
 ```
 
 默认重新构造编码矩阵，验证矩阵恒等式、每个 XOR 门、拼接后的实际门数、全部相关子式，以及每例 1,000 组随机输入。小例均检查 34 个非零子式，覆盖全部 $2^{32}$ 个输入的符号核验；大例检查 679 个子式，符号核验覆盖全部 $2^{112}$ 个输入。
 
-若有 `g++`，可编译未修改的 X-Sets 源码，继续检查 RS 小例的更强直接配置：
+构建时会生成未修改的 X-Sets 后端，可以继续检查 RS 小例的更强直接配置：
 
 ```bash
-python3 experiments/practical_mds_examples.py \
-  --profile systematic-rs-7-4 --path direct --method UBER_XSET \
+./build/ringlab profile systematic-rs-7-4 --path direct --method UBER_XSET \
   --params 0 4 0 --timeout 600 --output /tmp/systematic-rs-direct.json
 ```
 

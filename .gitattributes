@@ -1,0 +1,3 @@
+# Preserve historical backend byte identity; do not normalize their CRLF files.
+third_party/xsets/X-Sets.cpp -text
+third_party/uber/Uber.cpp -text whitespace=cr-at-eol

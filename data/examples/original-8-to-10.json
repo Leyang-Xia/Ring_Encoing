@@ -1,0 +1,12 @@
+{
+  "description": "Original field/ring moduli with a small unscaled Vandermonde parity matrix. Input bits are zero-padded into the ring. This is a runnable definition, not a claim of XOR savings.",
+  "w": 8,
+  "P": 285,
+  "Q": 7,
+  "M": 1875,
+  "n": 10,
+  "k": 4,
+  "m": 2,
+  "A": [[1, 1, 1, 1], [1, 2, 3, 4]],
+  "lifted": [[1, 1, 1, 1], [1, 2, 3, 4]]
+}

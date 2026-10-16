@@ -4,7 +4,7 @@
 
 新结果是：**对一个八数据、三校验的 MDS 编码，环内计算 152 次，投影 51 次，总计 203 次 XOR。已完成的直接基线最好为 212 次，减少 9 次，约 4.25%。**
 
-环内和投影都可以使用 MW_SQ；UBER_XSET 用于两阶段时，总成本为 204 次。完整电路、强基线电路和独立验证脚本均已保存。
+环内和投影都可以使用 MW_SQ；UBER_XSET 用于两阶段时，总成本为 204 次。完整电路、强基线电路和独立验证程序均已保存。
 
 这个结果限定于下文明确列出的已完成基线。部分参数配置超时，不能据此判断它们最终会找到什么电路；本例也没有证明 203 是最优值或证明软件吞吐提升。
 
@@ -57,7 +57,7 @@ $$
 
 所以 $A$ 的全部方形子式非零。系统化矩阵 $G=\begin{pmatrix}I_8\\A\end{pmatrix}$ 定义一个 $[11,8,4]$ MDS 码，可以恢复任意三个符号擦除。
 
-验证脚本也实际检查了全部 $24+84+56=164$ 个一至三阶子式。
+验证程序也实际检查了全部 $24+84+56=164$ 个一至三阶子式。
 
 ## 2. 为什么选择 17 维环？
 
@@ -206,13 +206,14 @@ $$
 
 配套材料：
 
-- [完整电路与实验记录](../experiments/structured_ring_example.json)。
-- [独立核验及复现脚本](../experiments/structured_ring_example.py)。
+- [完整电路与实验记录](../data/certificates/structured_ring_example.json)。
+- [C++ 核验及复现实现](../src/verification.cpp)。
 
-使用 Python 3.10 或更新版本，在仓库根目录运行：
+使用 C++17 编译器构建后，在仓库根目录运行：
 
 ```bash
-python3 experiments/structured_ring_example.py
+make -j3
+./build/ringlab verify --group original
 ```
 
 默认检查包括：
@@ -227,16 +228,20 @@ python3 experiments/structured_ring_example.py
 
 矩阵恒等式与符号执行是对全部 $2^{64}$ 组输入的线性代数证明。1,000 组数据是额外的执行检查，不被当作枚举全部输入。
 
-若有 `g++`，可以重新编译仓库未修改的 X-Sets 源码并验证投影结果：
+构建时会生成未修改的 X-Sets 后端，可以重新优化并验证投影结果：
 
 ```bash
-python3 experiments/structured_ring_example.py --rerun-projection
+./build/ringlab profile original --path projection --method MW_SQ \
+  --params 0 3 0 --output /tmp/original-projection.json
 ```
 
 也可以重新运行两条选定的强直接基线；较强配置可能需要较长时间，超时仍报告为未完成：
 
 ```bash
-python3 experiments/structured_ring_example.py --rerun-baselines --timeout 180
+./build/ringlab profile original --method MW_SQ --params 10 3 0 \
+  --timeout 180 --output /tmp/original-direct-mw.json
+./build/ringlab profile original --method UBER_XSET --params 0 3 0 \
+  --timeout 180 --output /tmp/original-direct-uber.json
 ```
 
 X-Sets 输入会去除重复、零和单位向量目标，并恢复原输出映射；这些操作只是免费的输出别名，不丢弃必要计算。记录中明确保存了这套规范化规则。Uber 的测试使用了修复目标释放后读取问题的临时源码副本；保存的电路经过独立核验。

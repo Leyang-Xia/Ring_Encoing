@@ -1,35 +1,15 @@
-# Ignore everything by default
-*
-
-# But track these specific files
-!ring_based_XOR.cpp
-!Uber.cpp
-!X-Sets.cpp
-
-# Also track the README, .gitignore, and AGENTS.md
-!README.md
-!.gitignore
-!AGENTS.md
-
-# Track research documentation
-!docs/
-!docs/mathematical-foundations.md
-!docs/feasibility-validation-plan.md
-!docs/existence-example.md
-!docs/structured-ring-example.md
-!docs/structured-ring-family.md
-!docs/vandermonde-validation.md
-!docs/systematic-rs-cauchy-examples.md
-
-# Keep the reproducible ring-lift existence example
-!experiments/
-!experiments/ring_lift_example.py
-!experiments/ring_lift_example.json
-!experiments/compare_xsets.py
-!experiments/xsets_comparison.json
-!experiments/structured_ring_example.py
-!experiments/structured_ring_example.json
-!experiments/structured_ring_family.py
-!experiments/structured_ring_family.json
-!experiments/practical_mds_examples.py
-!experiments/practical_mds_examples.json
+/build*/
+/.superpowers/
+*.o
+*.d
+__pycache__/
+/results/
+# Local outputs from the original demos (not source or certificates).
+/Uber
+/X-Sets
+/ring_xor
+/rs_xor_analysis
+/matrix*.txt
+/inverse_mapping_matrix*.txt
+/uber_output_*.txt
+/xsets_output_*.txt

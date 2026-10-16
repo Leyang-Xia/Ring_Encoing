@@ -505,7 +505,8 @@ void Schedule::Do_Uber()
       t->From.resize(fbs-1);
     }
     t->Min--;
-    if (t->Min == 0) {
+    const bool target_completed = (t->Min == 0);
+    if (target_completed) {
       // Find which original target this corresponds to
       int target_idx = -1;
       for (int k = 0; k < original_targets.size(); k++) {
@@ -527,7 +528,7 @@ void Schedule::Do_Uber()
       delete t;
     }
     
-    if (t->Min == 0 || Tori == 'I') Try_To_Improve();
+    if (target_completed || Tori == 'I') Try_To_Improve();
     
     // Print();
   }

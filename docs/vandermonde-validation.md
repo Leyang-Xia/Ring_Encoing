@@ -87,7 +87,7 @@ MW_SQ 投影为 81 次，总计 **312 次**。直接 CSE 的 100 个种子最好
 
 ## 3. 核验范围与搜索预算
 
-完整电路、直接基线及参数保存在[实验记录](../experiments/structured_ring_family.json)的 `examples` 中，新例名称为 `vandermonde-1d7-k8`、`vandermonde-11d-k8`、`vandermonde-11d-k12`。默认核验会检查实际矩阵是否满足 $A_{ij}=x_j^i$，并报告 `matrix_family: vandermonde`。
+完整电路、直接基线及参数保存在[实验记录](../data/certificates/structured_ring_family.json)的 `examples` 中，新例名称为 `vandermonde-1d7-k8`、`vandermonde-11d-k8`、`vandermonde-11d-k12`。默认核验会检查实际矩阵是否满足 $A_{ij}=x_j^i$，并报告 `matrix_family: vandermonde`。
 
 每个新例都验证了矩阵恒等式、全部 XOR 门、主计算与投影重新拼接、全部相关子式，以及 1,000 组随机数据。八数据实例分别检查 164 个子式，十二数据实例检查 454 个；随机数据只作为附加执行检查。
 
@@ -98,14 +98,14 @@ MW_SQ 投影为 81 次，总计 **312 次**。直接 CSE 的 100 个种子最好
 运行完整核验：
 
 ```bash
-python3 experiments/structured_ring_family.py
+make -j3
+./build/ringlab verify --group family
 ```
 
 后续搜索默认只检查未缩放的 Vandermonde：
 
 ```bash
-python3 experiments/structured_ring_family.py \
-  --search --family vandermonde --limit 10 --timeout 180 \
+./build/ringlab search --family vandermonde --limit 10 --timeout 180 \
   --output /tmp/vandermonde-search.json
 ```
 

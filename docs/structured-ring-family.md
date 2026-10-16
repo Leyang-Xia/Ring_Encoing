@@ -225,40 +225,38 @@ X-Sets 的三个参数是 `thresh nstart give-up-when`：
 
 ## 7. 复现与继续搜索
 
-配套的[实验记录](../experiments/structured_ring_family.json)保存矩阵定义、初筛结果、重点电路、参数和运行状态；[脚本](../experiments/structured_ring_family.py)负责重新构造矩阵并核验电路。
+配套的[实验记录](../data/certificates/structured_ring_family.json)保存矩阵定义、初筛结果、重点电路、参数和运行状态；[C++ 核验实现](../src/verification.cpp)负责重新构造矩阵并核验电路。
 
-默认检查不需要第三方 Python 库：
+使用 C++17 编译器构建，不需要额外运行库：
 
 ```bash
-python3 experiments/structured_ring_family.py
+make -j3
+./build/ringlab verify --group family
 ```
 
 检查包括矩阵恒等式、每个 XOR 门和输出、无用门计数、主计算与投影重新拼接、MDS 子式以及随机数据。矩阵恒等式和符号执行验证全部输入；随机数据是额外的执行检查。
 
-若有 `g++`，可以编译未修改的 X-Sets 源码，给原实例继续增加时间：
+构建时会生成未修改的 X-Sets 后端，可以给原实例继续增加时间：
 
 ```bash
-python3 experiments/structured_ring_family.py \
-  --profile original --path direct --method MW_SQ \
+./build/ringlab profile original --path direct --method MW_SQ \
   --params 10 3 0 --timeout 1800 --output /tmp/original-mw-longer.json
 ```
 
 对新实例也能检查直接路径、环内计算或投影，例如：
 
 ```bash
-python3 experiments/structured_ring_family.py \
-  --profile scaled-eight --path projection --method MW_SQ \
+./build/ringlab profile scaled-eight --path projection --method MW_SQ \
   --params 0 4 0 --timeout 300 --output /tmp/scaled-eight-projection.json
 ```
 
 继续对初筛排名靠前的未缩放 Vandermonde 配置运行后端：
 
 ```bash
-python3 experiments/structured_ring_family.py \
-  --search --limit 10 --params 0 3 0 --timeout 180 \
+./build/ringlab search --limit 10 --params 0 3 0 --timeout 180 \
   --output /tmp/additional-ring-search.json
 ```
 
 输出保留所有完成和超时记录。该命令的搜索结果也只代表有限次启发式比较；若新的直接电路更好，应相应更新领先结论。
 
-脚本默认 `--family vandermonde`，会直接检查矩阵是否满足 $A_{ij}=x_j^i$，而不是仅依赖构造标签。显式指定 `--family all` 才会将缩放扩展也加入候选池。矩阵的各列取点还应互不相同且非零。
+搜索器默认 `--family vandermonde`，会直接检查矩阵是否满足 $A_{ij}=x_j^i$，而不是仅依赖构造标签。显式指定 `--family all` 才会将缩放扩展也加入候选池。矩阵的各列取点还应互不相同且非零。

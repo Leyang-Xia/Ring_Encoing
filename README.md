@@ -1,315 +1,93 @@
-# Ring-Based XOR Optimization for Erasure Coding
+# Ring Encoding：有限域编码的环提升与 XOR 优化
 
-A C++ implementation that explores ring mapping techniques to optimize XOR operations in erasure coding systems, specifically targeting Galois Field arithmetic optimizations through quotient ring mappings.
+这个仓库研究一个问题：将有限域上的固定编码变换提升到更高维的商环，在环内复用中间结果，再投影回原域，能否减少**完整编码所需的 XOR 次数**？
 
-## Overview
+项目提供 C++17 实验工具、可逐门检查的 XOR 线路证据，以及数学说明。当前重点是未缩放 Vandermonde、系统化 Reed–Solomon 和 Cauchy 编码矩阵。它是研究工具，尚未实现面向实际数据块的高性能纠删码编码器。
 
-This project implements a novel approach to reduce XOR operations in erasure coding by mapping elements from GF(2^8) to a quotient ring defined by a reducible polynomial. The system generates encoding matrices, converts them to bit matrices, and applies the Uber optimization tool to minimize XOR operations.
+数学概念、比特表示、二进制矩阵展开及环提升原理由 [数学基础](docs/mathematical-foundations.md) 介绍。
 
-## Mathematical Foundation
+## 构建与快速开始
 
-### Base Field
-- **Field**: GF(2^8) with irreducible polynomial `x^8+x^4+x^3+x^2+1` (0x11D)
-
-### Ring Mapping
-- **Target Ring**: GF(2)[x] / ((x^8+x^4+x^3+x^2+1)(x^2+x+1))
-- **Ring Modulus**: 0x753 (reducible polynomial)
-- **Mapping Strategy**: f(x) → f(x) + g(x)(x^8+x^4+x^3+x^2+1) where g(x) ∈ {0, 1, x, x+1}
-- **Optimization Goal**: Minimize Hamming weight through optimal g(x) selection
-
-## 面向初学者的完整数学方案介绍（建议先读）
-
-这一节按“零基础有限域 + 编码初学者”来写，回答三个核心问题：
-
-1. 原来的编码到底在做什么？
-2. 这个 Ring-Based 方法本质在做什么？
-3. 为什么它可以这样做而不改变编码正确性？
-
----
-
-### 1) 原始编码在做什么：本质是“矩阵乘法”
-
-先不谈 Ring 映射，任何线性纠删码编码都可以写成：
-
-- 数据向量：`x = (x_0, x_1, ..., x_{k-1})^T`
-- 编码矩阵：`A`（元素在 `GF(2^8)`）
-- 输出向量：`y = A x`
-
-第 `i` 行就是：
-
-`y_i = Σ_j A_{i,j} * x_j`（加法和乘法都在 `GF(2^8)` 中）
-
-在这个仓库中，大体流程是：
-
-- 先构造 Vandermonde 矩阵并求逆，得到编码矩阵 `A`；
-- 再把 `GF(2^8)` 的矩阵转成二进制 bitmatrix（供 Uber/X-Sets 统计和优化 XOR 调度）。
-
-所以“原始编码”并不神秘：就是在 `GF(2^8)` 上做线性代数。
-
----
-
-### 2) 为什么会关心 XOR 次数
-
-`GF(2^8)` 元素可以看成 8 位二进制多项式（系数在 `GF(2)`）。
-
-- 域加法 = 按位异或（XOR）
-- 域乘法 = 多项式乘法后再模不可约多项式约简
-
-在软件实现里，编码耗时常被“需要执行多少 XOR”主导，因此项目会把矩阵展开成 bit-level 线性变换，并用 Uber/X-Sets 去找更省 XOR 的计算顺序。
-
----
-
-### 3) `GF(2^8)` 的数学模型（最关键的基础）
-
-这里固定：
-
-- `P(x) = x^8 + x^4 + x^3 + x^2 + 1`（十六进制 `0x11D`）
-- `GF(2^8) = GF(2)[x] / (P(x))`
-
-意思是：两个多项式只要相差 `P(x)` 的倍数，就代表同一个域元素。
-
----
-
-### 4) Ring-Based 方法本质：给每个元素选一个“等价提升”
-
-项目里定义：
-
-- `Q(x) = x^2 + x + 1`
-- `M(x) = P(x)Q(x) = x^10 + x^9 + x^8 + x^6 + x^4 + x + 1`（`0x753`）
-- 目标环：`R = GF(2)[x] / (M(x))`
-
-对任意原始系数 `a`（它是 `GF(2^8)` 元素），构造：
-
-`a' = a + g(x)P(x)`，其中 `g(x) ∈ {0, 1, x, x+1}`
-
-这四个 `g` 恰好对应 4 种“提升版本”（因为这里本质上只需要看 `g mod Q`，而 `deg(Q)=2`，所以 `GF(2)[x]/(Q)` 一共只有 `2^2=4` 个元素）。
-
-直觉上：
-
-- `a` 不变其数学意义；
-- 但二进制形态会变（位分布可能更稀疏）；
-- 稀疏度改变会影响后续 XOR 成本。
-
-所以这个方法不是“改了码的定义”，而是“在等价类里换表示”。
-
----
-
-### 5) 为什么这样做是对的：严格正确性说明
-
-定义投影（回映射）：
-
-`π: R -> GF(2^8),   π([f] mod M) = [f] mod P`
-
-因为 `P | M`，这个投影是良定义的环同态。
-
-现在看一个输出分量：
-
-`y'_i = Σ_j (A_{i,j} + g_{i,j}P) x_j`（在 `R` 中计算）
-
-把它投影回 `GF(2^8)`：
-
-`π(y'_i) = Σ_j π((A_{i,j} + g_{i,j}P) x_j)`
-`       = Σ_j (π(A_{i,j}x_j) + π(g_{i,j}Px_j))`
-`       = Σ_j (A_{i,j}x_j + 0)`（因为 `P` 的倍数对 `mod P` 来说都是 0）
-`       = Σ_j A_{i,j} x_j`
-`       = y_i`
-
-因为 `g_{i,j}P mod P = 0`，额外项全部消失。
-
-**结论**：不管你怎么选 `g(x)`，只要最后按 `mod P` 回来，结果和原始编码完全一致。
-
----
-
-### 6) 从“代数正确”到“工程可用”的直观理解
-
-可以把它理解为：
-
-- 原始编码在一个“8 位坐标系”里做；
-- Ring 方法先临时换到一个“10 位坐标系”里做中间计算；
-- 但这个 10 位空间中有专门设计的投影能无损回到原坐标系；
-- 你利用了这段“中间坐标自由度”去压低 XOR 成本。
-
-这和“换一组基做同一个线性变换”有类似味道：变的是实现路径，不是数学目标。
-
----
-
-### 7) 本仓库对应实现流程（把数学落到代码）
-
-1. 生成 `GF(2^8)` 编码矩阵 `A`（Vandermonde + invert）。
-2. 将 `A` 转为 bitmatrix，得到原始 XOR 成本。
-3. 对每个 `A_{i,j}` 在四个候选 `a + gP` 中挑一个（当前实现是偏向局部稀疏度）。
-4. 生成 ring-mapped 矩阵 `A'` 的 mixed bitmatrix（`10x8` 子块拼接）。
-5. 对 `A'` 路径做 XOR 优化。
-6. 叠加“从 10 位回 8 位”的逆映射开销，和原始路径比较总 XOR。
-
-因此最终比较的是：
-
-`Total_Ring_XOR = XOR(A' 路径) + XOR(回映射)`
-
-vs
-
-`Total_Original_XOR = XOR(A 路径)`
-
----
-
-### 8) 这个方法的优化空间在哪里
-
-当前策略通常是“逐元素选最小汉明重量”的启发式，它容易实现，但不保证全局最优。
-
-原因是：真实总代价取决于整个矩阵的结构共享、调度复用和逆映射耦合，不是单个元素的位数相加这么简单。
-
-可以继续优化的方向：
-
-- 把目标从“单元素 popcount”升级为“矩阵级总代价估计”；
-- 对并列最优候选引入二级目标（例如结构共享友好性）；
-- 做局部搜索/坐标下降，而不是一次性独立决定每个元素的 `g`。
-
----
-
-### 9) 给初学者的最短总结
-
-- 原始编码：`GF(2^8)` 上做 `y = A x`。
-- Ring 方法：把每个系数临时替换为 `a + gP`，利用表示自由度优化 XOR。
-- 正确性来源：最后 `mod P` 投影，所有 `gP` 项都会消失，结果严格等于原编码输出。
-- 所以它是“同一个数学映射的不同实现路径”，不是改码本身。
-
-## Features
-
-- **Matrix Generation**: Vandermonde matrix creation and inversion
-- **Bitmatrix Conversion**: GF(2^8) to binary matrix transformation
-- **Ring Mapping**: Element-wise mapping with sparsity optimization
-- **Mixed Bitmatrix**: GF(2^10) × GF(2^8) multiplication matrices
-- **Uber Integration**: Automatic XOR count optimization
-- **Inverse Mapping**: Proper reduction from ring back to base field
-
-## Dependencies
-
-### Required Libraries
-```bash
-# GF-Complete (Galois Field arithmetic)
-sudo apt-get install libgf-complete-dev
-
-# Jerasure (Erasure coding library)
-sudo apt-get install libjerasure-dev
-```
-
-### Build Requirements
-- C++17 compatible compiler (GCC 7+ or Clang 5+)
-- Make build system
-- Uber optimization tool (should be in project directory)
-
-## Building
+需要 C++17 编译器、GNU Make 和 `sha256sum` 或 `shasum`；也可用下文的 CMake 构建。后端进程管理支持 Linux / macOS。构建和运行不需要 Python、Boost、Jerasure 或 GF-Complete。
 
 ```bash
-# Clone the repository
-git clone https://github.com/Leyang-Xia/Ring_Encoing.git
-cd Ring_Encoing
-
-# Compile the project
-g++ -std=c++17 -O3 ring_based_XOR.cpp -lgf_complete -ljerasure -o ring_xor
-
-# Make sure Uber tool is executable
-chmod +x Uber
+make -j3
+./build/ringlab --help
+./build/ringlab verify --exhaustive
+make test
 ```
 
-## Usage
+默认 `-O3` 构建。完整验证会核对保存的全部线路证据、矩阵恒等式、MDS 子式、CSE 历史种子及每例 1,000 组随机数据；`--exhaustive` 额外穷举四位域小例的 65,536 个输入。验证在 Release 模式中同样有效。
 
-### Basic Execution
+也支持 CMake 3.16 或更新版本：
+
 ```bash
-./ring_xor
+cmake -S . -B build-cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build build-cmake -j3
+(cd build-cmake && ctest --output-on-failure)
 ```
 
-### Interactive Mode
-The program offers several optimization levels:
-1. Choose optimization level (1-5) when prompted
-2. Review original matrix optimization results
-3. Examine ring mapping statistics
-4. Compare optimization improvements
+## 常用操作
 
-### Output Files
-- `matrix_vandermonde_gf8.txt` - Original Vandermonde matrix
-- `matrix_A_gf8.txt` - Encoding matrix (inverted Vandermonde)
-- `matrix_A_bitmatrix.txt` - Binary representation for Uber
-- `matrix_A_ring_mapped.txt` - Ring-mapped encoding matrix
-- `matrix_A_ring_bitmatrix.txt` - Mixed bitmatrix (100×80)
-- `inverse_mapping_matrix.txt` - Reduction matrix
+只验证某组实验：
 
-## Configuration
-
-Key parameters in `Config` namespace:
-```cpp
-constexpr int FIELD_SIZE = 8;           // GF(2^8)
-constexpr int RING_SIZE = 10;           // 10-bit ring
-constexpr int MATRIX_SIZE = 10;         // 10×10 matrices
-constexpr uint16_t PRIMITIVE_POLY = 0x11D;  // Base field polynomial
-constexpr uint16_t RING_MODULUS = 0x753;    // Ring modulus
+```bash
+./build/ringlab verify --group practical
+./build/ringlab verify --group family --samples 1000
 ```
 
-## Architecture
+对已有矩阵重新运行 `MW_SQ` 或 `UBER_XSET`，保存参数、状态和完整线路：
 
-### Core Classes
-- **`GaloisField`**: RAII wrapper for GF-Complete operations
-- **`MatrixHandler`**: Matrix generation, inversion, and bitmatrix conversion
-- **`RingMapper`**: Ring mapping logic with sparsity optimization
-- **`UberOptimizer`**: Interface to Uber optimization tool
-- **`FileManager`**: File I/O operations for matrices
-- **`ErasureCodingApp`**: Main application orchestrator
-
-### Key Algorithms
-1. **Vandermonde Matrix Generation**: α^(i×j) pattern
-2. **Matrix Inversion**: Jerasure-based inversion
-3. **Custom Bitmatrix Conversion**: Respects specified primitive polynomial
-4. **Optimal g(x) Selection**: Hamming weight minimization
-5. **Mixed Bitmatrix Generation**: Ring×Field multiplication
-
-## Performance Results
-
-The system compares XOR counts between:
-- Original GF(2^8) matrix optimization
-- Ring-mapped matrix optimization + inverse mapping overhead
-- Reports percentage improvement/degradation
-
-Typical output:
-```
---- Ring Mapping Comparison Results ---
-Original matrix XORs: 1250
-Ring-mapped matrix XORs: 980
-Inverse mapping XORs: 180
-Total ring mapping XORs: 1160
-XOR improvement: 90 (BETTER)
-Percentage improvement: 7.2%
+```bash
+./build/ringlab profile systematic-rs-7-4 \
+  --path direct --method UBER_XSET --params 0 3 0 \
+  --timeout 60 --output /tmp/rs-direct.json
+./build/ringlab verify --input /tmp/rs-direct.json
 ```
 
-## Research Applications
+`--path` 可选 `direct`（原域完整变换）、`main`（环主计算）、`projection`（回到原域的投影及必要后处理）。单阶段 profile 的计数不能直接当作完整环路线的总成本。
 
-This implementation supports research in:
-- Galois Field arithmetic optimization
-- Sparse matrix techniques for erasure coding
-- Ring-theoretic approaches to linear algebra
-- XOR minimization in coding theory
+继续细化已保存的候选配置，默认只搜索未缩放 Vandermonde：
 
-## Contributing
+```bash
+./build/ringlab search --limit 3 --timeout 60 \
+  --output /tmp/vandermonde-search.json
+./build/ringlab verify --input /tmp/vandermonde-search.json
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Follow C++17 best practices and existing code style
-4. Add tests for new functionality
-5. Submit a pull request
+分析自己的 01 矩阵，每行是一个输出，每列是一个输入，列从第 0 位开始：
 
-## License
+```bash
+./build/ringlab analyze matrix.txt --method CSE --seeds 100
+./build/ringlab analyze matrix.txt --method MW_SQ --timeout 60
+```
 
-This project is provided for research and educational purposes. See individual library licenses for GF-Complete and Jerasure.
+[命令与证据格式](docs/usage.md) 说明全部入口、例名、输出及继续搜索的方法。
 
-## References
+## 已有结果
 
-- GF-Complete: Fast Galois Field arithmetic library
-- Jerasure: Library for erasure coding in storage systems
-- Uber: XOR optimization tool for binary matrices
+以下数字比较固定原始输入到固定原域输出的完整线路，包含进入环和返回原域的实际代价；当前所用输入进入环仅补零，XOR 成本为 0。
 
-## Authors
+| 矩阵实例 | 已完成直接基线 | 完整环线路 | 结论 |
+|---|---:|---:|---|
+| 原始 8→17、8 数据 / 3 校验 | 212 | 203 | 相对所列基线减少 9 次 |
+| 未缩放 Vandermonde、`0x11D`、12 数据 | 338 | 312 | 相对所列基线减少 26 次 |
+| 系统化 RS `[7,4,4]` | 126 | 124 | 相对所列基线减少 2 次 |
+| 四位域 Cauchy 小例 | 32 | 35 | 当前环线路没有收益 |
 
-Leyang Xia - Initial implementation and ring mapping theory
+这些是有限启发式搜索得到的可实现上界，不能当作最优性证明或吞吐提升。其他 Cauchy 实例保留负结果；大型系统化 RS 的强直接搜索尚未完成，仍标为未决。[文档导航](docs/README.md) 给出全部正例、负例、参数和适用范围。
 
-## Contact
+## 目录
 
-For questions or collaboration: spicycurrykk@gmail.com 
+```text
+apps/                  统一命令行 ringlab
+include/ringlab/        C++ 公共接口
+src/                   精确 JSON、比特向量、数学、线路、CSE 与实验实现
+tests/                 核心、证据、CLI 和内存错误回归
+data/certificates/     原样保留的实验记录与完整 XOR 线路
+docs/                  数学基础、验证方案、实验解释与使用说明
+third_party/           保留版权声明的 X-Sets、Uber 后端
+legacy/                早期演示源码与其依赖、局限说明
+```
+
+新功能使用 C++，优先复用共享核心；开发和计数约定见 [AGENTS.md](AGENTS.md)。第三方来源及 Uber 的内存访问修复见 [third_party/README.md](third_party/README.md)。历史演示仍保留，推荐使用统一 CLI 开展后续实验。

@@ -296,18 +296,19 @@ $$
 
 本仓库提供两个配套文件：
 
-- [证据数据](../experiments/ring_lift_example.json)：系数、提升、原始输入约定、直接基线与环电路的全部 XOR 指令。
-- [复现与验证脚本](../experiments/ring_lift_example.py)：使用 Python 3.10 或更新版本的标准库，不依赖现有 Uber 可执行文件。
+- [证据数据](../data/certificates/ring_lift_example.json)：系数、提升、原始输入约定、直接基线与环电路的全部 XOR 指令。
+- [C++ 复现与验证实现](../src/verification.cpp)：与共享核心一起编译为 `ringlab`，运行不依赖 Python 或现有 Uber 可执行文件。
 
-新增的 [X-Sets 比较记录](../experiments/xsets_comparison.json) 保存四组参数下的全部已核验电路，包含投影后的完整环电路。[比较脚本](../experiments/compare_xsets.py) 可从原始源码重新编译、运行并验证这两种方法。
+新增的 [X-Sets 比较记录](../data/certificates/xsets_comparison.json) 保存四组参数下的全部已核验电路，包含投影后的完整环电路。[C++ 比较实现](../src/search.cpp) 使用构建生成的原始 X-Sets 后端，运行并验证这两种方法。
 
 在仓库根目录执行：
 
 ```bash
-python3 experiments/ring_lift_example.py --exhaustive
+make -j3
+./build/ringlab verify --group small --exhaustive
 ```
 
-脚本执行的检查包括：
+程序执行的检查包括：
 
 1. 独立检查模数、不可约性、Cauchy 参数和全部二阶子式。
 2. 通过循环移位乘法重建环中的乘法块，通过移位约简乘法重建原域块，验证 $D_mB_G=T_A$。
@@ -317,13 +318,13 @@ python3 experiments/ring_lift_example.py --exhaustive
 6. 枚举系统化编码的所有码字，确认最小非零符号重量为 3。
 7. 若存在 X-Sets 比较记录，同时核验其中的全部直接电路、环主电路和包含投影的完整电路，并报告新增的最好直接值 32。
 
-这组检查已经通过。重新运行两种 X-Sets 方法需要可用的 `g++`：
+这组检查已经通过。构建后可以重新运行两种 X-Sets 方法：
 
 ```bash
-python3 experiments/compare_xsets.py --output /tmp/xsets-comparison.json
+./build/ringlab compare --output /tmp/xsets-comparison.json
 ```
 
-它会记录原始源码哈希、编译器版本、参数、运行状态、完整电路及核验后的计数。后续如果再出现更好的直接电路，应继续更新基线，不能用旧基线维持领先结论。
+历史比较文件保留了源码哈希、编译器版本与编译选项；新的运行结果记录后端来源、参数、运行状态、完整电路及核验后的计数。后续如果再出现更好的直接电路，应继续更新基线，不能用旧基线维持领先结论。
 
 ## 7. 目前可以得出的结论
 
