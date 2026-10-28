@@ -6,6 +6,8 @@
 
 数学概念、比特表示、二进制矩阵展开及环提升原理由 [数学基础](docs/mathematical-foundations.md) 介绍。
 
+当前阶段已收尾，暂停继续搜索与专利评审 PPT 制作。PYRIT 文献已提出域到环及等价代表选择的核心思路；本仓库尚未证明相对于这些工作提出了新方法。已有正例和调度比较的适用范围见[阶段总结与文献对照](docs/research-summary-and-prior-art.md)。
+
 ## 构建与快速开始
 
 需要 C++17 编译器、GNU Make 和 `sha256sum` 或 `shasum`；也可用下文的 CMake 构建。后端进程管理支持 Linux / macOS。构建和运行不需要 Python、Boost、Jerasure 或 GF-Complete。

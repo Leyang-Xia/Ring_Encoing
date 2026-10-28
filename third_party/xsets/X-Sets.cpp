@@ -72,6 +72,7 @@ int Technique = 0;
 int Thresh = 0;
 int NStart = 0;
 int Give_Up_When = 0;
+bool Quiet = false;
 
 #define BMS_SET(C) elts[(C)/8] |= (1 << ((C)%8))
 #define BMS_CLEAR(C) elts[(C)/8] &= (0xff ^ (1 << (C)%8))
@@ -971,24 +972,22 @@ void Schedule::Add_Global_Edge_Weights(MXS *mx, XMit xptr)
 
 void Schedule::Add_Element_To_MX_Set(MXS *mx, XMit xptr, int index, int global_weight)
 {
-  Bitset *b;
   IBMit spit;
   IPair ip;
 
   IT(spit, xptr->second.indices) {
-    b = new Bitset(spit->second, sched[index]); 
-    if (schedtree.find(b->Key) == schedtree.end()) {
-      if (xptr->second.sums.find(b->Key) != xptr->second.sums.end()) {
+    Bitset sum(spit->second, sched[index]);
+    if (schedtree.find(sum.Key) == schedtree.end()) {
+      if (xptr->second.sums.find(sum.Key) != xptr->second.sums.end()) {
         /* If this happens, you have issues, because the sum of four elements equals zero. */
       } else {
         ip.first = index;
         ip.second = spit->first;
-        xptr->second.sums.insert(make_pair(b->Key, ip));
-        mx->MX_Local_Edge_Weights[b->Key]++;
-        if (global_weight) Add_Global_Edge(mx, b->Key);
+        xptr->second.sums.insert(make_pair(sum.Key, ip));
+        mx->MX_Local_Edge_Weights[sum.Key]++;
+        if (global_weight) Add_Global_Edge(mx, sum.Key);
       }
     }
-    delete b;
   }
   xptr->second.indices.insert(make_pair(index, sched[index]));
 }
@@ -1012,7 +1011,6 @@ void Schedule::Add_Global_Edge(MXS *mx, string &s)
 
 void Schedule::Subtract_Element_From_MX_Set(MXS *mx, XMit xptr, int index, int global_weight)
 {
-  Bitset *b;
   IBMit spit;
   SPMit pit;
   SIMit mpit;
@@ -1022,18 +1020,17 @@ void Schedule::Subtract_Element_From_MX_Set(MXS *mx, XMit xptr, int index, int g
   xptr->second.indices.erase(spit);
 
   IT(spit, xptr->second.indices) {
-    b = new Bitset(spit->second, sched[index]); 
-    pit = xptr->second.sums.find(b->Key);
+    Bitset sum(spit->second, sched[index]);
+    pit = xptr->second.sums.find(sum.Key);
     if (pit != xptr->second.sums.end()) {
       xptr->second.sums.erase(pit);                  /* Erase from sum's edge set */
-      mpit = mx->MX_Local_Edge_Weights.find(b->Key);   /* Decrement from mx->MX_Global_Edge_Weights */
+      mpit = mx->MX_Local_Edge_Weights.find(sum.Key);   /* Decrement from mx->MX_Global_Edge_Weights */
       mpit->second--;
       if (mpit->second == 0) { 
         mx->MX_Local_Edge_Weights.erase(mpit);
       }
-      if (global_weight) Subtract_Global_Edge(mx, b->Key);
+      if (global_weight) Subtract_Global_Edge(mx, sum.Key);
     }
-    delete b;
   }
 }
 
@@ -1102,9 +1099,12 @@ void Bitset::Print(int cols, int newline)
   
 void Bitset::SetKey()
 {
-  int i, j;
-  
-  if (Key.size() == 0) FUP(i, elts.size()*8) Key.push_back((BMS_ISSET(i)) ? '1' : '0');
+  int i;
+
+  if (Key.size() == 0) {
+    Key.resize(elts.size()*8, '0');
+    FUP(i, elts.size()*8) if (BMS_ISSET(i)) Key[i] = '1';
+  }
 }
   
 Bitset::Bitset(int c)
@@ -1139,31 +1139,31 @@ Bitset::Bitset(Bitset *b1, Bitset *b2)
 void Bitset::XOR_With(Bitset *b)
 {
   int i;
-  string s;
 
   VIT(i, elts) elts[i] ^= b->elts[i];
-  FUP(i, elts.size()*8) s.push_back((BMS_ISSET(i)) ? '1' : '0');
-  Key = s;
+  Key.resize(elts.size()*8, '0');
+  FUP(i, elts.size()*8) Key[i] = BMS_ISSET(i) ? '1' : '0';
 }
 
 int Bitset::Diff(Bitset *b)
 {
-  int i, j, d, x;
+  int i, d;
 
   d = 0;
   VIT(i, elts) {
-    x = elts[i] ^ b->elts[i];
-    FUP(j, 8) if (x & (1 << j)) d++;
+    const auto lhs = static_cast<unsigned char>(elts[i]);
+    const auto rhs = static_cast<unsigned char>(b->elts[i]);
+    d += __builtin_popcount(static_cast<unsigned>(lhs ^ rhs));
   }
   return d;
 }
 
 int Bitset::Ones()
 {
-  int i, j, d;
+  int i, d;
 
   d = 0;
-  VIT(i, elts) FUP(j, 8) if (elts[i] & (1 << j)) d++;
+  VIT(i, elts) d += __builtin_popcount(static_cast<unsigned>(static_cast<unsigned char>(elts[i])));
   return d;
 }
 
@@ -1428,10 +1428,10 @@ vector <Bitset *>Schedule::GetBest(int maxelts, Schedule *me)
     }
     IT(eit, Edges_By_Weight[top]) {
       s = *eit;
-      b = new Bitset(s, cols);
+      Bitset candidate(s, cols);
       news = new Schedule;
       news->Copy(me);
-      news->Add_Element(b);
+      news->Add_Element(new Bitset(candidate));
       for (b = news->Find_Two(); b != NULL; b = news->Find_Two()) news->Add_Element(b);
       if (Technique == MW_SMALLEST_SUM) {
         sum = 0;
@@ -1680,12 +1680,12 @@ void Schedule::Add_Element(Bitset *b)
   
       inds.clear();
       VIT(i, Enumerator) if (Enumerator[i] >= cols) inds.push_back(Enumerator[i]);
-      b2 = new Bitset(mx->t, sched[inds[0]]);
-      for (i = 1; i < inds.size(); i++) b2->XOR_With(sched[inds[i]]);
+      Bitset residual(mx->t, sched[inds[0]]);
+      for (i = 1; i < inds.size(); i++) residual.XOR_With(sched[inds[i]]);
   
       /* Now, cruise through Sched_By_Bits and see if any currently scheduled items can reduce the size */
   
-      ones = b2->Ones();
+      ones = residual.Ones();
       to_test = ones*2 - 2;
       if (to_test > cols) to_test = cols;
       j = 0;
@@ -1696,11 +1696,11 @@ void Schedule::Add_Element(Bitset *b)
         } else {
           i = Sched_By_Bits[to_test][j];
           j++;
-          tones = b2->Diff(sched[i]);
+          tones = residual.Diff(sched[i]);
           if ((!(BMP_ISSET(EN_Cannot_Use, i))) && tones < ones-1) {
             inds.push_back(i);
             ones = tones;
-            b2->XOR_With(sched[i]);
+            residual.XOR_With(sched[i]);
             if (ones*2 - 2 < to_test) {
               to_test = ones*2-2;
               j = 0;
@@ -1713,10 +1713,9 @@ void Schedule::Add_Element(Bitset *b)
 
       ones += inds.size();
       if ((ones <= mx->sz + Thresh)) {
-        FUP(i, cols) if (BMP_ISSET(b2, i)) inds.push_back(i);
+        FUP(i, cols) if (residual.elts[i/8] & (1 << (i%8))) inds.push_back(i);
         Add_New_MX(mx, inds);
       }
-      delete b2;
 //    mx->Print();
     }
     Enumerator_Next();
@@ -1798,7 +1797,7 @@ void Schedule::Create_Initial_Sets()
 
 void usage() 
 {
-    cerr << "usage: X-Sets thresh nstart give-up-when selection_technique\n"; 
+    cerr << "usage: X-Sets thresh nstart give-up-when selection_technique [--quiet]\n";
     cerr << "       selection_technique = MW|MW_SS|MW_SMALLEST_SUM|MW_SQ|UBER_XSET|MW_MATCHING|SUBEX\n"; 
     exit(1); 
 }
@@ -1811,7 +1810,11 @@ int main(int argc, char **argv)
   Schedule *S;
   vector <Bitset *> to_try;
 
-  if (argc != 5) usage();
+  if (argc != 5 && argc != 6) usage();
+  if (argc == 6) {
+    if (strcmp(argv[5], "--quiet") != 0) usage();
+    Quiet = true;
+  }
 
   Thresh = atoi(argv[1]);
   NStart = atoi(argv[2]);
@@ -1847,9 +1850,11 @@ int main(int argc, char **argv)
       to_try = S->GetBest(S->targets.size(), S);
       VIT(i, to_try) {
         b = to_try[i];
-        printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
-        printf(" Edge Weight: %lu (Matching %d)\n", S->Sched_Edge_Weights[b->Key].size(), i);
-        fflush(stdout);
+        if (!Quiet) {
+          printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
+          printf(" Edge Weight: %lu (Matching %d)\n", S->Sched_Edge_Weights[b->Key].size(), i);
+          fflush(stdout);
+        }
         S->Add_Element(to_try[i]);
       }
     }
@@ -1859,27 +1864,33 @@ int main(int argc, char **argv)
   }
 
   for (b = S->Find_Two(); b != NULL; b = S->Find_Two())  {
-    printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
-    printf(" Edge Weight: %lu (TH 4.1)\n", S->Sched_Edge_Weights[b->Key].size());
-    fflush(stdout);
+    if (!Quiet) {
+      printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
+      printf(" Edge Weight: %lu (TH 4.1)\n", S->Sched_Edge_Weights[b->Key].size());
+      fflush(stdout);
+    }
     S->Add_Element(b);
   }
 
   while (S->sets.size() > 0) {
     to_try = S->GetBest(1, S);  /* This will still work if you call it with something larger, just to see how many sets you get */
     b = to_try[0];
-    printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
-    printf(" Edge Weight: %lu\n", S->Sched_Edge_Weights[b->Key].size());
-    fflush(stdout);
+    if (!Quiet) {
+      printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
+      printf(" Edge Weight: %lu\n", S->Sched_Edge_Weights[b->Key].size());
+      fflush(stdout);
+    }
 
     VIT(i, to_try) if (i > 0) delete to_try[i]; /* This is in case you did call it with something larger */
 
     S->Add_Element_From_GetBest(b);
     for (b = S->Find_Two(); b != NULL; b = S->Find_Two()) {
-      printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
-      printf(" Edge Weight: %lu (TH 4.1)\n", S->Sched_Edge_Weights[b->Key].size());
+      if (!Quiet) {
+        printf("Targets Left %2lu.  New Element ", S->sets.size()); b->Print(S->cols, 0);
+        printf(" Edge Weight: %lu (TH 4.1)\n", S->Sched_Edge_Weights[b->Key].size());
+      }
       S->Add_Element(b);
-      fflush(stdout);
+      if (!Quiet) fflush(stdout);
     }
   }
 

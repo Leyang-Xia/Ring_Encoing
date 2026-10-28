@@ -7,6 +7,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
+#include <filesystem>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -245,9 +246,12 @@ Json run_backend(const std::string &binary, const Rows &rows, int inputs, const 
                     text += row.bit(bit) ? '1' : '0';
                 text += '\n';
             }
-            auto process = execute({binary, std::to_string(params[0]), std::to_string(params[1]),
-                                    std::to_string(params[2]), method},
-                                   text, timeout);
+            std::vector<std::string> command{binary, std::to_string(params[0]),
+                                              std::to_string(params[1]), std::to_string(params[2]),
+                                              method};
+            if (std::filesystem::path(binary).filename() == "xsets")
+                command.push_back("--quiet");
+            auto process = execute(command, text, timeout);
             record["exit_code"] = process.exit_code;
             if (process.cancel_signal) {
                 record["status"] = "cancelled";
