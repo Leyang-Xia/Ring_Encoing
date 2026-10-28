@@ -33,6 +33,7 @@ test: all $(BUILD)/core-test $(BUILD)/experiment-test
 	$(BUILD)/experiment-test data/certificates
 	$(BUILD)/ringlab verify --exhaustive
 	bash tests/cli_test.sh $(BUILD)/ringlab
+	bash tests/xsets_quiet.sh $(BUILD)/xsets
 clean:
 	rm -rf $(BUILD)
 -include $(wildcard $(BUILD)/*.d)
