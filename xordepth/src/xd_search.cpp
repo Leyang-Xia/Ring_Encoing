@@ -1,4 +1,5 @@
 #include "xd/search.hpp"
+#include <chrono>
 #include <climits>
 #include <map>
 #include <numeric>
@@ -310,6 +311,137 @@ std::string SearchState::signature() const {
         out << ']';
     }
     return out.str();
+}
+
+ringlab::Circuit SearchState::export_circuit() const {
+    require(valid_ && complete(), "cannot export incomplete search state");
+    ringlab::GreedyCircuit circuit(inputs_);
+    std::vector<int> mapped(nodes_.size(), -1);
+    for (int i = 0; i < inputs_; ++i) mapped[i] = i;
+    for (std::size_t i = static_cast<std::size_t>(inputs_); i < nodes_.size(); ++i) {
+        require(nodes_[i].left >= 0 && nodes_[i].right >= 0, "missing search producer");
+        mapped[i] = circuit.xor_nodes(mapped[nodes_[i].left], mapped[nodes_[i].right]);
+    }
+    std::vector<int> outputs;
+    outputs.reserve(frontiers_.size());
+    for (const auto &frontier : frontiers_) {
+        const Representation *done = nullptr;
+        for (const auto &entry : frontier.entries)
+            if (entry.terms.size() <= 1) {
+                done = &entry;
+                break;
+            }
+        require(done != nullptr, "incomplete search frontier");
+        outputs.push_back(done->terms.empty() ? inputs_ : mapped[done->terms.front()]);
+    }
+    auto result = circuit.export_circuit(outputs);
+    return result;
+}
+
+BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int inputs,
+                                         const BoundedScheduleOptions &options) {
+    validate_target_width(targets, inputs);
+    require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
+                options.max_representations > 0 && options.restarts > 0 &&
+                options.timeout_seconds > 0,
+            "invalid bounded search options");
+    BoundedScheduleResult result;
+    result.requested_depth = options.max_depth;
+    result.depth_lower_bound = depth_lower_bound(targets);
+    if (options.max_depth < result.depth_lower_bound) {
+        result.status = "infeasible_by_lower_bound";
+        return result;
+    }
+
+    const auto started = std::chrono::steady_clock::now();
+    SearchState initial = SearchState::initial(targets, inputs, options);
+    if (!initial.valid()) {
+        result.status = "search_failed";
+        return result;
+    }
+    std::vector<SearchState> beam{initial};
+    std::unordered_map<std::string, int> transposition;
+    transposition.emplace(initial.signature(), initial.best_cost_lower_bound());
+    auto consider_incumbent = [&](ringlab::Circuit circuit) {
+        circuit.verify(targets);
+        auto profile = depth_profile(circuit);
+        if (profile.depth > options.max_depth) return;
+        if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {
+            result.circuit = std::move(circuit);
+            result.status = "verified";
+        }
+    };
+    ScheduleOptions baseline_options;
+    baseline_options.share_threshold = 2;
+    baseline_options.depth_aware = true;
+    consider_incumbent(synthesize_schedule(targets, inputs, baseline_options));
+    consider_incumbent(rebalanced(synthesize_schedule(targets, inputs, baseline_options)));
+    bool timed_out = false;
+    for (int restart = 0; restart < options.restarts && !timed_out; ++restart) {
+        if (restart > 0) beam = {initial};
+        while (!beam.empty()) {
+            if (std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count() >=
+                options.timeout_seconds) {
+                timed_out = true;
+                break;
+            }
+            std::vector<SearchState> next;
+            for (const auto &state : beam) {
+                ++result.explored_states;
+                if (state.complete()) {
+                    auto circuit = state.export_circuit();
+                    auto profile = depth_profile(circuit);
+                    circuit.verify(targets);
+                    require(profile.depth <= options.max_depth, "bounded result exceeds depth limit");
+                    if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {
+                        result.circuit = std::move(circuit);
+                        result.status = "verified";
+                    }
+                    continue;
+                }
+                auto candidates = state.candidates();
+                ringlab::SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
+                if (restart > 0 || options.seed != 0)
+                    for (std::size_t i = candidates.size(); i > 1; --i)
+                        std::swap(candidates[i - 1], candidates[random.below(i)]);
+                if (candidates.size() > static_cast<std::size_t>(options.branch_width))
+                    candidates.resize(static_cast<std::size_t>(options.branch_width));
+                for (const auto &candidate : candidates) {
+                    auto child = state.apply(candidate);
+                    if (!child.valid()) {
+                        ++result.pruned_depth;
+                        continue;
+                    }
+                    if (result.status == "verified" &&
+                        child.best_cost_lower_bound() > result.circuit.cost()) {
+                        ++result.pruned_bound;
+                        continue;
+                    }
+                    auto key = child.signature();
+                    auto bound = child.best_cost_lower_bound();
+                    auto seen = transposition.find(key);
+                    if (seen != transposition.end() && seen->second <= bound) {
+                        ++result.pruned_bound;
+                        continue;
+                    }
+                    transposition[key] = bound;
+                    next.push_back(std::move(child));
+                }
+            }
+            std::sort(next.begin(), next.end(), [](const SearchState &a, const SearchState &b) {
+                if (a.best_cost_lower_bound() != b.best_cost_lower_bound())
+                    return a.best_cost_lower_bound() < b.best_cost_lower_bound();
+                return a.signature() < b.signature();
+            });
+            if (next.size() > static_cast<std::size_t>(options.beam_width))
+                next.resize(static_cast<std::size_t>(options.beam_width));
+            beam = std::move(next);
+        }
+    }
+    if (result.status == "verified") return result;
+    result.status = timed_out ? "timeout" : "search_failed";
+    result.circuit = ringlab::Circuit();
+    return result;
 }
 
 } // namespace xd

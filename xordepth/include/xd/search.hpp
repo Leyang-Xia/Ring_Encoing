@@ -47,6 +47,7 @@ class SearchState {
     bool complete() const;
     int best_cost_lower_bound() const;
     std::string signature() const;
+    ringlab::Circuit export_circuit() const;
     const ParetoFrontier &frontier(std::size_t index) const;
     int pair_support(const Candidate &candidate) const;
 

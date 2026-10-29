@@ -70,5 +70,26 @@ int main() {
     auto shared_child = shared.apply(*shared_pair);
     require(shared_child.valid(), "shared pair remains feasible");
     require(shared_child.pair_support(*shared_pair) == 0, "pair support is updated");
+
+    auto balanced = synthesize_bounded({ringlab::Mask(15)}, 4, options(2));
+    require(balanced.status == "verified", "D=2 feasible");
+    require(balanced.circuit.cost() == 3, "balanced XOR count");
+    require(depth_profile(balanced.circuit).depth <= 2, "hard depth bound");
+    balanced.circuit.verify({ringlab::Mask(15)});
+    auto repeat = synthesize_bounded({ringlab::Mask(15)}, 4, options(2));
+    require(repeat.status == "verified", "repeat feasible");
+    require(repeat.circuit.json().dump() == balanced.circuit.json().dump(),
+            "same seed is deterministic");
+
+    auto impossible = synthesize_bounded({ringlab::Mask(15)}, 4, options(1));
+    require(impossible.status == "infeasible_by_lower_bound", "lower-bound rejection");
+
+    auto exhausted_options = options(2);
+    exhausted_options.beam_width = 1;
+    exhausted_options.branch_width = 1;
+    auto exhausted = synthesize_bounded({ringlab::Mask(7), ringlab::Mask(11)}, 4,
+                                        exhausted_options);
+    require(exhausted.status == "search_failed" || exhausted.status == "verified",
+            "beam exhaustion is not infeasibility");
     std::cout << "xd search primitives passed\n";
 }
