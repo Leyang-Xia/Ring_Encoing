@@ -8,7 +8,7 @@ $(error A SHA-256 tool is required: sha256sum or shasum)
 endif
 CPPFLAGS += -DRINGLAB_XSETS_SHA256='"$(XSETS_HASH)"'
 CXXFLAGS ?= -O3 -DNDEBUG
-override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic
+override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -pthread
 CORE = $(BUILD)/json.o $(BUILD)/bitvector.o $(BUILD)/field.o $(BUILD)/circuit.o $(BUILD)/cse.o
 LAB = $(CORE) $(BUILD)/matrices.o $(BUILD)/verification.o $(BUILD)/search.o $(BUILD)/backend.o
 .PHONY: all test clean
@@ -25,7 +25,7 @@ $(BUILD)/core-test: tests/core_test.cpp $(CORE)
 $(BUILD)/ringlab: apps/ringlab.cpp $(LAB)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 $(BUILD)/xsets: third_party/xsets/X-Sets.cpp | $(BUILD)
-	$(CXX) -std=c++17 -O3 $< -o $@
+	$(CXX) -std=c++17 -O3 -pthread $< -o $@
 $(BUILD)/uber: third_party/uber/Uber.cpp | $(BUILD)
 	$(CXX) -std=c++17 -O3 $< -o $@
 test: all $(BUILD)/core-test $(BUILD)/experiment-test
@@ -34,6 +34,7 @@ test: all $(BUILD)/core-test $(BUILD)/experiment-test
 	$(BUILD)/ringlab verify --exhaustive
 	bash tests/cli_test.sh $(BUILD)/ringlab
 	bash tests/xsets_quiet.sh $(BUILD)/xsets
+	bash tests/xsets_parallel.sh $(BUILD)/xsets
 clean:
 	rm -rf $(BUILD)
 -include $(wildcard $(BUILD)/*.d)
