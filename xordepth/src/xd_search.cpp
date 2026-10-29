@@ -205,19 +205,20 @@ std::vector<Candidate> SearchState::candidates() const {
 SearchState SearchState::apply(const Candidate &candidate) const {
     SearchState child = *this;
     if (!valid_ || candidate.left < 0 || candidate.right < 0 ||
-        candidate.left == candidate.right ||
+        candidate.left >= candidate.right ||
         static_cast<std::size_t>(candidate.left) >= nodes_.size() ||
         static_cast<std::size_t>(candidate.right) >= nodes_.size() ||
         !candidate_allowed(node_depth(candidate.left), node_depth(candidate.right),
-                           options_.max_depth)) {
+                           options_.max_depth) || pair_support(candidate) == 0) {
         child.valid_ = false;
         return child;
     }
     auto result_mask = nodes_[candidate.left].mask ^ nodes_[candidate.right].mask;
+    int new_depth = candidate_depth(node_depth(candidate.left), node_depth(candidate.right));
     int node = lookup_node(child.node_by_mask_, result_mask);
     if (node < 0) {
         node = static_cast<int>(child.nodes_.size());
-        child.nodes_.push_back(NodeRecord{result_mask, candidate.arrival_depth,
+        child.nodes_.push_back(NodeRecord{result_mask, new_depth,
                                           candidate.left, candidate.right});
         child.node_by_mask_.emplace(result_mask, node);
     }

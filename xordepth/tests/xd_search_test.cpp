@@ -54,11 +54,18 @@ int main() {
     require(child.valid(), "transactional pair application");
     require(!child.frontier(0).entries.empty(), "pair replacement representation");
     require(state.signature() == parent_signature, "apply does not mutate parent");
-    auto depth_two = child.apply(Candidate{4, 2, 2, 1});
+    auto wrong_depth = state.apply(Candidate{0, 1, 0, 1});
+    require(wrong_depth.valid(), "candidate depth is recomputed");
+    require(wrong_depth.signature().find("3@1;") != std::string::npos,
+            "candidate depth is not trusted");
+    auto depth_two = child.apply(Candidate{2, 4, 2, 1});
     require(depth_two.valid(), "second pair application");
     auto depth_two_signature = depth_two.signature();
-    require(!depth_two.apply(Candidate{5, 3, 3, 1}).valid(), "over-depth transition rejected");
+    require(!depth_two.apply(Candidate{3, 5, 3, 1}).valid(), "over-depth transition rejected");
     require(depth_two.signature() == depth_two_signature, "rejected transition preserves parent");
+    auto absent_pair_state = SearchState::initial({ringlab::Mask(3)}, 4, options(2));
+    require(!absent_pair_state.apply(Candidate{2, 3, 1, 1}).valid(),
+            "absent pair transition rejected");
 
     auto shared = SearchState::initial({ringlab::Mask(7), ringlab::Mask(11)}, 4, options(2));
     auto shared_candidates = shared.candidates();
