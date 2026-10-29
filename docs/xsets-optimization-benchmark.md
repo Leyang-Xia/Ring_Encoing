@@ -8,7 +8,7 @@ state_{n+1} = (1009 * state_n + 9176) mod 1000003
 A[i,j] = 1 iff state_n < 500002
 ```
 
-矩阵文件为 [`matrix_100x50_lcg.txt`](../data/benchmarks/matrix_100x50_lcg.txt)，100 行均不重复，平均行权重为 25.23。运行环境为当前 macOS arm64 工作区，X-Sets 源码 SHA-256 为 `34e30dae9ed5e4f8df5dd88dc8609b7a5e3ee13d16cc30526e22b60e4c1e30a8`。
+矩阵文件为 [`matrix_100x50_lcg.txt`](../data/benchmarks/matrix_100x50_lcg.txt)，100 行均不重复，平均行权重为 25.23。运行环境为当前工作区，X-Sets 源码 SHA-256 为 `8fe109bc7e02b65a756c5ab1495f28a0cbc9e8fd3d0063120c3a9c772f45ef45`。
 
 ## 结果
 
@@ -33,3 +33,13 @@ A[i,j] = 1 iff state_n < 500002
 ## 与补丁前源码的时间对照
 
 在同一矩阵、同一 `0 0 0` 参数下，用补丁前源码临时编译的可执行文件复测：`MW_SQ` 约 23.93 s、905 XOR；`UBER_XSET` 约 0.17 s、979 XOR。当前补丁版本约为 23.30 s 和 0.16 s。这个规模上，优化主要保持了结果并减少了常数开销；此前 8→17 矩阵的 `0 3 0` 基准中，`MW_SQ` 从约 27.9 s 降到 8.1 s，`UBER_XSET` 从约 4.5 s 降到 1.2 s。不同输入规模的收益不能直接外推。
+## 候选评估并行化复测
+
+在同一 100×50 矩阵、`MW_SQ 0 0 0` 和当前源码上，使用 `XSETS_THREADS=2` 的运行约 81.35 秒完成，得到与既有结果一致的 905 次 XOR。当前环境中 `XSETS_THREADS=1` 和 `4` 在 90 秒预算内未完成，因此不把超时视为 XOR 质量结论。小矩阵的串行、2 线程和 64 线程输出逐字节一致；大矩阵的并行线路保留完整输出，后续可在更快机器上补充同一输入的串行完整核对。
+
+线程数由环境变量控制，例如：
+
+```bash
+XSETS_THREADS=1 ./build/xsets 0 0 0 MW_SQ --quiet < data/benchmarks/matrix_100x50_lcg.txt
+XSETS_THREADS=2 ./build/xsets 0 0 0 MW_SQ --quiet < data/benchmarks/matrix_100x50_lcg.txt
+```

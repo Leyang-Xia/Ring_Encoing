@@ -58,6 +58,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <atomic>
+#include <cerrno>
+#include <climits>
+#include <exception>
+#include <memory>
+#include <thread>
+#include <mutex>
 using namespace std;
 
 #define MW (1111)
@@ -183,6 +190,35 @@ typedef map <string, MXS *> SMMap;
 typedef SMMap::iterator SMMit;
 
 typedef set <string> SSet;
+
+struct HeavyCandidateEvaluation {
+  string key;
+  int newtop = -1;
+  size_t newn = 0;
+  int sum = 0;
+};
+
+static unsigned XSetsThreadCount(size_t candidate_count)
+{
+  const char *value = getenv("XSETS_THREADS");
+  unsigned long parsed;
+  char *end;
+  unsigned configured;
+  unsigned hardware;
+
+  if (candidate_count == 0) return 1;
+  if (value != NULL && *value != '\0') {
+    errno = 0;
+    parsed = strtoul(value, &end, 10);
+    if (errno == 0 && end != value && *end == '\0' && parsed > 0) {
+      configured = parsed > static_cast<unsigned long>(UINT_MAX) ? UINT_MAX : static_cast<unsigned>(parsed);
+      return min(configured, static_cast<unsigned>(candidate_count));
+    }
+  }
+  hardware = thread::hardware_concurrency();
+  if (hardware == 0) hardware = 1;
+  return min(hardware, static_cast<unsigned>(candidate_count));
+}
 
 typedef map <int, MXS *> IMXMap;
 typedef IMXMap::iterator IMXMit;
@@ -1288,6 +1324,61 @@ Bitset *Schedule::Find_Two()
 typedef multimap <int, string> ISMmap;
 typedef ISMmap::iterator ISMmit;
 
+static HeavyCandidateEvaluation EvaluateHeavyCandidate(Schedule *base, const string &candidate_key)
+{
+  HeavyCandidateEvaluation result;
+  string key = candidate_key;
+  unique_ptr<Schedule> news(new Schedule);
+  unique_ptr<Bitset> candidate(new Bitset(key, base->cols));
+  Bitset *b;
+
+  result.key = candidate_key;
+  news->Copy(base);
+  news->Add_Element(candidate.release());
+  for (b = news->Find_Two(); b != NULL; b = news->Find_Two()) news->Add_Element(b);
+  if (Technique == MW_SMALLEST_SUM) {
+    result.sum = 0;
+    for (SMMit sit = base->sets.begin(); sit != base->sets.end(); sit++) result.sum += sit->second->sz;
+  } else {
+    result.newtop = static_cast<int>(news->Edges_By_Weight.size()) - 1;
+    result.newn = news->Edges_By_Weight[result.newtop].size();
+  }
+  return result;
+}
+
+static vector <HeavyCandidateEvaluation> EvaluateHeavyCandidates(Schedule *base, const vector<string> &candidates)
+{
+  vector <HeavyCandidateEvaluation> results(candidates.size());
+  unsigned workers = XSetsThreadCount(candidates.size());
+
+  if (workers <= 1 || candidates.size() <= 1) {
+    for (size_t i = 0; i < candidates.size(); i++) results[i] = EvaluateHeavyCandidate(base, candidates[i]);
+    return results;
+  }
+
+  atomic<size_t> next(0);
+  exception_ptr first_error;
+  mutex error_mutex;
+  vector <thread> pool;
+  pool.reserve(workers);
+  for (unsigned worker = 0; worker < workers; worker++) {
+    pool.emplace_back([&]() {
+      size_t index;
+      try {
+        while ((index = next.fetch_add(1)) < candidates.size()) {
+          results[index] = EvaluateHeavyCandidate(base, candidates[index]);
+        }
+      } catch (...) {
+        lock_guard<mutex> lock(error_mutex);
+        if (!first_error) first_error = current_exception();
+      }
+    });
+  }
+  for (size_t i = 0; i < pool.size(); i++) pool[i].join();
+  if (first_error) rethrow_exception(first_error);
+  return results;
+}
+
 vector <Bitset *>Schedule::GetBest(int maxelts, Schedule *me)
 {
   SSet::iterator eit;
@@ -1298,8 +1389,6 @@ vector <Bitset *>Schedule::GetBest(int maxelts, Schedule *me)
   vector <Bitset *> retval;
   string s, key;
   MXS *mx;
-  Bitset *b;
-  Schedule *news;
   SVec pots;
   Graph g;
   XMit xptr;
@@ -1426,24 +1515,22 @@ vector <Bitset *>Schedule::GetBest(int maxelts, Schedule *me)
       retval.push_back(new Bitset(s, cols));
       return retval;
     }
-    IT(eit, Edges_By_Weight[top]) {
-      s = *eit;
-      Bitset candidate(s, cols);
-      news = new Schedule;
-      news->Copy(me);
-      news->Add_Element(new Bitset(candidate));
-      for (b = news->Find_Two(); b != NULL; b = news->Find_Two()) news->Add_Element(b);
+    vector<string> candidates;
+    vector<HeavyCandidateEvaluation> evaluations;
+    IT(eit, Edges_By_Weight[top]) candidates.push_back(*eit);
+    evaluations = EvaluateHeavyCandidates(me, candidates);
+    VIT(i, evaluations) {
+      s = evaluations[i].key;
       if (Technique == MW_SMALLEST_SUM) {
-        sum = 0;
-        IT(sit, sets) sum += sit->second->sz;
+        sum = evaluations[i].sum;
         if (sum < minxsz) {
           minxsz = sum;
           pots.clear();
         }
         if (sum == minxsz) pots.push_back(s);
       } else {
-        newtop = news->Edges_By_Weight.size()-1;
-        newn = news->Edges_By_Weight[newtop].size();
+        newtop = evaluations[i].newtop;
+        newn = evaluations[i].newn;
         if (newtop > maxtop || (newtop == maxtop && newn > maxn)) {
           maxtop = newtop;
           maxn = newn;
@@ -1451,7 +1538,6 @@ vector <Bitset *>Schedule::GetBest(int maxelts, Schedule *me)
         }
         if (newtop == maxtop && newn == maxn) pots.push_back(s);
       }
-      delete news;
     }
     VIT(i, pots) {
       retval.push_back(new Bitset(pots[i], cols));

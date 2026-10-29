@@ -1,0 +1,1688 @@
+{
+  "circuits": 206,
+  "depth_improved": 178,
+  "files": [
+    {
+      "circuits": 7,
+      "entries": [
+        {
+          "cost": 36,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/direct",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 38,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/direct_default",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 35,
+          "depth": 4,
+          "max_fanout": 4,
+          "path": "/ring",
+          "rebalanced_cost": 35,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 48,
+          "depth": 18,
+          "max_fanout": 4,
+          "path": "/uber_certificates/1",
+          "rebalanced_cost": 47,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 40,
+          "depth": 19,
+          "max_fanout": 4,
+          "path": "/uber_certificates/2",
+          "rebalanced_cost": 40,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 38,
+          "depth": 19,
+          "max_fanout": 3,
+          "path": "/uber_certificates/3",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 38,
+          "depth": 19,
+          "max_fanout": 3,
+          "path": "/uber_certificates/4",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 11
+        }
+      ],
+      "file": "../data/certificates/ring_lift_example.json"
+    },
+    {
+      "circuits": 15,
+      "entries": [
+        {
+          "cost": 217,
+          "depth": 13,
+          "max_fanout": 5,
+          "path": "/direct_cse",
+          "rebalanced_cost": 217,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 331,
+          "depth": 99,
+          "max_fanout": 9,
+          "path": "/direct_uber/1/circuit",
+          "rebalanced_cost": 312,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 283,
+          "depth": 75,
+          "max_fanout": 7,
+          "path": "/direct_uber/2/circuit",
+          "rebalanced_cost": 277,
+          "rebalanced_depth": 17
+        },
+        {
+          "cost": 261,
+          "depth": 82,
+          "max_fanout": 6,
+          "path": "/direct_uber/3/circuit",
+          "rebalanced_cost": 257,
+          "rebalanced_depth": 31
+        },
+        {
+          "cost": 219,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/direct_xsets/MW_SQ/circuit",
+          "rebalanced_cost": 219,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 212,
+          "depth": 15,
+          "max_fanout": 5,
+          "path": "/direct_xsets/UBER_XSET/circuit",
+          "rebalanced_cost": 212,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 51,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/projection",
+          "rebalanced_cost": 51,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 203,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/ring",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 204,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/ring_cse",
+          "rebalanced_cost": 204,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/ring_mw_pipeline/main",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 51,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/ring_mw_pipeline/projection",
+          "rebalanced_cost": 51,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 203,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/ring_mw_pipeline/ring",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/ring_uber_pipeline/main",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 52,
+          "depth": 9,
+          "max_fanout": 3,
+          "path": "/ring_uber_pipeline/projection",
+          "rebalanced_cost": 52,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 204,
+          "depth": 12,
+          "max_fanout": 5,
+          "path": "/ring_uber_pipeline/ring",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 8
+        }
+      ],
+      "file": "../data/certificates/structured_ring_example.json"
+    },
+    {
+      "circuits": 71,
+      "entries": [
+        {
+          "cost": 273,
+          "depth": 14,
+          "max_fanout": 5,
+          "path": "/examples/scaled-eight/direct_cse",
+          "rebalanced_cost": 273,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 251,
+          "depth": 18,
+          "max_fanout": 5,
+          "path": "/examples/scaled-eight/factored_baselines/0/circuit",
+          "rebalanced_cost": 251,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 39,
+          "depth": 3,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/factored_baselines/0/post",
+          "rebalanced_cost": 39,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 251,
+          "depth": 20,
+          "max_fanout": 5,
+          "path": "/examples/scaled-eight/factored_baselines/1/circuit",
+          "rebalanced_cost": 251,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 39,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/factored_baselines/1/post",
+          "rebalanced_cost": 39,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 251,
+          "depth": 18,
+          "max_fanout": 5,
+          "path": "/examples/scaled-eight/factored_baselines/2/circuit",
+          "rebalanced_cost": 251,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 39,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/factored_baselines/2/post",
+          "rebalanced_cost": 39,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/main",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 70,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/0/circuit",
+          "rebalanced_cost": 70,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 70,
+          "depth": 9,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/1/circuit",
+          "rebalanced_cost": 70,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 70,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/2/circuit",
+          "rebalanced_cost": 70,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 292,
+          "depth": 14,
+          "max_fanout": 4,
+          "path": "/examples/scaled-eight/measurements/4/circuit",
+          "rebalanced_cost": 292,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 279,
+          "depth": 18,
+          "max_fanout": 4,
+          "path": "/examples/scaled-eight/measurements/6/circuit",
+          "rebalanced_cost": 278,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 256,
+          "depth": 18,
+          "max_fanout": 6,
+          "path": "/examples/scaled-eight/measurements/7/circuit",
+          "rebalanced_cost": 255,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/10/circuit",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/11/circuit",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 275,
+          "depth": 14,
+          "max_fanout": 4,
+          "path": "/examples/scaled-eight/measurements/12/circuit",
+          "rebalanced_cost": 275,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 70,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/measurements/14/circuit",
+          "rebalanced_cost": 70,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 70,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-eight/projection",
+          "rebalanced_cost": 70,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 222,
+          "depth": 14,
+          "max_fanout": 4,
+          "path": "/examples/scaled-eight/ring",
+          "rebalanced_cost": 222,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 348,
+          "depth": 15,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/direct_cse",
+          "rebalanced_cost": 348,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 433,
+          "depth": 20,
+          "max_fanout": 8,
+          "path": "/examples/scaled-ten/field_decomposition/circuit",
+          "rebalanced_cost": 433,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 129,
+          "depth": 3,
+          "max_fanout": 5,
+          "path": "/examples/scaled-ten/field_decomposition/stages/0",
+          "rebalanced_cost": 129,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 273,
+          "depth": 14,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/field_decomposition/stages/1",
+          "rebalanced_cost": 273,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 31,
+          "depth": 3,
+          "max_fanout": 5,
+          "path": "/examples/scaled-ten/field_decomposition/stages/2",
+          "rebalanced_cost": 31,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 189,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/main",
+          "rebalanced_cost": 189,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 87,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/measurements/0/circuit",
+          "rebalanced_cost": 87,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 81,
+          "depth": 11,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/measurements/1/circuit",
+          "rebalanced_cost": 81,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 87,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/measurements/2/circuit",
+          "rebalanced_cost": 87,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 359,
+          "depth": 18,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/measurements/4/circuit",
+          "rebalanced_cost": 359,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 368,
+          "depth": 21,
+          "max_fanout": 5,
+          "path": "/examples/scaled-ten/measurements/6/circuit",
+          "rebalanced_cost": 368,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 358,
+          "depth": 17,
+          "max_fanout": 5,
+          "path": "/examples/scaled-ten/measurements/7/circuit",
+          "rebalanced_cost": 357,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 189,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/measurements/10/circuit",
+          "rebalanced_cost": 189,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 189,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/measurements/11/circuit",
+          "rebalanced_cost": 189,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 343,
+          "depth": 13,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/measurements/12/circuit",
+          "rebalanced_cost": 343,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 87,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/examples/scaled-ten/measurements/14/circuit",
+          "rebalanced_cost": 87,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 81,
+          "depth": 11,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/projection",
+          "rebalanced_cost": 81,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 270,
+          "depth": 17,
+          "max_fanout": 3,
+          "path": "/examples/scaled-ten/ring",
+          "rebalanced_cost": 270,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 338,
+          "depth": 17,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k12/direct_cse",
+          "rebalanced_cost": 338,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 231,
+          "depth": 11,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-11d-k12/main",
+          "rebalanced_cost": 231,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 81,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-11d-k12/measurements/0/circuit",
+          "rebalanced_cost": 81,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 83,
+          "depth": 7,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k12/measurements/1/circuit",
+          "rebalanced_cost": 83,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 344,
+          "depth": 15,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k12/measurements/3/circuit",
+          "rebalanced_cost": 344,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 350,
+          "depth": 18,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k12/measurements/5/circuit",
+          "rebalanced_cost": 350,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 81,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-11d-k12/projection",
+          "rebalanced_cost": 81,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 312,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k12/ring",
+          "rebalanced_cost": 312,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 214,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/direct_cse",
+          "rebalanced_cost": 214,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 147,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-11d-k8/main",
+          "rebalanced_cost": 147,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 59,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-11d-k8/measurements/0/circuit",
+          "rebalanced_cost": 59,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 62,
+          "depth": 7,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/measurements/1/circuit",
+          "rebalanced_cost": 61,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 218,
+          "depth": 16,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/measurements/2/circuit",
+          "rebalanced_cost": 218,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 214,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/measurements/3/circuit",
+          "rebalanced_cost": 214,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 212,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/measurements/4/circuit",
+          "rebalanced_cost": 212,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 59,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/projection",
+          "rebalanced_cost": 59,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 206,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-11d-k8/ring",
+          "rebalanced_cost": 206,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 222,
+          "depth": 13,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-1d7-k8/direct_cse",
+          "rebalanced_cost": 222,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 150,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-1d7-k8/main",
+          "rebalanced_cost": 150,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 58,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-1d7-k8/measurements/0/circuit",
+          "rebalanced_cost": 58,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 54,
+          "depth": 11,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-1d7-k8/measurements/1/circuit",
+          "rebalanced_cost": 54,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 250,
+          "depth": 13,
+          "max_fanout": 5,
+          "path": "/examples/vandermonde-1d7-k8/measurements/2/circuit",
+          "rebalanced_cost": 250,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 223,
+          "depth": 11,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-1d7-k8/measurements/3/circuit",
+          "rebalanced_cost": 223,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 220,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/examples/vandermonde-1d7-k8/measurements/4/circuit",
+          "rebalanced_cost": 220,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 54,
+          "depth": 11,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-1d7-k8/projection",
+          "rebalanced_cost": 54,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 204,
+          "depth": 14,
+          "max_fanout": 3,
+          "path": "/examples/vandermonde-1d7-k8/ring",
+          "rebalanced_cost": 204,
+          "rebalanced_depth": 12
+        },
+        {
+          "cost": 214,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/primary_additional_runs/2/circuit",
+          "rebalanced_cost": 214,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 51,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/primary_additional_runs/3/circuit",
+          "rebalanced_cost": 51,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 203,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/primary_additional_runs/3/ring",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 214,
+          "depth": 12,
+          "max_fanout": 4,
+          "path": "/primary_additional_runs/4/circuit",
+          "rebalanced_cost": 214,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 51,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/primary_additional_runs/5/circuit",
+          "rebalanced_cost": 51,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 203,
+          "depth": 10,
+          "max_fanout": 4,
+          "path": "/primary_additional_runs/5/ring",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 152,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/primary_additional_runs/6/circuit",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 3
+        }
+      ],
+      "file": "../data/certificates/structured_ring_family.json"
+    },
+    {
+      "circuits": 81,
+      "entries": [
+        {
+          "cost": 143,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-0/direct_cse",
+          "rebalanced_cost": 143,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 147,
+          "depth": 16,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-0/main",
+          "rebalanced_cost": 147,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-0/measurements/0/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-0/measurements/1/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 147,
+          "depth": 16,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-0/measurements/2/circuit",
+          "rebalanced_cost": 147,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 155,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-0/measurements/3/circuit",
+          "rebalanced_cost": 155,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 141,
+          "depth": 19,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-0/measurements/4/circuit",
+          "rebalanced_cost": 141,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 147,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-0/measurements/5/circuit",
+          "rebalanced_cost": 146,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-0/projection",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 168,
+          "depth": 18,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-0/ring",
+          "rebalanced_cost": 168,
+          "rebalanced_depth": 15
+        },
+        {
+          "cost": 176,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/direct_cse",
+          "rebalanced_cost": 176,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 150,
+          "depth": 18,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/main",
+          "rebalanced_cost": 150,
+          "rebalanced_depth": 14
+        },
+        {
+          "cost": 18,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-1/measurements/0/circuit",
+          "rebalanced_cost": 18,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 18,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-1/measurements/1/circuit",
+          "rebalanced_cost": 18,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 150,
+          "depth": 18,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/measurements/2/circuit",
+          "rebalanced_cost": 150,
+          "rebalanced_depth": 14
+        },
+        {
+          "cost": 166,
+          "depth": 8,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/measurements/3/circuit",
+          "rebalanced_cost": 166,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 158,
+          "depth": 17,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/measurements/4/circuit",
+          "rebalanced_cost": 157,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 180,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-1/measurements/5/circuit",
+          "rebalanced_cost": 180,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 18,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-1/projection",
+          "rebalanced_cost": 18,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 168,
+          "depth": 19,
+          "max_fanout": 7,
+          "path": "/examples/cauchy-7-4-1/ring",
+          "rebalanced_cost": 168,
+          "rebalanced_depth": 15
+        },
+        {
+          "cost": 166,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/direct_cse",
+          "rebalanced_cost": 166,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 148,
+          "depth": 24,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/main",
+          "rebalanced_cost": 148,
+          "rebalanced_depth": 18
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-2/measurements/0/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-2/measurements/1/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 148,
+          "depth": 24,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/measurements/2/circuit",
+          "rebalanced_cost": 148,
+          "rebalanced_depth": 18
+        },
+        {
+          "cost": 162,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/measurements/3/circuit",
+          "rebalanced_cost": 162,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 154,
+          "depth": 13,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-2/measurements/4/circuit",
+          "rebalanced_cost": 154,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 168,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/measurements/5/circuit",
+          "rebalanced_cost": 168,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-2/projection",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 169,
+          "depth": 25,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-2/ring",
+          "rebalanced_cost": 169,
+          "rebalanced_depth": 18
+        },
+        {
+          "cost": 164,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-3/direct_cse",
+          "rebalanced_cost": 164,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 151,
+          "depth": 11,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-3/main",
+          "rebalanced_cost": 151,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-3/measurements/0/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-3/measurements/1/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 151,
+          "depth": 11,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-3/measurements/2/circuit",
+          "rebalanced_cost": 151,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 165,
+          "depth": 8,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-3/measurements/3/circuit",
+          "rebalanced_cost": 165,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 152,
+          "depth": 12,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-3/measurements/4/circuit",
+          "rebalanced_cost": 152,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 161,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/cauchy-7-4-3/measurements/5/circuit",
+          "rebalanced_cost": 161,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/cauchy-7-4-3/projection",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 171,
+          "depth": 12,
+          "max_fanout": 6,
+          "path": "/examples/cauchy-7-4-3/ring",
+          "rebalanced_cost": 171,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 547,
+          "depth": 21,
+          "max_fanout": 4,
+          "path": "/examples/systematic-rs-17-14-preliminary/direct_cse",
+          "rebalanced_cost": 547,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 285,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/examples/systematic-rs-17-14-preliminary/main",
+          "rebalanced_cost": 285,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 209,
+          "depth": 19,
+          "max_fanout": 7,
+          "path": "/examples/systematic-rs-17-14-preliminary/measurements/1/circuit",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 14
+        },
+        {
+          "cost": 209,
+          "depth": 19,
+          "max_fanout": 7,
+          "path": "/examples/systematic-rs-17-14-preliminary/projection",
+          "rebalanced_cost": 203,
+          "rebalanced_depth": 14
+        },
+        {
+          "cost": 494,
+          "depth": 26,
+          "max_fanout": 7,
+          "path": "/examples/systematic-rs-17-14-preliminary/ring",
+          "rebalanced_cost": 488,
+          "rebalanced_depth": 17
+        },
+        {
+          "cost": 146,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/direct_cse",
+          "rebalanced_cost": 146,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 112,
+          "depth": 14,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/main",
+          "rebalanced_cost": 112,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 12,
+          "depth": 1,
+          "max_fanout": 4,
+          "path": "/examples/systematic-rs-7-4/measurements/0/circuit",
+          "rebalanced_cost": 12,
+          "rebalanced_depth": 1
+        },
+        {
+          "cost": 12,
+          "depth": 1,
+          "max_fanout": 4,
+          "path": "/examples/systematic-rs-7-4/measurements/1/circuit",
+          "rebalanced_cost": 12,
+          "rebalanced_depth": 1
+        },
+        {
+          "cost": 112,
+          "depth": 14,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/2/circuit",
+          "rebalanced_cost": 112,
+          "rebalanced_depth": 13
+        },
+        {
+          "cost": 134,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/3/circuit",
+          "rebalanced_cost": 133,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 126,
+          "depth": 12,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/4/circuit",
+          "rebalanced_cost": 126,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 140,
+          "depth": 8,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4/measurements/5/circuit",
+          "rebalanced_cost": 140,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 141,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/6/circuit",
+          "rebalanced_cost": 141,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 134,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/7/circuit",
+          "rebalanced_cost": 132,
+          "rebalanced_depth": 9
+        },
+        {
+          "cost": 129,
+          "depth": 15,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/8/circuit",
+          "rebalanced_cost": 129,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 136,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/10/circuit",
+          "rebalanced_cost": 136,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 133,
+          "depth": 11,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/measurements/11/circuit",
+          "rebalanced_cost": 133,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 12,
+          "depth": 1,
+          "max_fanout": 4,
+          "path": "/examples/systematic-rs-7-4/projection",
+          "rebalanced_cost": 12,
+          "rebalanced_depth": 1
+        },
+        {
+          "cost": 124,
+          "depth": 15,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4/ring",
+          "rebalanced_cost": 124,
+          "rebalanced_depth": 14
+        },
+        {
+          "cost": 179,
+          "depth": 10,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-powers/direct_cse",
+          "rebalanced_cost": 179,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 167,
+          "depth": 17,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-powers/main",
+          "rebalanced_cost": 167,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/0/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/1/circuit",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 167,
+          "depth": 17,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/2/circuit",
+          "rebalanced_cost": 167,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 176,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/3/circuit",
+          "rebalanced_cost": 176,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 158,
+          "depth": 13,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/4/circuit",
+          "rebalanced_cost": 157,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 178,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-powers/measurements/5/circuit",
+          "rebalanced_cost": 178,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 21,
+          "depth": 2,
+          "max_fanout": 3,
+          "path": "/examples/systematic-rs-7-4-powers/projection",
+          "rebalanced_cost": 21,
+          "rebalanced_depth": 2
+        },
+        {
+          "cost": 188,
+          "depth": 18,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-powers/ring",
+          "rebalanced_cost": 188,
+          "rebalanced_depth": 10
+        },
+        {
+          "cost": 146,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-ring12/direct_cse",
+          "rebalanced_cost": 146,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 91,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-ring12/main",
+          "rebalanced_cost": 91,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 38,
+          "depth": 5,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/0/circuit",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 38,
+          "depth": 5,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/1/circuit",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 100,
+          "depth": 7,
+          "max_fanout": 4,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/2/circuit",
+          "rebalanced_cost": 100,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 91,
+          "depth": 9,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/3/circuit",
+          "rebalanced_cost": 91,
+          "rebalanced_depth": 8
+        },
+        {
+          "cost": 126,
+          "depth": 12,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/4/circuit",
+          "rebalanced_cost": 126,
+          "rebalanced_depth": 11
+        },
+        {
+          "cost": 140,
+          "depth": 8,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/5/circuit",
+          "rebalanced_cost": 140,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 141,
+          "depth": 10,
+          "max_fanout": 5,
+          "path": "/examples/systematic-rs-7-4-ring12/measurements/6/circuit",
+          "rebalanced_cost": 141,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 38,
+          "depth": 5,
+          "max_fanout": 6,
+          "path": "/examples/systematic-rs-7-4-ring12/projection",
+          "rebalanced_cost": 38,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 127,
+          "depth": 11,
+          "max_fanout": 7,
+          "path": "/examples/systematic-rs-7-4-ring12/ring",
+          "rebalanced_cost": 127,
+          "rebalanced_depth": 9
+        }
+      ],
+      "file": "../data/certificates/practical_mds_examples.json"
+    },
+    {
+      "circuits": 32,
+      "entries": [
+        {
+          "cost": 37,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/records/0/circuit",
+          "rebalanced_cost": 37,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 37,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/records/0/full_circuit",
+          "rebalanced_cost": 37,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 27,
+          "depth": 5,
+          "max_fanout": 2,
+          "path": "/records/1/circuit",
+          "rebalanced_cost": 27,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 35,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/records/1/full_circuit",
+          "rebalanced_cost": 35,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 37,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/records/2/circuit",
+          "rebalanced_cost": 37,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 37,
+          "depth": 6,
+          "max_fanout": 3,
+          "path": "/records/2/full_circuit",
+          "rebalanced_cost": 37,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 28,
+          "depth": 4,
+          "max_fanout": 2,
+          "path": "/records/3/circuit",
+          "rebalanced_cost": 28,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 36,
+          "depth": 5,
+          "max_fanout": 4,
+          "path": "/records/3/full_circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 36,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/records/4/circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 36,
+          "depth": 7,
+          "max_fanout": 3,
+          "path": "/records/4/full_circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 27,
+          "depth": 5,
+          "max_fanout": 2,
+          "path": "/records/5/circuit",
+          "rebalanced_cost": 27,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 35,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/records/5/full_circuit",
+          "rebalanced_cost": 35,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 33,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/6/circuit",
+          "rebalanced_cost": 33,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 33,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/6/full_circuit",
+          "rebalanced_cost": 33,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 28,
+          "depth": 4,
+          "max_fanout": 3,
+          "path": "/records/7/circuit",
+          "rebalanced_cost": 28,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 36,
+          "depth": 5,
+          "max_fanout": 4,
+          "path": "/records/7/full_circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 34,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/8/circuit",
+          "rebalanced_cost": 34,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 34,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/8/full_circuit",
+          "rebalanced_cost": 34,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 27,
+          "depth": 5,
+          "max_fanout": 2,
+          "path": "/records/9/circuit",
+          "rebalanced_cost": 27,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 35,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/records/9/full_circuit",
+          "rebalanced_cost": 35,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 32,
+          "depth": 9,
+          "max_fanout": 2,
+          "path": "/records/10/circuit",
+          "rebalanced_cost": 32,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 32,
+          "depth": 9,
+          "max_fanout": 2,
+          "path": "/records/10/full_circuit",
+          "rebalanced_cost": 32,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 28,
+          "depth": 4,
+          "max_fanout": 3,
+          "path": "/records/11/circuit",
+          "rebalanced_cost": 28,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 36,
+          "depth": 5,
+          "max_fanout": 4,
+          "path": "/records/11/full_circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 5
+        },
+        {
+          "cost": 34,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/12/circuit",
+          "rebalanced_cost": 34,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 34,
+          "depth": 8,
+          "max_fanout": 3,
+          "path": "/records/12/full_circuit",
+          "rebalanced_cost": 34,
+          "rebalanced_depth": 7
+        },
+        {
+          "cost": 27,
+          "depth": 5,
+          "max_fanout": 2,
+          "path": "/records/13/circuit",
+          "rebalanced_cost": 27,
+          "rebalanced_depth": 3
+        },
+        {
+          "cost": 35,
+          "depth": 6,
+          "max_fanout": 4,
+          "path": "/records/13/full_circuit",
+          "rebalanced_cost": 35,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 32,
+          "depth": 9,
+          "max_fanout": 2,
+          "path": "/records/14/circuit",
+          "rebalanced_cost": 32,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 32,
+          "depth": 9,
+          "max_fanout": 2,
+          "path": "/records/14/full_circuit",
+          "rebalanced_cost": 32,
+          "rebalanced_depth": 6
+        },
+        {
+          "cost": 28,
+          "depth": 4,
+          "max_fanout": 3,
+          "path": "/records/15/circuit",
+          "rebalanced_cost": 28,
+          "rebalanced_depth": 4
+        },
+        {
+          "cost": 36,
+          "depth": 5,
+          "max_fanout": 4,
+          "path": "/records/15/full_circuit",
+          "rebalanced_cost": 36,
+          "rebalanced_depth": 5
+        }
+      ],
+      "file": "../data/certificates/xsets_comparison.json"
+    }
+  ],
+  "gates_removed": 59,
+  "note": "rebalanced_depth is the exact result of rebalanced(): every output mask is compared and the gate count never increases.",
+  "scope": "depth audit of stored circuits; no file is rewritten",
+  "status": "verified"
+}
