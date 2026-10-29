@@ -1,7 +1,25 @@
 #include "xd/search.hpp"
+#include <algorithm>
 #include <iostream>
 using namespace xd;
 using ringlab::require;
+namespace {
+BoundedScheduleOptions options(int depth) {
+    BoundedScheduleOptions o;
+    o.max_depth = depth;
+    o.beam_width = 4;
+    o.branch_width = 8;
+    o.max_representations = 8;
+    o.restarts = 1;
+    return o;
+}
+bool has_pair(const std::vector<Candidate> &candidates, int left, int right) {
+    for (const auto &candidate : candidates)
+        if (candidate.left == left && candidate.right == right)
+            return true;
+    return false;
+}
+}
 int main() {
     require(combine_depth({0, 0, 0, 0}) == 2, "balanced four-leaf depth");
     require(!dominates(std::vector<int>{3, 2}, std::vector<int>{4, 1}), "term ordering");
@@ -23,5 +41,34 @@ int main() {
     bool width_rejected = false;
     try { validate_target_width({ringlab::Mask(4)}, 2); } catch (...) { width_rejected = true; }
     require(width_rejected, "target width validated");
+
+    auto state = SearchState::initial({ringlab::Mask(15)}, 4, options(2));
+    auto candidates = state.candidates();
+    require(has_pair(candidates, 0, 1), "initial pair candidate");
+    auto pair = std::find_if(candidates.begin(), candidates.end(), [](const Candidate &candidate) {
+        return candidate.left == 0 && candidate.right == 1;
+    });
+    require(pair != candidates.end(), "pair lookup");
+    auto parent_signature = state.signature();
+    auto child = state.apply(*pair);
+    require(child.valid(), "transactional pair application");
+    require(!child.frontier(0).entries.empty(), "pair replacement representation");
+    require(state.signature() == parent_signature, "apply does not mutate parent");
+    auto depth_two = child.apply(Candidate{4, 2, 2, 1});
+    require(depth_two.valid(), "second pair application");
+    auto depth_two_signature = depth_two.signature();
+    require(!depth_two.apply(Candidate{5, 3, 3, 1}).valid(), "over-depth transition rejected");
+    require(depth_two.signature() == depth_two_signature, "rejected transition preserves parent");
+
+    auto shared = SearchState::initial({ringlab::Mask(7), ringlab::Mask(11)}, 4, options(2));
+    auto shared_candidates = shared.candidates();
+    auto shared_pair = std::find_if(shared_candidates.begin(), shared_candidates.end(),
+                                    [](const Candidate &candidate) {
+                                        return candidate.left == 0 && candidate.right == 1;
+                                    });
+    require(shared_pair != shared_candidates.end(), "shared pair indexed");
+    auto shared_child = shared.apply(*shared_pair);
+    require(shared_child.valid(), "shared pair remains feasible");
+    require(shared_child.pair_support(*shared_pair) == 0, "pair support is updated");
     std::cout << "xd search primitives passed\n";
 }
