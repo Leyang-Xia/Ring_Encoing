@@ -59,8 +59,9 @@ void pareto_insert(ParetoFrontier &frontier, Representation candidate, std::size
                            frontier.entries.end());
     frontier.entries.push_back(std::move(candidate));
     std::sort(frontier.entries.begin(), frontier.entries.end(), [](const Representation &x, const Representation &y) {
-        if (x.arrival_depth != y.arrival_depth) return x.arrival_depth < y.arrival_depth;
         if (x.terms.size() != y.terms.size()) return x.terms.size() < y.terms.size();
+        if (x.arrival_depth != y.arrival_depth) return x.arrival_depth < y.arrival_depth;
+        if (x.mask != y.mask) return x.mask < y.mask;
         return x.terms < y.terms;
     });
     if (max_representations && frontier.entries.size() > max_representations)
@@ -72,6 +73,23 @@ int candidate_depth(int left_depth, int right_depth) {
     return 1 + std::max(left_depth, right_depth);
 }
 
+bool candidate_allowed(int left_depth, int right_depth, int max_depth) {
+    require(max_depth >= 0, "negative maximum depth");
+    return candidate_depth(left_depth, right_depth) <= max_depth;
+}
+
+int lookup_node(const std::unordered_map<ringlab::Mask, int, ringlab::MaskHash> &nodes,
+                const ringlab::Mask &mask) {
+    auto it = nodes.find(mask);
+    return it == nodes.end() ? -1 : it->second;
+}
+
+void validate_target_width(const ringlab::Rows &targets, int inputs) {
+    require(inputs > 0, "invalid input count");
+    for (const auto &target : targets)
+        require(target.bits() <= static_cast<std::size_t>(inputs), "target mask exceeds input width");
+}
+
 std::string canonical_representation(const Representation &representation) {
     auto terms = normalize_terms(representation.terms);
     std::ostringstream out;
@@ -81,28 +99,4 @@ std::string canonical_representation(const Representation &representation) {
     return out.str();
 }
 
-BoundedScheduleResult synthesize_bounded(const Rows &targets, int inputs,
-                                         const BoundedScheduleOptions &options) {
-    require(inputs > 0, "invalid input count");
-    require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
-                options.max_representations > 0 && options.restarts > 0 && options.timeout_seconds > 0.0,
-            "invalid bounded search options");
-    BoundedScheduleResult result;
-    result.requested_depth = options.max_depth;
-    result.depth_lower_bound = depth_lower_bound(targets);
-    if (result.depth_lower_bound > options.max_depth) {
-        result.status = "infeasible_by_lower_bound";
-        return result;
-    }
-    ScheduleOptions schedule;
-    auto circuit = synthesize_schedule(targets, inputs, schedule, options.seed);
-    if (depth_profile(circuit).depth > options.max_depth) {
-        result.status = "search_failed";
-        return result;
-    }
-    result.circuit = std::move(circuit);
-    result.status = "verified";
-    result.explored_states = 1;
-    return result;
-}
 } // namespace xd

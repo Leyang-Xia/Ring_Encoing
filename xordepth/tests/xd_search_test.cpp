@@ -10,12 +10,18 @@ int main() {
     require(dominates(a, b), "term-and-depth dominance");
     require(normalize_terms({4, 2, 4}) == std::vector<int>({2}), "duplicate terms cancel");
     require(candidate_depth(2, 2) == 3, "candidate depth");
+    require(!candidate_allowed(2, 2, 2), "hard candidate depth filter");
     ParetoFrontier p;
     pareto_insert(p, Representation{{1, 2}, {}, 2});
     pareto_insert(p, Representation{{1}, {}, 3});
     require(p.entries.size() == 2, "pareto retains depth tradeoff");
-    BoundedScheduleOptions bad; bad.max_depth = -1;
-    bool rejected = false; try { synthesize_bounded({ringlab::Mask(1)}, 1, bad); } catch (...) { rejected = true; }
-    require(rejected, "negative options rejected");
+    std::unordered_map<ringlab::Mask, int, ringlab::MaskHash> nodes;
+    nodes.emplace(ringlab::Mask(3), 7);
+    require(lookup_node(nodes, ringlab::Mask(3)) == 7, "duplicate mask reuses node");
+    require(lookup_node(nodes, ringlab::Mask(5)) == -1, "missing mask lookup");
+    validate_target_width({ringlab::Mask(3)}, 2);
+    bool width_rejected = false;
+    try { validate_target_width({ringlab::Mask(4)}, 2); } catch (...) { width_rejected = true; }
+    require(width_rejected, "target width validated");
     std::cout << "xd search primitives passed\n";
 }

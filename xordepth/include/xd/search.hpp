@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace xd {
 
@@ -29,6 +30,10 @@ bool dominates(const Representation &a, const Representation &b);
 void pareto_insert(ParetoFrontier &frontier, Representation candidate,
                    std::size_t max_representations = 0);
 int candidate_depth(int left_depth, int right_depth);
+bool candidate_allowed(int left_depth, int right_depth, int max_depth);
+int lookup_node(const std::unordered_map<ringlab::Mask, int, ringlab::MaskHash> &nodes,
+                const ringlab::Mask &mask);
+void validate_target_width(const ringlab::Rows &targets, int inputs);
 std::string canonical_representation(const Representation &representation);
 
 } // namespace xd
