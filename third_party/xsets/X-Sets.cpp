@@ -955,6 +955,23 @@ void Schedule::Print()
 void Schedule::PrintMathematical()
 {
   int i, j;
+  int max_depth = 0;
+  vector<int> node_depth(sched.size(), 0);
+
+  VIT(i, computation_history) {
+    XSetComputationStep& step = computation_history[i];
+    if (step.result_index < 0 || step.result_index >= node_depth.size()) continue;
+    if (step.operand1_index < 0) {
+      node_depth[step.result_index] = 0;
+    } else if (step.operand2_index < 0) {
+      node_depth[step.result_index] = node_depth[step.operand1_index];
+    } else {
+      node_depth[step.result_index] =
+          1 + max(node_depth[step.operand1_index], node_depth[step.operand2_index]);
+    }
+    if (node_depth[step.result_index] > max_depth)
+      max_depth = node_depth[step.result_index];
+  }
   
   printf("Schedule:\n");
   
@@ -988,6 +1005,7 @@ void Schedule::PrintMathematical()
   }
   
   printf("\nTotal XOR operations: %lu\n", computation_history.size());
+  printf("Schedule Depth: %d\n", max_depth);
 }
 
 void Schedule::Remove_Global_Edge_Weights(MXS *mx, XMit xptr)
@@ -1941,10 +1959,11 @@ int main(int argc, char **argv)
           printf(" Edge Weight: %lu (Matching %d)\n", S->Sched_Edge_Weights[b->Key].size(), i);
           fflush(stdout);
         }
-        S->Add_Element(to_try[i]);
+        S->Add_Element_From_GetBest(to_try[i]);
       }
     }
     S->Print();
+    S->PrintMathematical();
     printf("%lu\n", S->sched.size());
     exit(0);
   }

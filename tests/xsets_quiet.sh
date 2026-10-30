@@ -14,10 +14,16 @@ MATRIX
 for method in MW_SQ UBER_XSET; do
   "$xsets" 0 0 0 "$method" --quiet < "$tmp/matrix.txt" > "$tmp/$method.out"
   grep -q 'Total XOR operations:' "$tmp/$method.out"
+  grep -q '^Schedule Depth: 3$' "$tmp/$method.out"
   if grep -q '^Targets Left' "$tmp/$method.out"; then
     echo "$method emitted progress output in quiet mode" >&2
     exit 1
   fi
+done
+
+for method in MW MW_SS MW_SMALLEST_SUM MW_MATCHING SUBEX; do
+  "$xsets" 0 0 0 "$method" --quiet < "$tmp/matrix.txt" > "$tmp/$method.out"
+  grep -q '^Schedule Depth: ' "$tmp/$method.out"
 done
 
 grep -q 'Total XOR operations: 5' "$tmp/MW_SQ.out"
