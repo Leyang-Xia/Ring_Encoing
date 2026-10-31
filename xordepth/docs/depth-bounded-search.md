@@ -77,6 +77,25 @@ make -j4
 - `data/results/mw_sq_vandermonde_8to17_p0_3_0.json`
 - `data/results/mw_sq_vandermonde_8to17_p0_4_0_timeout.json`
 
+## 运行结果差异与 canonical 输入
+
+MW_SQ 的候选评分包含平局选择，目标行的输入顺序会影响候选访问顺序。因此，下面两条
+命令虽然计算的是同一个目标集合，可能得到不同的启发式上界：
+
+```bash
+./build/xsets 0 3 0 MW_SQ --quiet < data/matrices/vandermonde_8to17_direct.txt
+# 220 XOR
+
+./build/xsets 0 3 0 MW_SQ --quiet < data/matrices/vandermonde_8to17_direct_canonical.txt
+# 219 XOR
+```
+
+`ringlab analyze` 的 backend 适配层会用 `std::set<Mask>` 对目标行去重并排序，因而使用
+canonical 顺序。为保证直接 X-Sets 调用与 `ringlab`、xordepth 的参照一致，仓库保留了
+排序后的 [`vandermonde_8to17_direct_canonical.txt`](../data/matrices/vandermonde_8to17_direct_canonical.txt)。
+在 canonical 输入上，直接 X-Sets 和 `ringlab analyze` 都得到 219 XOR、深度 12；这是
+行顺序导致的启发式路径差异，不是电路验证或 XOR 计数差异。
+
 ## 正确性边界
 
 - 深度按二输入 XOR 门的拓扑深度计算，输入和常量零深度为 0；
