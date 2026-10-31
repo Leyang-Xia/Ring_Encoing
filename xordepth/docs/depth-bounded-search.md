@@ -54,6 +54,29 @@ make -j4
 
 可用 `xordepth verify` 重新执行功能、门数和深度检查。
 
+## MW_SQ 参照
+
+为了给深度搜索提供同一矩阵上的计数参照，又在 `64×24` 的
+`vandermonde_8to17_direct.txt` 上运行了当前工作区的 MW_SQ。`0 3 0` 是更高的
+前瞻参数；`0 4 0` 在 180 秒预算内超时。
+
+| 方法 | 参数 | 状态 | XOR | 原始深度 | 重结合后深度 | 墙钟时间 |
+|---|---|---|---:|---:|---:|---:|
+| MW_SQ | `0 0 0` | verified | 220 | 12 | 6 | 0.126 s |
+| MW_SQ | `0 3 0` | verified | 219 | 12 | 6 | 5.684 s |
+| MW_SQ | `0 4 0` | timeout | — | — | — | 180 s |
+
+重结合只重新安排单消费者 XOR 树，保留 MW_SQ 已经选择的共享节点，因此门数不变；
+`0 3 0` 的 219 门线路在深度 6 预算下仍是一个有效参照。当前 bounded Beam
+在同一 `D=6` 配置下得到 221 门，所以这组结果显示了搜索还没有达到该参照上界。
+超时配置不提供 XOR 数结论。
+
+完整 verified 电路和目标掩码保存在：
+
+- `data/results/mw_sq_vandermonde_8to17_p0_0_0.json`
+- `data/results/mw_sq_vandermonde_8to17_p0_3_0.json`
+- `data/results/mw_sq_vandermonde_8to17_p0_4_0_timeout.json`
+
 ## 正确性边界
 
 - 深度按二输入 XOR 门的拓扑深度计算，输入和常量零深度为 0；
