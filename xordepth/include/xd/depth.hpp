@@ -1,6 +1,8 @@
 #pragma once
 #include "ringlab/core.hpp"
+#include <chrono>
 #include <cstdint>
+#include <exception>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -42,6 +44,10 @@ struct BoundedScheduleOptions {
     int restarts = 8;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
+    // Internal monotonic deadline used by SearchState; not serialized as a
+    // result parameter. The public default leaves primitive tests unbounded.
+    std::chrono::steady_clock::time_point deadline =
+        std::chrono::steady_clock::time_point::max();
 };
 
 struct BoundedScheduleResult {
@@ -54,6 +60,12 @@ struct BoundedScheduleResult {
     std::size_t pruned_bound = 0;
 };
 
+// Internal control flow for the bounded search budget. Public callers normally
+// use the default, unbounded schedule helpers and never observe this type.
+struct SearchDeadlineExceeded final : std::exception {
+    const char *what() const noexcept override { return "xordepth search deadline exceeded"; }
+};
+
 BoundedScheduleResult synthesize_bounded(const Rows &targets, int inputs,
                                          const BoundedScheduleOptions &options);
 
@@ -61,11 +73,16 @@ BoundedScheduleResult synthesize_bounded(const Rows &targets, int inputs,
 // and a balanced (Huffman by arrival time) final accumulation. Every output,
 // dependency and live gate is re-verified before returning.
 Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptions &options,
-                            std::uint64_t seed = 0);
+                            std::uint64_t seed = 0,
+                            std::chrono::steady_clock::time_point deadline =
+                                std::chrono::steady_clock::time_point::max());
 
 // Re-associate the accumulation trees of a pruned circuit. Only gates with a
 // single consumer that are not outputs are folded away, so each affected cone
 // has |frontier| - 1 gates before and after: the gate count never grows.
 // Every output mask is compared against the original before returning.
-Circuit rebalanced(const Circuit &circuit);
+Circuit rebalanced(
+    const Circuit &circuit,
+    std::chrono::steady_clock::time_point deadline =
+        std::chrono::steady_clock::time_point::max());
 } // namespace xd

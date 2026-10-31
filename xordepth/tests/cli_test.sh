@@ -16,6 +16,9 @@ grep -q '"depth_limit": 2' "$tmp/bounded.json"
 cp "$tmp/bounded.json" "$tmp/tampered.json"
 perl -0pi -e 's/"depth":\s*2/"depth": 99/' "$tmp/tampered.json"
 expect_fail "$tool" verify "$tmp/tampered.json"
+cp "$tmp/bounded.json" "$tmp/tampered-bound.json"
+perl -0pi -e 's/"depth_lower_bound":\s*2/"depth_lower_bound": 99/' "$tmp/tampered-bound.json"
+expect_fail "$tool" verify "$tmp/tampered-bound.json"
 
 "$tool" bounded "$root/data/matrices/gf8_10x10_expanded.txt" --depth 6 --beam 8 --branch 8 \
   --restarts 1 --timeout 0.000001 --output "$tmp/timeout.json" > /dev/null || true

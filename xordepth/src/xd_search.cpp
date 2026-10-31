@@ -10,6 +10,12 @@
 namespace xd {
 namespace {
 using ringlab::require;
+
+void check_search_deadline(const BoundedScheduleOptions &options) {
+    if (options.deadline != std::chrono::steady_clock::time_point::max() &&
+        std::chrono::steady_clock::now() >= options.deadline)
+        throw SearchDeadlineExceeded();
+}
 }
 
 int combine_depth(const std::vector<int> &depths) {
@@ -106,6 +112,7 @@ std::string canonical_representation(const Representation &representation) {
 
 SearchState SearchState::initial(const ringlab::Rows &targets, int inputs,
                                  const BoundedScheduleOptions &options) {
+    check_search_deadline(options);
     require(inputs > 0, "invalid input count");
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
@@ -117,14 +124,18 @@ SearchState SearchState::initial(const ringlab::Rows &targets, int inputs,
     state.options_ = options;
     state.nodes_.reserve(inputs);
     for (int i = 0; i < inputs; ++i) {
+        check_search_deadline(options);
         state.nodes_.push_back(NodeRecord{ringlab::Mask::unit(i), 0, -1, -1});
         state.node_by_mask_.emplace(state.nodes_.back().mask, i);
     }
     state.frontiers_.resize(targets.size());
     for (std::size_t target = 0; target < targets.size(); ++target) {
+        check_search_deadline(options);
         std::vector<int> terms;
-        for (int bit = 0; bit < inputs; ++bit)
+        for (int bit = 0; bit < inputs; ++bit) {
+            check_search_deadline(options);
             if (targets[target].bit(bit)) terms.push_back(bit);
+        }
         auto representation = state.make_representation(terms);
         if (representation.arrival_depth > options.max_depth) {
             state.valid_ = false;
@@ -143,28 +154,37 @@ int SearchState::node_depth(int node) const {
 }
 
 Representation SearchState::make_representation(const std::vector<int> &terms) const {
+    check_search_deadline(options_);
     Representation result;
     result.terms = normalize_terms(terms);
     for (int node : result.terms) {
+        check_search_deadline(options_);
         require(node >= 0 && static_cast<std::size_t>(node) < nodes_.size(),
                 "invalid representation node");
         result.mask ^= nodes_[node].mask;
     }
     std::vector<int> depths;
     depths.reserve(result.terms.size());
-    for (int node : result.terms) depths.push_back(node_depth(node));
+    for (int node : result.terms) {
+        check_search_deadline(options_);
+        depths.push_back(node_depth(node));
+    }
     result.arrival_depth = combine_depth(depths);
     return result;
 }
 
 void SearchState::rebuild_pair_index() {
+    check_search_deadline(options_);
     pair_index_.clear();
     for (std::size_t target = 0; target < frontiers_.size(); ++target) {
+        check_search_deadline(options_);
         for (std::size_t representation = 0; representation < frontiers_[target].entries.size();
              ++representation) {
+            check_search_deadline(options_);
             const auto &entry = frontiers_[target].entries[representation];
             for (std::size_t i = 0; i < entry.terms.size(); ++i) {
                 for (std::size_t j = i + 1; j < entry.terms.size(); ++j) {
+                    check_search_deadline(options_);
                     auto edge = nodes_[entry.terms[i]].mask ^ nodes_[entry.terms[j]].mask;
                     pair_index_[edge].push_back(PairRef{static_cast<int>(target),
                                                         static_cast<int>(representation),
@@ -176,9 +196,12 @@ void SearchState::rebuild_pair_index() {
 }
 
 std::vector<Candidate> SearchState::candidates() const {
+    check_search_deadline(options_);
     std::map<std::pair<int, int>, Candidate> by_pair;
     for (const auto &[edge, refs] : pair_index_) {
+        check_search_deadline(options_);
         for (const auto &ref : refs) {
+            check_search_deadline(options_);
             if (!candidate_allowed(node_depth(ref.left), node_depth(ref.right),
                                    options_.max_depth))
                 continue;
@@ -194,6 +217,7 @@ std::vector<Candidate> SearchState::candidates() const {
     }
     std::vector<Candidate> result;
     for (const auto &[key, candidate] : by_pair) result.push_back(candidate);
+    check_search_deadline(options_);
     std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
         if (a.support != b.support) return a.support > b.support;
         if (a.arrival_depth != b.arrival_depth) return a.arrival_depth < b.arrival_depth;
@@ -204,6 +228,7 @@ std::vector<Candidate> SearchState::candidates() const {
 }
 
 SearchState SearchState::apply(const Candidate &candidate) const {
+    check_search_deadline(options_);
     SearchState child = *this;
     if (!valid_ || candidate.left < 0 || candidate.right < 0 ||
         candidate.left >= candidate.right ||
@@ -225,8 +250,10 @@ SearchState SearchState::apply(const Candidate &candidate) const {
     }
 
     for (std::size_t target = 0; target < child.frontiers_.size(); ++target) {
+        check_search_deadline(options_);
         ParetoFrontier next;
         for (const auto &entry : frontiers_[target].entries) {
+            check_search_deadline(options_);
             pareto_insert(next, entry, static_cast<std::size_t>(options_.max_representations));
             auto left = std::find(entry.terms.begin(), entry.terms.end(), candidate.left);
             auto right = std::find(entry.terms.begin(), entry.terms.end(), candidate.right);
@@ -251,26 +278,36 @@ SearchState SearchState::apply(const Candidate &candidate) const {
 }
 
 bool SearchState::complete() const {
+    check_search_deadline(options_);
     if (!valid_) return false;
     for (const auto &frontier : frontiers_) {
+        check_search_deadline(options_);
         bool done = false;
-        for (const auto &entry : frontier.entries)
+        for (const auto &entry : frontier.entries) {
+            check_search_deadline(options_);
             done = done || entry.terms.size() <= 1;
+        }
         if (!done) return false;
     }
     return true;
 }
 
 int SearchState::best_cost_lower_bound() const {
+    check_search_deadline(options_);
     // Nodes can be created by a transition whose replacement is later removed
     // by Pareto pruning.  Such nodes are not part of the exported circuit and
     // must not inflate the lower bound used for branch-and-bound pruning.
     std::set<int> live;
     std::vector<int> pending;
-    for (const auto &frontier : frontiers_)
-        for (const auto &entry : frontier.entries)
+    for (const auto &frontier : frontiers_) {
+        check_search_deadline(options_);
+        for (const auto &entry : frontier.entries) {
+            check_search_deadline(options_);
             pending.insert(pending.end(), entry.terms.begin(), entry.terms.end());
+        }
+    }
     while (!pending.empty()) {
+        check_search_deadline(options_);
         const int node = pending.back();
         pending.pop_back();
         if (node < inputs_ || !live.insert(node).second) continue;
@@ -282,9 +319,12 @@ int SearchState::best_cost_lower_bound() const {
     }
     int bound = static_cast<int>(live.size());
     for (const auto &frontier : frontiers_) {
+        check_search_deadline(options_);
         int remaining = INT_MAX;
-        for (const auto &entry : frontier.entries)
+        for (const auto &entry : frontier.entries) {
+            check_search_deadline(options_);
             remaining = std::min(remaining, static_cast<int>(entry.terms.size()));
+        }
         if (remaining != INT_MAX)
             bound = std::max(bound, static_cast<int>(live.size()) +
                                       std::max(0, remaining - 1));
@@ -298,6 +338,7 @@ const ParetoFrontier &SearchState::frontier(std::size_t index) const {
 }
 
 int SearchState::pair_support(const Candidate &candidate) const {
+    check_search_deadline(options_);
     if (candidate.left < 0 || candidate.right < 0 ||
         static_cast<std::size_t>(candidate.left) >= nodes_.size() ||
         static_cast<std::size_t>(candidate.right) >= nodes_.size())
@@ -312,6 +353,7 @@ int SearchState::pair_support(const Candidate &candidate) const {
 }
 
 std::string SearchState::signature() const {
+    check_search_deadline(options_);
     std::vector<int> order(nodes_.size());
     std::iota(order.begin(), order.end(), 0);
     std::sort(order.begin(), order.end(), [&](int a, int b) {
@@ -322,13 +364,16 @@ std::string SearchState::signature() const {
     std::vector<int> canonical(nodes_.size());
     std::ostringstream out;
     for (std::size_t i = 0; i < order.size(); ++i) {
+        check_search_deadline(options_);
         canonical[order[i]] = static_cast<int>(i);
         out << nodes_[order[i]].mask.decimal() << '@' << nodes_[order[i]].depth << ';';
     }
     out << '|';
     for (const auto &frontier : frontiers_) {
+        check_search_deadline(options_);
         out << '[';
         for (const auto &entry : frontier.entries) {
+            check_search_deadline(options_);
             out << entry.arrival_depth << ':';
             for (int node : entry.terms) out << canonical[node] << ',';
             out << entry.mask.decimal() << ';';
@@ -339,23 +384,28 @@ std::string SearchState::signature() const {
 }
 
 ringlab::Circuit SearchState::export_circuit() const {
+    check_search_deadline(options_);
     require(valid_ && complete(), "cannot export incomplete search state");
     ringlab::GreedyCircuit circuit(inputs_);
     std::vector<int> mapped(nodes_.size(), -1);
     for (int i = 0; i < inputs_; ++i) mapped[i] = i;
     for (std::size_t i = static_cast<std::size_t>(inputs_); i < nodes_.size(); ++i) {
+        check_search_deadline(options_);
         require(nodes_[i].left >= 0 && nodes_[i].right >= 0, "missing search producer");
         mapped[i] = circuit.xor_nodes(mapped[nodes_[i].left], mapped[nodes_[i].right]);
     }
     std::vector<int> outputs;
     outputs.reserve(frontiers_.size());
     for (const auto &frontier : frontiers_) {
+        check_search_deadline(options_);
         const Representation *done = nullptr;
-        for (const auto &entry : frontier.entries)
+        for (const auto &entry : frontier.entries) {
+            check_search_deadline(options_);
             if (entry.terms.size() <= 1) {
                 done = &entry;
                 break;
             }
+        }
         require(done != nullptr, "incomplete search frontier");
         outputs.push_back(done->terms.empty() ? inputs_ : mapped[done->terms.front()]);
     }
@@ -379,15 +429,35 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
     }
 
     const auto started = std::chrono::steady_clock::now();
-    SearchState initial = SearchState::initial(targets, inputs, options);
+    const auto deadline = started + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                                      std::chrono::duration<double>(options.timeout_seconds));
+    auto search_options = options;
+    search_options.deadline = deadline;
+    SearchState initial;
+    try {
+        initial = SearchState::initial(targets, inputs, search_options);
+    } catch (const SearchDeadlineExceeded &) {
+        result.status = "timeout";
+        return result;
+    }
     if (!initial.valid()) {
         result.status = "search_failed";
         return result;
     }
+    if (std::chrono::steady_clock::now() >= deadline) {
+        result.status = "timeout";
+        return result;
+    }
     std::vector<SearchState> beam{initial};
     std::unordered_map<std::string, int> transposition;
-    transposition.emplace(initial.signature(), initial.best_cost_lower_bound());
+    try {
+        transposition.emplace(initial.signature(), initial.best_cost_lower_bound());
+    } catch (const SearchDeadlineExceeded &) {
+        result.status = "timeout";
+        return result;
+    }
     auto consider_incumbent = [&](ringlab::Circuit circuit) {
+        if (std::chrono::steady_clock::now() >= deadline) throw SearchDeadlineExceeded();
         circuit.verify(targets);
         auto profile = depth_profile(circuit);
         if (profile.depth > options.max_depth) return;
@@ -396,22 +466,27 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
             result.status = "verified";
         }
     };
-    const auto deadline_reached = [&]() {
-        return std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count() >=
-               options.timeout_seconds;
-    };
+    const auto deadline_reached = [&]() { return std::chrono::steady_clock::now() >= deadline; };
     ScheduleOptions baseline_options;
     baseline_options.share_threshold = 2;
     baseline_options.depth_aware = true;
-    if (!deadline_reached())
-        consider_incumbent(synthesize_schedule(targets, inputs, baseline_options));
-    if (!deadline_reached())
-        consider_incumbent(rebalanced(synthesize_schedule(targets, inputs, baseline_options)));
+    try {
+        if (!deadline_reached())
+            consider_incumbent(synthesize_schedule(targets, inputs, baseline_options, 0, deadline));
+        if (!deadline_reached()) {
+            auto baseline = synthesize_schedule(targets, inputs, baseline_options, 0, deadline);
+            consider_incumbent(rebalanced(baseline, deadline));
+        }
+    } catch (const SearchDeadlineExceeded &) {
+        if (result.status != "verified") result.status = "timeout";
+        return result;
+    }
     if (deadline_reached()) {
         if (result.status != "verified") result.status = "timeout";
         return result;
     }
     bool timed_out = false;
+    try {
     for (int restart = 0; restart < options.restarts && !timed_out; ++restart) {
         if (restart > 0) beam = {initial};
         while (!beam.empty()) {
@@ -423,9 +498,11 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
             for (const auto &state : beam) {
                 ++result.explored_states;
                 if (state.complete()) {
+                    if (deadline_reached()) throw SearchDeadlineExceeded();
                     auto circuit = state.export_circuit();
                     auto profile = depth_profile(circuit);
                     circuit.verify(targets);
+                    if (deadline_reached()) throw SearchDeadlineExceeded();
                     require(profile.depth <= options.max_depth, "bounded result exceeds depth limit");
                     if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {
                         result.circuit = std::move(circuit);
@@ -471,6 +548,10 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
                 next.resize(static_cast<std::size_t>(options.beam_width));
             beam = std::move(next);
         }
+    }
+    } catch (const SearchDeadlineExceeded &) {
+        if (result.status != "verified") result.status = "timeout";
+        return result;
     }
     if (result.status == "verified") return result;
     result.status = timed_out ? "timeout" : "search_failed";

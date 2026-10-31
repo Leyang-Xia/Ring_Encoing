@@ -1,5 +1,6 @@
 #include "xd/experiments.hpp"
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
@@ -308,14 +309,42 @@ Json verify_bounded_result(const std::string &path) {
     auto data = Json::read(path);
     require(data.has("method") && data["method"].string() == "DEPTH_BOUNDED_XSET_BEAM",
             "not a bounded result");
-    require(data.has("target_masks") && data.has("depth_limit"),
-            "bounded result is missing target masks or depth limit");
+    require(data.has("target_masks") && data.has("depth_limit") && data.has("inputs") &&
+                data.has("outputs") && data.has("depth_lower_bound") &&
+                data.has("beam_width") && data.has("branch_width") &&
+                data.has("max_representations") && data.has("restarts") &&
+                data.has("timeout_seconds") && data.has("explored_states") &&
+                data.has("pruned_depth") && data.has("pruned_bound"),
+            "bounded result is missing search metadata");
     auto rows = json_to_masks(data["target_masks"]);
+    const int inputs = data["inputs"].int32();
+    require(inputs > 0, "bounded input count must be positive");
+    for (const auto &row : rows)
+        require(row.bits() <= static_cast<std::size_t>(inputs),
+                "bounded target mask exceeds input width");
+    require(data["outputs"].integer() == static_cast<std::int64_t>(rows.size()),
+            "bounded output count mismatch");
+    const int depth_limit = data["depth_limit"].int32();
+    require(depth_limit >= 0, "bounded depth limit must be nonnegative");
+    require(data["depth_lower_bound"].integer() == depth_lower_bound(rows),
+            "bounded depth lower bound mismatch");
+    require(data["beam_width"].integer() > 0 && data["branch_width"].integer() > 0 &&
+                data["max_representations"].integer() > 0 && data["restarts"].integer() > 0,
+            "bounded search parameters must be positive");
+    require(std::isfinite(data["timeout_seconds"].number()) &&
+                data["timeout_seconds"].number() > 0,
+            "bounded timeout must be finite and positive");
+    require(data["explored_states"].integer() >= 0 && data["pruned_depth"].integer() >= 0 &&
+                data["pruned_bound"].integer() >= 0,
+            "bounded search counters must be nonnegative");
     const std::string status = data["status"].string();
     require(status == "verified" || status == "timeout" || status == "search_failed" ||
                 status == "infeasible_by_lower_bound",
             "invalid bounded result status");
     if (status != "verified") {
+        if (status == "infeasible_by_lower_bound")
+            require(depth_limit < depth_lower_bound(rows),
+                    "lower-bound infeasibility status is inconsistent");
         require(data.has("cost") && data["cost"].null(),
                 "unfinished bounded result must have null cost");
         require(!data.has("circuit"), "unfinished bounded result cannot contain a circuit");
@@ -327,11 +356,21 @@ Json verify_bounded_result(const std::string &path) {
     require(data.has("circuit") && data.has("cost") && data.has("depth"),
             "verified bounded result is missing circuit metrics");
     auto circuit = Circuit::from_json(data["circuit"]);
+    require(circuit.inputs == inputs && circuit.outputs.size() == rows.size(),
+            "bounded circuit dimensions mismatch");
     circuit.verify(rows);
     require(circuit.cost() == data["cost"].integer(), "bounded cost mismatch");
     auto profile = depth_profile(circuit);
     require(profile.depth == data["depth"].integer(), "bounded depth mismatch");
-    require(profile.depth <= data["depth_limit"].integer(), "bounded depth limit exceeded");
+    require(profile.depth <= depth_limit, "bounded depth limit exceeded");
+    require(data.has("max_fanout") && data["max_fanout"].integer() == profile.max_fanout,
+            "bounded fanout mismatch");
+    require(data.has("output_depth") && data["output_depth"].type == Json::Type::Array &&
+                data["output_depth"].arr.size() == profile.output_depth.size(),
+            "bounded output depth metadata mismatch");
+    for (std::size_t i = 0; i < profile.output_depth.size(); ++i)
+        require(data["output_depth"][i].integer() == profile.output_depth[i],
+                "bounded output depth mismatch");
     return Json::object({{"status", "verified"},
                          {"file", path},
                          {"result_status", "verified"},

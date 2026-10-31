@@ -10,6 +10,13 @@ using ringlab::GreedyCircuit;
 using ringlab::MaskHash;
 using ringlab::require;
 
+using Deadline = std::chrono::steady_clock::time_point;
+
+void check_deadline(Deadline deadline) {
+    if (deadline != Deadline::max() && std::chrono::steady_clock::now() >= deadline)
+        throw SearchDeadlineExceeded();
+}
+
 // GreedyCircuit deduplicates by mask but exposes only its mask vector, so keep a
 // local node index in step with it instead of reaching into the class.
 void index_new(const GreedyCircuit &c, std::unordered_map<Mask, int, MaskHash> &by_mask,
@@ -50,8 +57,10 @@ void record_depth(std::unordered_map<int, int> &depth, int node, int value) {
 // ready signals. This minimizes the depth of one sum for a fixed term set and
 // uses exactly (#terms - 1) gates before sharing is accounted for.
 int accumulate(GreedyCircuit &c, std::unordered_map<Mask, int, MaskHash> &by_mask,
-               std::size_t &seen, std::unordered_map<int, int> &depth, std::vector<int> pool) {
+               std::size_t &seen, std::unordered_map<int, int> &depth, std::vector<int> pool,
+               Deadline deadline) {
     while (pool.size() > 1) {
+        check_deadline(deadline);
         std::sort(pool.begin(), pool.end(), [&](int a, int b) {
             return depth.at(a) != depth.at(b) ? depth.at(a) < depth.at(b) : a < b;
         });
@@ -113,7 +122,8 @@ int depth_lower_bound(const Rows &targets) {
 }
 
 Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptions &options,
-                            std::uint64_t seed) {
+                            std::uint64_t seed, Deadline deadline) {
+    check_deadline(deadline);
     require(options.share_threshold >= 0, "share threshold must be nonnegative");
     GreedyCircuit c(inputs);
     std::unordered_map<Mask, int, MaskHash> by_mask;
@@ -137,6 +147,7 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
     ringlab::SeedRandom random(seed);
     const int threshold = std::max(options.share_threshold, 2);
     while (options.share_threshold > 1) {
+        check_deadline(deadline);
         int best = 0;
         for (const auto &[pair, count] : freq)
             best = std::max(best, count);
@@ -181,6 +192,7 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
     std::vector<int> outputs;
     outputs.reserve(expressions.size());
     for (const auto &row : expressions) {
+        check_deadline(deadline);
         Mask mask;
         for (auto node : row)
             mask ^= c.masks.at(node);
@@ -189,14 +201,16 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
             outputs.push_back(it->second);
             continue;
         }
-        outputs.push_back(accumulate(c, by_mask, seen, depth, row));
+        outputs.push_back(accumulate(c, by_mask, seen, depth, row, deadline));
     }
     auto result = c.export_circuit(outputs);
+    check_deadline(deadline);
     result.verify(targets);
     return result;
 }
 
-Circuit rebalanced(const Circuit &c) {
+Circuit rebalanced(const Circuit &c, Deadline deadline) {
+    check_deadline(deadline);
     std::unordered_map<int, Mask> value;
     for (int i = 0; i < c.inputs; ++i)
         value.emplace(i, Mask::unit(i));
@@ -205,6 +219,7 @@ Circuit rebalanced(const Circuit &c) {
     std::unordered_map<int, std::array<int, 2>> operands;
     std::unordered_map<int, int> consumers;
     for (const auto &op : c.ops) {
+        check_deadline(deadline);
         require(value.emplace(op[0], value.at(op[1]) ^ value.at(op[2])).second,
                 "duplicate or unavailable rebalance node");
         operands.emplace(op[0], std::array<int, 2>{op[1], op[2]});
@@ -231,6 +246,7 @@ Circuit rebalanced(const Circuit &c) {
         mapped.emplace(c.zero_node, c.inputs);
     std::vector<int> pool, work;
     for (const auto &op : c.ops) {
+        check_deadline(deadline);
         int node = op[0];
         if (foldable(node) || mapped.count(node))
             continue;
@@ -251,17 +267,19 @@ Circuit rebalanced(const Circuit &c) {
             else
                 pool.erase(duplicate);
         }
-        mapped.emplace(node, accumulate(c2, by_mask, seen, depth, pool));
+        mapped.emplace(node, accumulate(c2, by_mask, seen, depth, pool, deadline));
     }
     std::vector<int> result;
     result.reserve(c.outputs.size());
     for (auto node : c.outputs) {
+        check_deadline(deadline);
         auto it = mapped.find(node);
         require(it != mapped.end(), "rebalance output is not available");
         require(c2.masks.at(it->second) == value.at(node), "rebalance changed an output mask");
         result.push_back(it->second);
     }
     auto out = c2.export_circuit(result);
+    check_deadline(deadline);
     require(out.cost() <= c.cost(), "rebalance increased the gate count");
     return out;
 }
