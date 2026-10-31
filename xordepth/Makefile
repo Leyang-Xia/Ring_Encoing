@@ -27,8 +27,9 @@ $(BUILD)/xd-test: tests/xd_test.cpp $(LOCAL) $(SHARED) | $(BUILD)
 $(BUILD)/xd-search-test: tests/xd_search_test.cpp $(LOCAL) $(SHARED) | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-test: all $(BUILD)/xd-test
+test: all $(BUILD)/xd-test $(BUILD)/xd-search-test
 	$(BUILD)/xd-test
+	$(BUILD)/xd-search-test
 	bash tests/cli_test.sh $(BUILD)/xordepth
 
 clean:

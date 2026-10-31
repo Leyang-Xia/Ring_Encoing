@@ -3,6 +3,7 @@
 #include <climits>
 #include <map>
 #include <numeric>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 
@@ -261,13 +262,32 @@ bool SearchState::complete() const {
 }
 
 int SearchState::best_cost_lower_bound() const {
-    int bound = static_cast<int>(nodes_.size()) - inputs_;
+    // Nodes can be created by a transition whose replacement is later removed
+    // by Pareto pruning.  Such nodes are not part of the exported circuit and
+    // must not inflate the lower bound used for branch-and-bound pruning.
+    std::set<int> live;
+    std::vector<int> pending;
+    for (const auto &frontier : frontiers_)
+        for (const auto &entry : frontier.entries)
+            pending.insert(pending.end(), entry.terms.begin(), entry.terms.end());
+    while (!pending.empty()) {
+        const int node = pending.back();
+        pending.pop_back();
+        if (node < inputs_ || !live.insert(node).second) continue;
+        require(static_cast<std::size_t>(node) < nodes_.size(), "invalid live search node");
+        require(nodes_[node].left >= 0 && nodes_[node].right >= 0,
+                "live gate is missing a producer");
+        pending.push_back(nodes_[node].left);
+        pending.push_back(nodes_[node].right);
+    }
+    int bound = static_cast<int>(live.size());
     for (const auto &frontier : frontiers_) {
         int remaining = INT_MAX;
         for (const auto &entry : frontier.entries)
             remaining = std::min(remaining, static_cast<int>(entry.terms.size()));
-        if (remaining != INT_MAX) bound = std::max(bound, static_cast<int>(nodes_.size()) - inputs_ +
-                                                    std::max(0, remaining - 1));
+        if (remaining != INT_MAX)
+            bound = std::max(bound, static_cast<int>(live.size()) +
+                                      std::max(0, remaining - 1));
     }
     return bound;
 }
@@ -284,7 +304,11 @@ int SearchState::pair_support(const Candidate &candidate) const {
         return 0;
     auto edge = nodes_[candidate.left].mask ^ nodes_[candidate.right].mask;
     auto it = pair_index_.find(edge);
-    return it == pair_index_.end() ? 0 : static_cast<int>(it->second.size());
+    if (it == pair_index_.end()) return 0;
+    int support = 0;
+    for (const auto &ref : it->second)
+        if (ref.left == candidate.left && ref.right == candidate.right) ++support;
+    return support;
 }
 
 std::string SearchState::signature() const {
@@ -372,17 +396,26 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
             result.status = "verified";
         }
     };
+    const auto deadline_reached = [&]() {
+        return std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count() >=
+               options.timeout_seconds;
+    };
     ScheduleOptions baseline_options;
     baseline_options.share_threshold = 2;
     baseline_options.depth_aware = true;
-    consider_incumbent(synthesize_schedule(targets, inputs, baseline_options));
-    consider_incumbent(rebalanced(synthesize_schedule(targets, inputs, baseline_options)));
+    if (!deadline_reached())
+        consider_incumbent(synthesize_schedule(targets, inputs, baseline_options));
+    if (!deadline_reached())
+        consider_incumbent(rebalanced(synthesize_schedule(targets, inputs, baseline_options)));
+    if (deadline_reached()) {
+        if (result.status != "verified") result.status = "timeout";
+        return result;
+    }
     bool timed_out = false;
     for (int restart = 0; restart < options.restarts && !timed_out; ++restart) {
         if (restart > 0) beam = {initial};
         while (!beam.empty()) {
-            if (std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count() >=
-                options.timeout_seconds) {
+            if (deadline_reached()) {
                 timed_out = true;
                 break;
             }
