@@ -388,6 +388,51 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
     return result;
 }
 
+std::vector<Candidate> SearchState::bridge_candidates() const {
+    check_search_deadline(options_);
+    if (options_.residual_pairs == 0) return {};
+    std::vector<Candidate> result;
+    for (std::size_t ta = 0; ta < frontiers_.size(); ++ta) {
+        for (std::size_t ra = 0; ra < frontiers_[ta].entries.size(); ++ra) {
+            const auto &a = frontiers_[ta].entries[ra];
+            for (std::size_t tb = ta + 1; tb < frontiers_.size(); ++tb) {
+                std::size_t rb_start = 0;
+                for (std::size_t rb = rb_start; rb < frontiers_[tb].entries.size(); ++rb) {
+                    const auto &b = frontiers_[tb].entries[rb];
+                    for (int left : a.terms) {
+                        for (int right : b.terms) {
+                            if (left == right) continue;
+                            int lo = std::min(left, right), hi = std::max(left, right);
+                            if (!candidate_allowed(node_depth(lo), node_depth(hi), options_.max_depth))
+                                continue;
+                            Candidate candidate{lo, hi,
+                                                candidate_depth(node_depth(lo), node_depth(hi)), 1,
+                                                static_cast<int>(ta), static_cast<int>(ra), false,
+                                                true, static_cast<int>(tb), static_cast<int>(rb)};
+                            candidate.affected_targets = ta == tb ? 1 : 2;
+                            candidate.term_reduction = 2;
+                            candidate.depth_slack = options_.max_depth - candidate.arrival_depth;
+                            result.push_back(candidate);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
+        if (a.affected_targets != b.affected_targets)
+            return a.affected_targets > b.affected_targets;
+        if (a.depth_slack != b.depth_slack) return a.depth_slack > b.depth_slack;
+        if (a.left != b.left) return a.left < b.left;
+        if (a.right != b.right) return a.right < b.right;
+        if (a.target != b.target) return a.target < b.target;
+        return a.target2 < b.target2;
+    });
+    if (result.size() > static_cast<std::size_t>(options_.residual_pairs))
+        result.resize(static_cast<std::size_t>(options_.residual_pairs));
+    return result;
+}
+
 SearchState SearchState::apply(const Candidate &candidate) const {
     check_search_deadline(options_);
     SearchState child = *this;
@@ -503,6 +548,48 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
     child.adjust_residual_pair_index(child.frontiers_[target],
                                      static_cast<int>(child.nodes_.size()), 1);
     child.rebuild_pair_index();
+    return child;
+}
+
+SearchState SearchState::apply_bridge(int left, int right, std::size_t left_target,
+                                      std::size_t left_representation,
+                                      std::size_t right_target,
+                                      std::size_t right_representation) const {
+    check_search_deadline(options_);
+    SearchState child = *this;
+    if (!valid_ || left_target >= frontiers_.size() || right_target >= frontiers_.size() ||
+        left_representation >= frontiers_[left_target].entries.size() ||
+        right_representation >= frontiers_[right_target].entries.size() || left == right)
+        return child.valid_ = false, child;
+    if (!candidate_allowed(node_depth(std::min(left, right)), node_depth(std::max(left, right)),
+                           options_.max_depth))
+        return child.valid_ = false, child;
+    const auto mask = nodes_[left].mask ^ nodes_[right].mask;
+    int node = lookup_node(child.node_by_mask_, mask);
+    if (node < 0) {
+        node = static_cast<int>(child.nodes_.size());
+        child.nodes_.push_back(NodeRecord{mask, candidate_depth(node_depth(left), node_depth(right)), left, right});
+        child.node_by_mask_.emplace(mask, node);
+    }
+    auto update = [&](std::size_t target, std::size_t representation) {
+        const auto &entry = frontiers_[target].entries[representation];
+        std::vector<int> terms = entry.terms;
+        auto toggle = [&](int term) {
+            auto it = std::find(terms.begin(), terms.end(), term);
+            if (it == terms.end()) terms.push_back(term); else terms.erase(it);
+        };
+        toggle(left); toggle(right); toggle(node);
+        auto replacement = child.make_representation(terms);
+        if (replacement.arrival_depth > options_.max_depth) return false;
+        ParetoFrontier next = frontiers_[target];
+        pareto_insert(next, std::move(replacement), static_cast<std::size_t>(options_.max_representations));
+        child.frontiers_[target] = std::move(next);
+        return true;
+    };
+    if (!update(left_target, left_representation)) { child.valid_ = false; return child; }
+    if (!update(right_target, right_representation)) { child.valid_ = false; return child; }
+    child.rebuild_pair_index();
+    child.rebuild_residual_pair_index();
     return child;
 }
 
@@ -815,6 +902,9 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     auto toggles = state.toggle_candidates();
                     result.toggle_candidates += toggles.size();
                     candidates.insert(candidates.end(), toggles.begin(), toggles.end());
+                    auto bridges = state.bridge_candidates();
+                    result.toggle_candidates += bridges.size();
+                    candidates.insert(candidates.end(), bridges.begin(), bridges.end());
                 }
                 SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
                 if (restart > 0 || options.seed != 0)
@@ -848,6 +938,8 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                             if (options.residual_pairs > 0) {
                                 auto toggles = probe.toggle_candidates();
                                 next.insert(next.end(), toggles.begin(), toggles.end());
+                                auto bridges = probe.bridge_candidates();
+                                next.insert(next.end(), bridges.begin(), bridges.end());
                             }
                             if (next.empty()) break;
                             const auto &future = next.front();
@@ -857,7 +949,14 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                               static_cast<std::size_t>(future.target),
                                               static_cast<std::size_t>(future.representation),
                                               future.future_support)
-                                        : probe.apply(future);
+                                        : future.bridge
+                                            ? probe.apply_bridge(
+                                                  future.left, future.right,
+                                                  static_cast<std::size_t>(future.target),
+                                                  static_cast<std::size_t>(future.representation),
+                                                  static_cast<std::size_t>(future.target2),
+                                                  static_cast<std::size_t>(future.representation2))
+                                            : probe.apply(future);
                             if (!probe.valid()) break;
                             bound = probe.cost_priority();
                         }
@@ -887,7 +986,13 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                                           static_cast<std::size_t>(candidate.target),
                                                           static_cast<std::size_t>(candidate.representation),
                                                           candidate.future_support)
-                                     : state.apply(candidate);
+                                     : candidate.bridge
+                                         ? state.apply_bridge(candidate.left, candidate.right,
+                                                              static_cast<std::size_t>(candidate.target),
+                                                              static_cast<std::size_t>(candidate.representation),
+                                                              static_cast<std::size_t>(candidate.target2),
+                                                              static_cast<std::size_t>(candidate.representation2))
+                                         : state.apply(candidate);
                     if (!child.valid()) {
                         ++result.pruned_depth;
                         continue;

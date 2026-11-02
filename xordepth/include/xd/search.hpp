@@ -25,6 +25,9 @@ struct Candidate {
     int target = -1;
     int representation = -1;
     bool toggle = false;
+    bool bridge = false;
+    int target2 = -1;
+    int representation2 = -1;
     int affected_targets = 0;
     int term_reduction = 0;
     int depth_slack = 0;
@@ -54,7 +57,11 @@ class SearchState {
     SearchState apply(const Candidate &candidate) const;
     SearchState apply_toggle(int left, int right, std::size_t target,
                              std::size_t representation, int future_support = 0) const;
+    SearchState apply_bridge(int left, int right, std::size_t left_target,
+                             std::size_t left_representation, std::size_t right_target,
+                             std::size_t right_representation) const;
     std::vector<Candidate> toggle_candidates() const;
+    std::vector<Candidate> bridge_candidates() const;
     bool valid() const { return valid_; }
     bool complete() const;
     int best_cost_lower_bound() const;

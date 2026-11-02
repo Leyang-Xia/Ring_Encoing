@@ -106,6 +106,22 @@ int main() {
         require(candidate.depth_slack >= 0, "residual candidate reports depth slack");
         require(candidate.toggle_penalty >= 0, "residual candidate reports toggle penalty");
     }
+    auto bridge_options = options(2);
+    bridge_options.residual_pairs = 8;
+    bridge_options.residual_targets = 1;
+    auto bridge_state = SearchState::initial({BitMask(7), BitMask(11)}, 4,
+                                             bridge_options);
+    auto bridges = bridge_state.bridge_candidates();
+    require(!bridges.empty(), "cross-representation bridge candidate generated");
+    require(bridges.front().bridge && !bridges.front().toggle,
+            "bridge candidate has distinct transition kind");
+    auto bridged = bridge_state.apply_bridge(
+        bridges.front().left, bridges.front().right,
+        static_cast<std::size_t>(bridges.front().target),
+        static_cast<std::size_t>(bridges.front().representation),
+        static_cast<std::size_t>(bridges.front().target2),
+        static_cast<std::size_t>(bridges.front().representation2));
+    require(bridged.valid(), "cross-representation bridge transition is valid");
     auto empty_toggle_state = toggle_state.apply(Candidate{0, 1, 1, 1});
     require(empty_toggle_state.valid(), "state exposes a residual representation");
     auto empty_default = empty_toggle_state.apply_toggle(0, 1, 0, 0);
