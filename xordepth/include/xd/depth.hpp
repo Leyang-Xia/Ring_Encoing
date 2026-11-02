@@ -63,6 +63,7 @@ struct BoundedScheduleResult {
     std::size_t pruned_depth = 0;
     std::size_t pruned_bound = 0;
     std::size_t toggle_candidates = 0;
+    std::size_t diversity_buckets = 0;
     // Cost of the best externally supplied, verified incumbent that was
     // feasible at the requested depth, or -1 when none was supplied.
     int reference_cost = -1;

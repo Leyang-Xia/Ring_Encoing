@@ -509,6 +509,30 @@ int SearchState::cost_priority() const {
     return bound;
 }
 
+std::string SearchState::fingerprint() const {
+    check_search_deadline(options_);
+    std::ostringstream out;
+    out << "targets=" << frontiers_.size() << ';';
+    for (const auto &frontier : frontiers_) {
+        int min_terms = INT_MAX;
+        int min_depth = INT_MAX;
+        for (const auto &entry : frontier.entries) {
+            min_terms = std::min(min_terms, static_cast<int>(entry.terms.size()));
+            min_depth = std::min(min_depth, entry.arrival_depth);
+        }
+        out << min_terms << ':' << min_depth << ':' << frontier.entries.size() << ';';
+    }
+    std::vector<int> supports;
+    supports.reserve(pair_index_.size());
+    for (const auto &[edge, refs] : pair_index_) supports.push_back(static_cast<int>(refs.size()));
+    std::sort(supports.begin(), supports.end(), std::greater<int>());
+    if (supports.size() > 8) supports.resize(8);
+    out << "support=";
+    for (int support : supports) out << support << ',';
+    out << "nodes=" << nodes_.size() << ";pairs=" << pair_index_.size();
+    return out.str();
+}
+
 const ParetoFrontier &SearchState::frontier(std::size_t index) const {
     require(index < frontiers_.size(), "frontier index out of range");
     return frontiers_[index];
@@ -736,8 +760,18 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                         for (int step = 1; step < options.lookahead_depth && !probe.complete();
                              ++step) {
                             auto next = probe.candidates();
+                            if (options.residual_pairs > 0) {
+                                auto toggles = probe.toggle_candidates();
+                                next.insert(next.end(), toggles.begin(), toggles.end());
+                            }
                             if (next.empty()) break;
-                            probe = probe.apply(next.front());
+                            const auto &future = next.front();
+                            probe = future.toggle
+                                        ? probe.apply_toggle(
+                                              future.left, future.right,
+                                              static_cast<std::size_t>(future.target),
+                                              static_cast<std::size_t>(future.representation))
+                                        : probe.apply(future);
                             if (!probe.valid()) break;
                             bound = probe.cost_priority();
                         }
@@ -787,14 +821,35 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     next.push_back(std::move(child));
                 }
             }
-            std::sort(next.begin(), next.end(), [](const SearchState &a, const SearchState &b) {
-                if (a.cost_priority() != b.cost_priority())
-                    return a.cost_priority() < b.cost_priority();
-                return a.signature() < b.signature();
-            });
-            if (next.size() > static_cast<std::size_t>(options.beam_width))
-                next.resize(static_cast<std::size_t>(options.beam_width));
-            beam = std::move(next);
+            std::map<std::string, std::vector<SearchState>> buckets;
+            for (auto &candidate : next)
+                buckets[candidate.fingerprint()].push_back(std::move(candidate));
+            result.diversity_buckets = std::max(result.diversity_buckets, buckets.size());
+            for (auto &bucket : buckets) {
+                std::sort(bucket.second.begin(), bucket.second.end(),
+                          [](const SearchState &a, const SearchState &b) {
+                              if (a.cost_priority() != b.cost_priority())
+                                  return a.cost_priority() < b.cost_priority();
+                              return a.signature() < b.signature();
+                          });
+            }
+            std::vector<std::size_t> cursors(buckets.size(), 0);
+            std::vector<SearchState> diverse;
+            diverse.reserve(std::min<std::size_t>(buckets.size(), options.beam_width));
+            while (diverse.size() < static_cast<std::size_t>(options.beam_width)) {
+                bool added = false;
+                std::size_t bucket_index = 0;
+                for (auto &bucket : buckets) {
+                    if (cursors[bucket_index] < bucket.second.size() &&
+                        diverse.size() < static_cast<std::size_t>(options.beam_width)) {
+                        diverse.push_back(std::move(bucket.second[cursors[bucket_index]++]));
+                        added = true;
+                    }
+                    ++bucket_index;
+                }
+                if (!added) break;
+            }
+            beam = std::move(diverse);
         }
     }
     } catch (const SearchDeadlineExceeded &) {

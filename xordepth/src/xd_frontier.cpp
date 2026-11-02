@@ -254,6 +254,7 @@ Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                                 {"pruned_depth", std::uint64_t(search.pruned_depth)},
                                 {"pruned_bound", std::uint64_t(search.pruned_bound)},
                                 {"toggle_candidates", std::uint64_t(search.toggle_candidates)},
+                                {"diversity_buckets", std::uint64_t(search.diversity_buckets)},
                                 {"reference_cost", search.reference_cost < 0
                                                            ? Json()
                                                            : Json(search.reference_cost)},
@@ -392,6 +393,9 @@ Json verify_bounded_result(const std::string &path) {
     if (data.has("toggle_candidates"))
         require(data["toggle_candidates"].integer() >= 0,
                 "bounded toggle candidate count must be nonnegative");
+    if (data.has("diversity_buckets"))
+        require(data["diversity_buckets"].integer() >= 0,
+                "bounded diversity bucket count must be nonnegative");
     if (data.has("reference_cost") && !data["reference_cost"].null())
         require(data["reference_cost"].integer() >= 0, "bounded reference cost must be nonnegative");
     const std::string status = data["status"].string();

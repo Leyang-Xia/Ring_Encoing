@@ -55,6 +55,7 @@ class SearchState {
     // Search priority only: alternatives can overcount mandatory live gates.
     // Never use this score for branch-and-bound or as proof of optimality.
     int cost_priority() const;
+    std::string fingerprint() const;
     std::string signature() const;
     Circuit export_circuit() const;
     const ParetoFrontier &frontier(std::size_t index) const;

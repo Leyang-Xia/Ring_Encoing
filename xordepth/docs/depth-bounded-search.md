@@ -131,3 +131,17 @@ canonical 顺序。为保证直接 X-Sets 调用与 `ringlab`、xordepth 的参�
 | Vandermonde 8→17 | 6 | 221 / 6 | 219 / 6 | 212 / 8 |
 
 这些结果说明安全下界修复消除了错误剪枝，但当前候选生成仍主要复现 CSE 型结构，尚未达到 MW_SQ 或 UBER_XSET 的直接结果。完整目标、电路和参数保存在 `data/results/xd_series_compare_safe_bound_20261102.json`。GF(2⁸) 80×80 矩阵上的两种 X-Sets 配置在 60 秒内均超时，因此没有把它作为 XOR 质量结论。
+
+## Residual candidate 与独立 core
+
+当前 xordepth 已经使用自己的 `xd::BitMask`、`xd::Circuit`、`xd::Json`、`xd::GreedyNetwork` 和 `xd::SeedRandom`，Makefile 不再链接 ringlab 的 `../src`。`tests/independence_test.sh` 会检查源码、头文件和构建入口没有 ringlab 依赖。
+
+Residual 模式通过 `R' = normalize(R XOR {a,b,a XOR b})` 暴露跨表示共享节点，并用结构 fingerprint 分桶保留多种 Beam 状态。默认 `residual_pairs=0`，所以基础结果保持兼容；实验配置为 `residual_pairs=8`、`residual_targets=2`、`lookahead_width=8`、`lookahead_depth=2`、`beam=64`、`branch=16`、`restarts=4`、`seed=1`，不使用 incumbent。
+
+| 矩阵 | `D` | xordepth residual/diversity | MW_SQ + 重结合 | UBER_XSET + 重结合 |
+|---|---:|---:|---:|---:|
+| Cauchy 7→4 | 8 | 150 / 6 | 132 / 8 | 141 / 11 |
+| systematic RS 7→4 | 7 | 149 / 6 | 136 / 7 | 126 / 11 |
+| Vandermonde 8→17 | 6 | 221 / 6 | 219 / 6 | 212 / 8 |
+
+完整 bounded circuit、参数、toggle 计数、Beam bucket 计数和外部重结合参照保存在 `data/results/xd_series_residual_bound_20261102.json`。Residual 候选扩大了可达状态空间，但在这组预算下尚未降低三类矩阵的 XOR 数；后续应继续优化候选评分和增量状态更新。

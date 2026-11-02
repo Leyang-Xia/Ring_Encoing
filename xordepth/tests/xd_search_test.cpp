@@ -97,6 +97,10 @@ int main() {
     require(residual_candidates.size() <= 2, "residual target expansion is bounded");
     for (const auto &candidate : residual_candidates)
         require(candidate.toggle, "residual candidate is marked as toggle");
+    require(residual_state.fingerprint() == residual_state.fingerprint(),
+            "structure fingerprint is deterministic");
+    require(residual_state.fingerprint() != residual_state.apply(*shared_pair).fingerprint(),
+            "different search structures receive different fingerprints");
 
     // The second output has alternative producers. The unused producer of
     // mask 7 must not become a mandatory cost of completing mask 15.
