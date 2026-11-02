@@ -21,8 +21,11 @@ Options:
   --branch N         bounded candidates expanded per state
   --representations N  bounded representations retained per target
   --restarts N       bounded deterministic restarts
+  --lookahead-width K  bounded candidates scored with selective lookahead
+  --lookahead-depth L  future transitions simulated per scored candidate
   --seed N           bounded candidate-order seed
   --timeout SEC      bounded search budget
+  --incumbent FILE.json  verified stored circuit(s) used as bounded references
   --output FILE      write the complete result
 
 MATRIX.txt holds one output per line and one input per column, 0/1 and whitespace only.
@@ -92,6 +95,8 @@ int main(int argc, char **argv) {
                 o.depth_aware = true;
             } else if (key == "--also") {
                 o.also.push_back(value());
+            } else if (key == "--incumbent") {
+                o.incumbents.push_back(value());
             } else if (key == "--depth") {
                 bounded_options.max_depth = parse_int(value());
                 depth_set = true;
@@ -103,6 +108,10 @@ int main(int argc, char **argv) {
                 bounded_options.max_representations = parse_int(value());
             } else if (key == "--restarts") {
                 bounded_options.restarts = parse_int(value());
+            } else if (key == "--lookahead-width") {
+                bounded_options.lookahead_width = parse_int(value());
+            } else if (key == "--lookahead-depth") {
+                bounded_options.lookahead_depth = parse_int(value());
             } else if (key == "--seed") {
                 bounded_options.seed = std::stoull(value());
             } else if (key == "--timeout") {
@@ -133,7 +142,8 @@ int main(int argc, char **argv) {
             int inputs = 0;
             auto rows = read_matrix(positional[0], inputs);
             result = bounded_result(rows, inputs,
-                                    Json::object({{"matrix", positional[0]}}), bounded_options);
+                                    Json::object({{"matrix", positional[0]}}), bounded_options,
+                                    o.incumbents);
         } else if (command == "audit") {
             ringlab::require(!positional.empty(), "audit needs at least one JSON file");
             result = audit(positional);

@@ -116,7 +116,8 @@ SearchState SearchState::initial(const ringlab::Rows &targets, int inputs,
     require(inputs > 0, "invalid input count");
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.timeout_seconds > 0,
+                options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
+                options.lookahead_depth >= 0,
             "invalid bounded search options");
     validate_target_width(targets, inputs);
     SearchState state;
@@ -294,6 +295,40 @@ bool SearchState::complete() const {
 
 int SearchState::best_cost_lower_bound() const {
     check_search_deadline(options_);
+    int bound = 0;
+    for (const auto &frontier : frontiers_) {
+        int target_bound = INT_MAX;
+        for (const auto &entry : frontier.entries) {
+            std::set<int> live;
+            std::vector<int> pending = entry.terms;
+            while (!pending.empty()) {
+                check_search_deadline(options_);
+                int node = pending.back();
+                pending.pop_back();
+                if (node < inputs_ || !live.insert(node).second) continue;
+                require(static_cast<std::size_t>(node) < nodes_.size(), "invalid closure node");
+                require(nodes_[node].left >= 0 && nodes_[node].right >= 0,
+                        "closure gate is missing a producer");
+                pending.push_back(nodes_[node].left);
+                pending.push_back(nodes_[node].right);
+            }
+            target_bound = std::min(target_bound, static_cast<int>(live.size()));
+        }
+        if (target_bound != INT_MAX) bound = std::max(bound, target_bound);
+    }
+    // Pair replacement preserves disjoint primary-input supports within each
+    // representation, starting from unit inputs. Producers are cancellation
+    // free, so each closure above uses at most weight(target)-1 gates. Any XOR
+    // DAG computing that target needs at least weight(target)-1 gates, even
+    // with cancellation. This remains safe if later reuse drops old producers.
+    return bound;
+}
+
+int SearchState::cost_priority() const {
+    check_search_deadline(options_);
+    // This union is useful for ordering states because it estimates the
+    // amount of materialized structure. It includes mutually exclusive
+    // Pareto alternatives, so it is deliberately not a lower bound.
     // Nodes can be created by a transition whose replacement is later removed
     // by Pareto pruning.  Such nodes are not part of the exported circuit and
     // must not inflate the lower bound used for branch-and-bound pruning.
@@ -414,11 +449,13 @@ ringlab::Circuit SearchState::export_circuit() const {
 }
 
 BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int inputs,
-                                         const BoundedScheduleOptions &options) {
+                                         const BoundedScheduleOptions &options,
+                                         const std::vector<ringlab::Circuit> &incumbents) {
     validate_target_width(targets, inputs);
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.timeout_seconds > 0,
+                options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
+                options.lookahead_depth >= 0,
             "invalid bounded search options");
     BoundedScheduleResult result;
     result.requested_depth = options.max_depth;
@@ -426,6 +463,22 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
     if (options.max_depth < result.depth_lower_bound) {
         result.status = "infeasible_by_lower_bound";
         return result;
+    }
+
+    // References are validated before the timed search starts.  This keeps the
+    // guarantee useful even when the search budget is too small to initialize
+    // a beam: a verified depth-feasible incumbent is still returned.
+    for (const auto &incumbent : incumbents) {
+        incumbent.verify(targets);
+        auto profile = depth_profile(incumbent);
+        if (profile.depth > options.max_depth) continue;
+        if (result.reference_cost < 0 || incumbent.cost() < result.reference_cost) {
+            result.reference_cost = incumbent.cost();
+            result.reference_circuit = incumbent;
+            result.has_reference = true;
+            result.circuit = incumbent;
+            result.status = "verified";
+        }
     }
 
     const auto started = std::chrono::steady_clock::now();
@@ -437,15 +490,15 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
     try {
         initial = SearchState::initial(targets, inputs, search_options);
     } catch (const SearchDeadlineExceeded &) {
-        result.status = "timeout";
+        if (result.status != "verified") result.status = "timeout";
         return result;
     }
     if (!initial.valid()) {
-        result.status = "search_failed";
+        if (result.status != "verified") result.status = "search_failed";
         return result;
     }
     if (std::chrono::steady_clock::now() >= deadline) {
-        result.status = "timeout";
+        if (result.status != "verified") result.status = "timeout";
         return result;
     }
     std::vector<SearchState> beam{initial};
@@ -515,6 +568,48 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
                 if (restart > 0 || options.seed != 0)
                     for (std::size_t i = candidates.size(); i > 1; --i)
                         std::swap(candidates[i - 1], candidates[random.below(i)]);
+                if (options.lookahead_width > 0 && options.lookahead_depth > 0 &&
+                    candidates.size() > 1) {
+                    struct Ranked {
+                        Candidate candidate;
+                        int bound;
+                        std::size_t original;
+                    };
+                    const std::size_t width = std::min<std::size_t>(
+                        candidates.size(), static_cast<std::size_t>(options.lookahead_width));
+                    std::vector<Ranked> ranked;
+                    ranked.reserve(width);
+                    std::vector<bool> scored(candidates.size(), false);
+                    for (std::size_t i = 0; i < width; ++i) {
+                        auto probe = state.apply(candidates[i]);
+                        if (!probe.valid()) continue;
+                        int bound = probe.cost_priority();
+                        for (int step = 1; step < options.lookahead_depth && !probe.complete();
+                             ++step) {
+                            auto next = probe.candidates();
+                            if (next.empty()) break;
+                            probe = probe.apply(next.front());
+                            if (!probe.valid()) break;
+                            bound = probe.cost_priority();
+                        }
+                        ranked.push_back(Ranked{candidates[i], bound, i});
+                        scored[i] = true;
+                    }
+                    std::sort(ranked.begin(), ranked.end(), [](const Ranked &a, const Ranked &b) {
+                        if (a.bound != b.bound) return a.bound < b.bound;
+                        if (a.candidate.support != b.candidate.support)
+                            return a.candidate.support > b.candidate.support;
+                        if (a.candidate.arrival_depth != b.candidate.arrival_depth)
+                            return a.candidate.arrival_depth < b.candidate.arrival_depth;
+                        return a.original < b.original;
+                    });
+                    std::vector<Candidate> ordered;
+                    ordered.reserve(candidates.size());
+                    for (const auto &entry : ranked) ordered.push_back(entry.candidate);
+                    for (std::size_t i = 0; i < candidates.size(); ++i)
+                        if (!scored[i]) ordered.push_back(candidates[i]);
+                    candidates = std::move(ordered);
+                }
                 if (candidates.size() > static_cast<std::size_t>(options.branch_width))
                     candidates.resize(static_cast<std::size_t>(options.branch_width));
                 for (const auto &candidate : candidates) {
@@ -524,7 +619,7 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
                         continue;
                     }
                     if (result.status == "verified" &&
-                        child.best_cost_lower_bound() > result.circuit.cost()) {
+                        child.best_cost_lower_bound() >= result.circuit.cost()) {
                         ++result.pruned_bound;
                         continue;
                     }
@@ -540,8 +635,8 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
                 }
             }
             std::sort(next.begin(), next.end(), [](const SearchState &a, const SearchState &b) {
-                if (a.best_cost_lower_bound() != b.best_cost_lower_bound())
-                    return a.best_cost_lower_bound() < b.best_cost_lower_bound();
+                if (a.cost_priority() != b.cost_priority())
+                    return a.cost_priority() < b.cost_priority();
                 return a.signature() < b.signature();
             });
             if (next.size() > static_cast<std::size_t>(options.beam_width))

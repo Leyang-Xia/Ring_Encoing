@@ -39,8 +39,15 @@ make test         # 单元检查 + CLI 检查
 # 3. 深度硬约束搜索
 ./build/xordepth bounded data/matrices/vandermonde_8to17_direct.txt \
   --depth 6 --beam 64 --branch 16 --representations 8 \
-  --restarts 8 --seed 1 --timeout 180 --output /tmp/bounded.json
+  --restarts 8 --lookahead-width 8 --lookahead-depth 2 \
+  --seed 1 --timeout 180 --output /tmp/bounded.json
 ./build/xordepth verify /tmp/bounded.json
+
+# 4. 用已验证的 MW_SQ/X-Sets 结果作为 D=6 的 incumbent 参照
+./build/xordepth bounded data/matrices/vandermonde_8to17_direct.txt \
+  --depth 6 --incumbent data/results/mw_sq_vandermonde_8to17_p0_3_0.json \
+  --lookahead-width 8 --lookahead-depth 2 --timeout 180 \
+  --output /tmp/bounded-with-reference.json
 ```
 
 `MATRIX.txt`：每行一个输出，每列一个输入，只允许 `0`/`1` 与空白。
@@ -49,6 +56,8 @@ make test         # 单元检查 + CLI 检查
 - `--depth-aware`：频次相同的候选里优先选最早就绪的一对。
 - `--also FILE`：从任意结果/证据 JSON 中挑出**能算出同一个变换**的线路，作为额外候选（不能算出同一变换的会被跳过并计数）。
 - `bounded` 的 `--depth D` 是所有输出的硬深度上限；`--beam`、`--branch`、`--representations`、`--restarts`、`--seed` 和 `--timeout` 控制启发式搜索预算。
+- `--lookahead-width K --lookahead-depth L` 对每个状态的前 `K` 个候选试走最多 `L` 步，再按后续下界排序；两个参数为 `0` 时关闭这一步。
+- `--incumbent FILE` 从结果或证书 JSON 中读取电路，逐门验证后只接纳与当前矩阵相同且深度不超过 `D` 的线路。若搜索超时或剪枝耗尽，仍返回这个已验证 incumbent，因此输出门数不会劣于它；结果中的 `reference_cost` 和 `reference_circuit` 记录该参照。
 
 ## 主要结果
 

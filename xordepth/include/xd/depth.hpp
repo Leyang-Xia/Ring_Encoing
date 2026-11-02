@@ -42,6 +42,10 @@ struct BoundedScheduleOptions {
     int branch_width = 16;
     int max_representations = 8;
     int restarts = 8;
+    // Optional selective lookahead. Zero disables the extra probing pass;
+    // otherwise the first K candidates are simulated for L future steps.
+    int lookahead_width = 0;
+    int lookahead_depth = 0;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
     // Internal monotonic deadline used by SearchState; not serialized as a
@@ -58,6 +62,11 @@ struct BoundedScheduleResult {
     std::size_t explored_states = 0;
     std::size_t pruned_depth = 0;
     std::size_t pruned_bound = 0;
+    // Cost of the best externally supplied, verified incumbent that was
+    // feasible at the requested depth, or -1 when none was supplied.
+    int reference_cost = -1;
+    Circuit reference_circuit;
+    bool has_reference = false;
 };
 
 // Internal control flow for the bounded search budget. Public callers normally
@@ -67,7 +76,8 @@ struct SearchDeadlineExceeded final : std::exception {
 };
 
 BoundedScheduleResult synthesize_bounded(const Rows &targets, int inputs,
-                                         const BoundedScheduleOptions &options);
+                                         const BoundedScheduleOptions &options,
+                                         const std::vector<Circuit> &incumbents = {});
 
 // Plank-style common-subexpression scheduling with a depth-aware selection pass
 // and a balanced (Huffman by arrival time) final accumulation. Every output,

@@ -78,6 +78,23 @@ int main() {
     require(shared_child.valid(), "shared pair remains feasible");
     require(shared_child.pair_support(*shared_pair) == 0, "pair support is updated");
 
+    // The second output has alternative producers. The unused producer of
+    // mask 7 must not become a mandatory cost of completing mask 15.
+    auto alternatives = SearchState::initial({ringlab::Mask(3), ringlab::Mask(15)},
+                                              4, options(4));
+    int ancestor_bound = alternatives.best_cost_lower_bound();
+    for (auto candidate : std::vector<Candidate>{{0, 1}, {2, 4}, {3, 4}, {2, 6}}) {
+        alternatives = alternatives.apply(candidate);
+        require(alternatives.valid(), "alternative producer transition remains valid");
+        ancestor_bound = std::max(ancestor_bound, alternatives.best_cost_lower_bound());
+    }
+    require(alternatives.complete(), "alternative producer path completes");
+    auto alternative_circuit = alternatives.export_circuit();
+    alternative_circuit.verify({ringlab::Mask(3), ringlab::Mask(15)});
+    require(alternative_circuit.cost() == 3, "unused alternative producer is pruned");
+    require(ancestor_bound <= alternative_circuit.cost(),
+            "every ancestor lower bound is admissible for its completion");
+
     auto balanced = synthesize_bounded({ringlab::Mask(15)}, 4, options(2));
     require(balanced.status == "verified", "D=2 feasible");
     require(balanced.circuit.cost() == 3, "balanced XOR count");
@@ -87,6 +104,36 @@ int main() {
     require(repeat.status == "verified", "repeat feasible");
     require(repeat.circuit.json().dump() == balanced.circuit.json().dump(),
             "same seed is deterministic");
+
+    ringlab::Circuit incumbent;
+    incumbent.inputs = 4;
+    incumbent.has_zero = false;
+    incumbent.ops = {{4, 0, 1}, {5, 2, 3}, {6, 4, 5}};
+    incumbent.outputs = {6};
+    incumbent.verify({ringlab::Mask(15)});
+    auto incumbent_options = options(2);
+    incumbent_options.lookahead_width = 2;
+    incumbent_options.lookahead_depth = 1;
+    auto referenced = synthesize_bounded({ringlab::Mask(15)}, 4, incumbent_options,
+                                         {incumbent});
+    require(referenced.status == "verified", "verified incumbent keeps bounded search feasible");
+    require(referenced.has_reference && referenced.reference_cost == incumbent.cost(),
+            "bounded result retains the verified reference circuit");
+    require(referenced.circuit.cost() <= incumbent.cost(),
+            "bounded search never regresses below verified incumbent");
+    require(depth_profile(referenced.circuit).depth <= incumbent_options.max_depth,
+            "lookahead result respects hard depth bound");
+
+    ringlab::Circuit too_deep;
+    too_deep.inputs = 4;
+    too_deep.has_zero = false;
+    too_deep.ops = {{4, 0, 1}, {5, 4, 2}, {6, 5, 3}};
+    too_deep.outputs = {6};
+    too_deep.verify({ringlab::Mask(15)});
+    auto filtered = synthesize_bounded({ringlab::Mask(15)}, 4, options(2), {too_deep});
+    require(filtered.reference_cost < 0, "incumbent deeper than D is ignored");
+    require(filtered.status == "verified" && depth_profile(filtered.circuit).depth <= 2,
+            "depth filter does not weaken bounded feasibility");
 
     auto impossible = synthesize_bounded({ringlab::Mask(15)}, 4, options(1));
     require(impossible.status == "infeasible_by_lower_bound", "lower-bound rejection");

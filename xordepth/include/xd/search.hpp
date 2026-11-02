@@ -46,6 +46,9 @@ class SearchState {
     bool valid() const { return valid_; }
     bool complete() const;
     int best_cost_lower_bound() const;
+    // Search priority only: alternatives can overcount mandatory live gates.
+    // Never use this score for branch-and-bound or as proof of optimality.
+    int cost_priority() const;
     std::string signature() const;
     ringlab::Circuit export_circuit() const;
     const ParetoFrontier &frontier(std::size_t index) const;
