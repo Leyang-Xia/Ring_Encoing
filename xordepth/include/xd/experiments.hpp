@@ -4,8 +4,6 @@
 #include <vector>
 
 namespace xd {
-using ringlab::Json;
-using ringlab::Rows;
 
 struct Options {
     // Share thresholds to sweep; 0 or 1 means "no sharing at all".
@@ -21,11 +19,11 @@ struct Options {
     std::string output;
 };
 
-// Count/depth Pareto set for one fixed matrix. Rows are the fixed-input targets.
-Json frontier(const Rows &rows, int inputs, const Json &source, const Options &options);
+// Count/depth Pareto set for one fixed matrix. BitRows are the fixed-input targets.
+Json frontier(const BitRows &rows, int inputs, const Json &source, const Options &options);
 
 // Run the hard-depth bounded search and serialize one complete result record.
-Json bounded_result(const Rows &rows, int inputs, const Json &source,
+Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                     const BoundedScheduleOptions &options,
                     const std::vector<std::string> &incumbent_files = {});
 
@@ -41,5 +39,5 @@ Json verify_result(const std::string &path);
 Json verify_bounded_result(const std::string &path);
 
 // Parse a 01 matrix: one output per line, one input per column.
-Rows read_matrix(const std::string &path, int &inputs);
+BitRows read_matrix(const std::string &path, int &inputs);
 } // namespace xd

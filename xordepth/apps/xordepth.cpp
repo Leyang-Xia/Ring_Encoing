@@ -37,7 +37,7 @@ re-checks them symbolically. Heuristic upper bounds, not optimality claims.
 int parse_int(const std::string &text) {
     std::size_t count = 0;
     auto n = std::stoll(text, &count);
-    ringlab::require(count == text.size() && n >= 0 && n <= 1000000,
+    require(count == text.size() && n >= 0 && n <= 1000000,
                      "expected integer in [0,1000000]: " + text);
     return int(n);
 }
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
         for (int i = 2; i < argc; ++i) {
             std::string key = argv[i];
             auto value = [&]() {
-                ringlab::require(i + 1 < argc, "missing value for " + key);
+                require(i + 1 < argc, "missing value for " + key);
                 return std::string(argv[++i]);
             };
             if (key == "--help") {
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
                 o.shares.clear();
                 while (std::getline(list, token, ','))
                     o.shares.push_back(parse_int(token));
-                ringlab::require(!o.shares.empty(), "--share requires at least one threshold");
+                require(!o.shares.empty(), "--share requires at least one threshold");
             } else if (key == "--depth-aware") {
                 o.depth_aware = true;
             } else if (key == "--also") {
@@ -118,37 +118,37 @@ int main(int argc, char **argv) {
                 auto text = value();
                 std::size_t count = 0;
                 bounded_options.timeout_seconds = std::stod(text, &count);
-                ringlab::require(count == text.size(), "invalid timeout");
+                require(count == text.size(), "invalid timeout");
             } else if (key == "--output") {
                 o.output = value();
             } else if (key.rfind("--", 0) == 0) {
-                ringlab::require(false, "unknown option: " + key);
+                require(false, "unknown option: " + key);
             } else {
                 positional.push_back(key);
             }
         }
         Json result;
         if (command == "frontier") {
-            ringlab::require(positional.size() == 1, "frontier takes exactly one matrix");
-            ringlab::require(!o.output.empty(), "frontier requires --output");
+            require(positional.size() == 1, "frontier takes exactly one matrix");
+            require(!o.output.empty(), "frontier requires --output");
             int inputs = 0;
             auto rows = read_matrix(positional[0], inputs);
             result = frontier(rows, inputs,
                               Json::object({{"matrix", positional[0]}}), o);
         } else if (command == "bounded") {
-            ringlab::require(positional.size() == 1, "bounded takes exactly one matrix");
-            ringlab::require(depth_set, "bounded requires --depth");
-            ringlab::require(!o.output.empty(), "bounded requires --output");
+            require(positional.size() == 1, "bounded takes exactly one matrix");
+            require(depth_set, "bounded requires --depth");
+            require(!o.output.empty(), "bounded requires --output");
             int inputs = 0;
             auto rows = read_matrix(positional[0], inputs);
             result = bounded_result(rows, inputs,
                                     Json::object({{"matrix", positional[0]}}), bounded_options,
                                     o.incumbents);
         } else if (command == "audit") {
-            ringlab::require(!positional.empty(), "audit needs at least one JSON file");
+            require(!positional.empty(), "audit needs at least one JSON file");
             result = audit(positional);
         } else if (command == "verify") {
-            ringlab::require(positional.size() == 1, "verify takes exactly one result file");
+            require(positional.size() == 1, "verify takes exactly one result file");
             auto input = Json::read(positional[0]);
             if (input.has("method") && input["method"].string() == "DEPTH_BOUNDED_XSET_BEAM")
                 result = verify_bounded_result(positional[0]);

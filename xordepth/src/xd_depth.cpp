@@ -6,9 +6,9 @@
 
 namespace xd {
 namespace {
-using ringlab::GreedyCircuit;
-using ringlab::MaskHash;
-using ringlab::require;
+
+
+
 
 using Deadline = std::chrono::steady_clock::time_point;
 
@@ -17,14 +17,14 @@ void check_deadline(Deadline deadline) {
         throw SearchDeadlineExceeded();
 }
 
-// GreedyCircuit deduplicates by mask but exposes only its mask vector, so keep a
+// GreedyNetwork deduplicates by mask but exposes only its mask vector, so keep a
 // local node index in step with it instead of reaching into the class.
-void index_new(const GreedyCircuit &c, std::unordered_map<Mask, int, MaskHash> &by_mask,
+void index_new(const GreedyNetwork &c, std::unordered_map<BitMask, int, BitMaskHash> &by_mask,
                std::size_t &seen) {
     for (; seen < c.masks.size(); ++seen)
         by_mask.emplace(c.masks[seen], int(seen));
 }
-int xor_node(GreedyCircuit &c, std::unordered_map<Mask, int, MaskHash> &by_mask,
+int xor_node(GreedyNetwork &c, std::unordered_map<BitMask, int, BitMaskHash> &by_mask,
              std::size_t &seen, int a, int b) {
     int node = c.xor_nodes(a, b);
     index_new(c, by_mask, seen);
@@ -56,7 +56,7 @@ void record_depth(std::unordered_map<int, int> &depth, int node, int value) {
 // Huffman accumulation on arrival depth: repeatedly combine the two earliest
 // ready signals. This minimizes the depth of one sum for a fixed term set and
 // uses exactly (#terms - 1) gates before sharing is accounted for.
-int accumulate(GreedyCircuit &c, std::unordered_map<Mask, int, MaskHash> &by_mask,
+int accumulate(GreedyNetwork &c, std::unordered_map<BitMask, int, BitMaskHash> &by_mask,
                std::size_t &seen, std::unordered_map<int, int> &depth, std::vector<int> pool,
                Deadline deadline) {
     while (pool.size() > 1) {
@@ -109,7 +109,7 @@ DepthProfile depth_profile(const Circuit &c) {
     return p;
 }
 
-int depth_lower_bound(const Rows &targets) {
+int depth_lower_bound(const BitRows &targets) {
     int bound = 0;
     for (const auto &row : targets) {
         std::size_t weight = std::size_t(row.count());
@@ -121,12 +121,12 @@ int depth_lower_bound(const Rows &targets) {
     return bound;
 }
 
-Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptions &options,
+Circuit synthesize_schedule(const BitRows &targets, int inputs, const ScheduleOptions &options,
                             std::uint64_t seed, Deadline deadline) {
     check_deadline(deadline);
     require(options.share_threshold >= 0, "share threshold must be nonnegative");
-    GreedyCircuit c(inputs);
-    std::unordered_map<Mask, int, MaskHash> by_mask;
+    GreedyNetwork c(inputs);
+    std::unordered_map<BitMask, int, BitMaskHash> by_mask;
     std::size_t seen = 0;
     index_new(c, by_mask, seen);
     std::unordered_map<int, int> depth;
@@ -144,7 +144,7 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
     std::unordered_map<std::uint64_t, int> freq;
     for (const auto &row : expressions)
         update_pairs(freq, row, 1);
-    ringlab::SeedRandom random(seed);
+    SeedRandom random(seed);
     const int threshold = std::max(options.share_threshold, 2);
     while (options.share_threshold > 1) {
         check_deadline(deadline);
@@ -193,7 +193,7 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
     outputs.reserve(expressions.size());
     for (const auto &row : expressions) {
         check_deadline(deadline);
-        Mask mask;
+        BitMask mask;
         for (auto node : row)
             mask ^= c.masks.at(node);
         auto it = by_mask.find(mask);
@@ -211,11 +211,11 @@ Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptio
 
 Circuit rebalanced(const Circuit &c, Deadline deadline) {
     check_deadline(deadline);
-    std::unordered_map<int, Mask> value;
+    std::unordered_map<int, BitMask> value;
     for (int i = 0; i < c.inputs; ++i)
-        value.emplace(i, Mask::unit(i));
+        value.emplace(i, BitMask::unit(i));
     if (c.has_zero)
-        value.emplace(c.zero_node, Mask());
+        value.emplace(c.zero_node, BitMask());
     std::unordered_map<int, std::array<int, 2>> operands;
     std::unordered_map<int, int> consumers;
     for (const auto &op : c.ops) {
@@ -232,8 +232,8 @@ Circuit rebalanced(const Circuit &c, Deadline deadline) {
     auto foldable = [&](int node) {
         return operands.count(node) && consumers[node] == 1 && !outputs.count(node);
     };
-    GreedyCircuit c2(c.inputs);
-    std::unordered_map<Mask, int, MaskHash> by_mask;
+    GreedyNetwork c2(c.inputs);
+    std::unordered_map<BitMask, int, BitMaskHash> by_mask;
     std::size_t seen = 0;
     index_new(c2, by_mask, seen);
     std::unordered_map<int, int> depth;

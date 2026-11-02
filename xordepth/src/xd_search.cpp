@@ -9,7 +9,6 @@
 
 namespace xd {
 namespace {
-using ringlab::require;
 
 void check_search_deadline(const BoundedScheduleOptions &options) {
     if (options.deadline != std::chrono::steady_clock::time_point::max() &&
@@ -89,13 +88,13 @@ bool candidate_allowed(int left_depth, int right_depth, int max_depth) {
     return candidate_depth(left_depth, right_depth) <= max_depth;
 }
 
-int lookup_node(const std::unordered_map<ringlab::Mask, int, ringlab::MaskHash> &nodes,
-                const ringlab::Mask &mask) {
+int lookup_node(const std::unordered_map<BitMask, int, BitMaskHash> &nodes,
+                const BitMask &mask) {
     auto it = nodes.find(mask);
     return it == nodes.end() ? -1 : it->second;
 }
 
-void validate_target_width(const ringlab::Rows &targets, int inputs) {
+void validate_target_width(const BitRows &targets, int inputs) {
     require(inputs > 0, "invalid input count");
     for (const auto &target : targets)
         require(target.bits() <= static_cast<std::size_t>(inputs), "target mask exceeds input width");
@@ -110,7 +109,7 @@ std::string canonical_representation(const Representation &representation) {
     return out.str();
 }
 
-SearchState SearchState::initial(const ringlab::Rows &targets, int inputs,
+SearchState SearchState::initial(const BitRows &targets, int inputs,
                                  const BoundedScheduleOptions &options) {
     check_search_deadline(options);
     require(inputs > 0, "invalid input count");
@@ -126,7 +125,7 @@ SearchState SearchState::initial(const ringlab::Rows &targets, int inputs,
     state.nodes_.reserve(inputs);
     for (int i = 0; i < inputs; ++i) {
         check_search_deadline(options);
-        state.nodes_.push_back(NodeRecord{ringlab::Mask::unit(i), 0, -1, -1});
+        state.nodes_.push_back(NodeRecord{BitMask::unit(i), 0, -1, -1});
         state.node_by_mask_.emplace(state.nodes_.back().mask, i);
     }
     state.frontiers_.resize(targets.size());
@@ -418,10 +417,10 @@ std::string SearchState::signature() const {
     return out.str();
 }
 
-ringlab::Circuit SearchState::export_circuit() const {
+Circuit SearchState::export_circuit() const {
     check_search_deadline(options_);
     require(valid_ && complete(), "cannot export incomplete search state");
-    ringlab::GreedyCircuit circuit(inputs_);
+    GreedyNetwork circuit(inputs_);
     std::vector<int> mapped(nodes_.size(), -1);
     for (int i = 0; i < inputs_; ++i) mapped[i] = i;
     for (std::size_t i = static_cast<std::size_t>(inputs_); i < nodes_.size(); ++i) {
@@ -448,9 +447,9 @@ ringlab::Circuit SearchState::export_circuit() const {
     return result;
 }
 
-BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int inputs,
+BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                          const BoundedScheduleOptions &options,
-                                         const std::vector<ringlab::Circuit> &incumbents) {
+                                         const std::vector<Circuit> &incumbents) {
     validate_target_width(targets, inputs);
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
@@ -509,7 +508,7 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
         result.status = "timeout";
         return result;
     }
-    auto consider_incumbent = [&](ringlab::Circuit circuit) {
+    auto consider_incumbent = [&](Circuit circuit) {
         if (std::chrono::steady_clock::now() >= deadline) throw SearchDeadlineExceeded();
         circuit.verify(targets);
         auto profile = depth_profile(circuit);
@@ -564,7 +563,7 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
                     continue;
                 }
                 auto candidates = state.candidates();
-                ringlab::SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
+                SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
                 if (restart > 0 || options.seed != 0)
                     for (std::size_t i = candidates.size(); i > 1; --i)
                         std::swap(candidates[i - 1], candidates[random.below(i)]);
@@ -650,7 +649,7 @@ BoundedScheduleResult synthesize_bounded(const ringlab::Rows &targets, int input
     }
     if (result.status == "verified") return result;
     result.status = timed_out ? "timeout" : "search_failed";
-    result.circuit = ringlab::Circuit();
+    result.circuit = Circuit();
     return result;
 }
 

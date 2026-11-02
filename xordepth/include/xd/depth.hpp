@@ -1,5 +1,5 @@
 #pragma once
-#include "ringlab/core.hpp"
+#include "xd/core.hpp"
 #include <chrono>
 #include <cstdint>
 #include <exception>
@@ -8,9 +8,6 @@
 #include <string>
 
 namespace xd {
-using ringlab::Circuit;
-using ringlab::Mask;
-using ringlab::Rows;
 
 // Critical path of a XOR network, counted in two-input XOR gates from a primary
 // input (or the constant zero) to an output. Wiring and aliases cost no gate.
@@ -26,7 +23,7 @@ DepthProfile depth_profile(const Circuit &circuit);
 // One gate can at most double the number of distinct inputs it covers, so an
 // output of weight w needs at least ceil(log2 w) levels. This bound ignores
 // sharing and fanout, so it is weak: it is a floor, not a target.
-int depth_lower_bound(const Rows &targets);
+int depth_lower_bound(const BitRows &targets);
 
 struct ScheduleOptions {
     // A pair of signals must appear in at least this many output rows before it
@@ -75,14 +72,14 @@ struct SearchDeadlineExceeded final : std::exception {
     const char *what() const noexcept override { return "xordepth search deadline exceeded"; }
 };
 
-BoundedScheduleResult synthesize_bounded(const Rows &targets, int inputs,
+BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                          const BoundedScheduleOptions &options,
                                          const std::vector<Circuit> &incumbents = {});
 
 // Plank-style common-subexpression scheduling with a depth-aware selection pass
 // and a balanced (Huffman by arrival time) final accumulation. Every output,
 // dependency and live gate is re-verified before returning.
-Circuit synthesize_schedule(const Rows &targets, int inputs, const ScheduleOptions &options,
+Circuit synthesize_schedule(const BitRows &targets, int inputs, const ScheduleOptions &options,
                             std::uint64_t seed = 0,
                             std::chrono::steady_clock::time_point deadline =
                                 std::chrono::steady_clock::time_point::max());

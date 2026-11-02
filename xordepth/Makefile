@@ -1,15 +1,12 @@
 CXX ?= c++
-CORE ?= ../src
-INCLUDE ?= ../include
+INCLUDE ?= include
 BUILD ?= build
 
-# This experiment reuses the ringlab core primitives (exact JSON integers, masks,
-# circuit construction, Plank-style CSE) and nothing from its experiment layer.
-CPPFLAGS += -I$(INCLUDE) -Iinclude
+CPPFLAGS += -I$(INCLUDE)
 CXXFLAGS ?= -O3 -DNDEBUG
 override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic
 
-SHARED = $(CORE)/json.cpp $(CORE)/bitvector.cpp $(CORE)/circuit.cpp $(CORE)/cse.cpp
+CORE = src/xd_json.cpp src/xd_core_mask.cpp src/xd_core_circuit.cpp src/xd_core_network.cpp
 LOCAL = src/xd_depth.cpp src/xd_frontier.cpp src/xd_search.cpp
 
 .PHONY: all test clean
@@ -18,19 +15,20 @@ all: $(BUILD)/xordepth
 $(BUILD):
 	mkdir -p $@
 
-$(BUILD)/xordepth: apps/xordepth.cpp $(LOCAL) $(SHARED) | $(BUILD)
+$(BUILD)/xordepth: apps/xordepth.cpp $(LOCAL) $(CORE) | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-$(BUILD)/xd-test: tests/xd_test.cpp $(LOCAL) $(SHARED) | $(BUILD)
+$(BUILD)/xd-test: tests/xd_test.cpp $(LOCAL) $(CORE) | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-$(BUILD)/xd-search-test: tests/xd_search_test.cpp $(LOCAL) $(SHARED) | $(BUILD)
+$(BUILD)/xd-search-test: tests/xd_search_test.cpp $(LOCAL) $(CORE) | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 test: all $(BUILD)/xd-test $(BUILD)/xd-search-test
 	$(BUILD)/xd-test
 	$(BUILD)/xd-search-test
 	bash tests/cli_test.sh $(BUILD)/xordepth
+	bash tests/independence_test.sh
 
 clean:
 	rm -rf $(BUILD)

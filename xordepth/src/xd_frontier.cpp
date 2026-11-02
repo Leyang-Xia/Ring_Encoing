@@ -7,7 +7,6 @@
 
 namespace xd {
 namespace {
-using ringlab::require;
 
 struct Found {
     std::string path;
@@ -34,22 +33,22 @@ void collect(const Json &value, const std::string &path, std::vector<Found> &out
 
 // Masks are stored as exact decimal strings: a binary linear form can exceed
 // any fixed-width integer, so the JSON never carries them as numbers.
-Json masks_to_json(const Rows &rows) {
+Json masks_to_json(const BitRows &rows) {
     auto out = Json::array();
     for (const auto &row : rows)
         out.arr.emplace_back(row.decimal());
     return out;
 }
 
-Rows json_to_masks(const Json &value) {
+BitRows json_to_masks(const Json &value) {
     require(value.type == Json::Type::Array, "mask list must be an array");
-    Rows rows;
+    BitRows rows;
     for (const auto &item : value.arr)
-        rows.push_back(Mask::decimal(item.string()));
+        rows.push_back(BitMask::decimal(item.string()));
     return rows;
 }
 
-int heaviest_row(const Rows &rows) {
+int heaviest_row(const BitRows &rows) {
     int weight = 0;
     for (const auto &row : rows)
         weight = std::max(weight, row.count());
@@ -102,14 +101,14 @@ std::string share_label(int share, bool depth_aware) {
 }
 } // namespace
 
-Rows read_matrix(const std::string &path, int &inputs) {
+BitRows read_matrix(const std::string &path, int &inputs) {
     std::ifstream file(path);
     require(bool(file), "cannot read matrix: " + path);
     std::string line;
-    Rows rows;
+    BitRows rows;
     inputs = 0;
     while (std::getline(file, line)) {
-        Mask row;
+        BitMask row;
         int bit = 0;
         for (char c : line) {
             if (c == ' ' || c == '\t' || c == '\r')
@@ -130,7 +129,7 @@ Rows read_matrix(const std::string &path, int &inputs) {
     return rows;
 }
 
-Json frontier(const Rows &rows, int inputs, const Json &source, const Options &o) {
+Json frontier(const BitRows &rows, int inputs, const Json &source, const Options &o) {
     require(inputs > 0, "matrix needs at least one input column");
     auto result = Json::object({{"status", "verified"},
                                 {"scope", "fixed-input-to-fixed-output XOR network"},
@@ -145,7 +144,7 @@ Json frontier(const Rows &rows, int inputs, const Json &source, const Options &o
                                          "gates from a primary input to an output. Every entry is "
                                          "a heuristic upper bound; the frontier is not an "
                                          "optimality claim."}});
-    auto chained = ringlab::synthesize(rows, inputs);
+    auto chained = synthesize(rows, inputs);
     result["candidates"].arr.push_back(candidate("CSE-chained", chained, "CSE_CHAINED", 2, false));
     result["candidates"].arr.push_back(
         candidate("CSE-chained-rebalanced", rebalanced(chained), "REBALANCED", 2, false));
@@ -196,7 +195,7 @@ Json frontier(const Rows &rows, int inputs, const Json &source, const Options &o
     return result;
 }
 
-Json bounded_result(const Rows &rows, int inputs, const Json &source,
+Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                     const BoundedScheduleOptions &options,
                     const std::vector<std::string> &incumbent_files) {
     std::vector<Circuit> incumbents;

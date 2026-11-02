@@ -2,7 +2,7 @@
 #include <iostream>
 
 using namespace xd;
-using ringlab::require;
+
 
 template <class F> void rejects(F f) {
     bool rejected = false;
@@ -17,19 +17,19 @@ template <class F> void rejects(F f) {
 int main() {
     try {
         // A chain of three gates and a balanced tree over the same four terms.
-        auto chained = ringlab::synthesize({Mask(15)}, 4);
+        auto chained = synthesize({BitMask(15)}, 4);
         require(chained.cost() == 3 && depth_profile(chained).depth == 3, "chained depth");
-        require(depth_lower_bound({Mask(15), Mask(3)}) == 2, "lower bound");
-        require(depth_lower_bound({Mask(1)}) == 0, "single input bound");
-        require(depth_lower_bound({Mask(0)}) == 0, "zero row bound");
+        require(depth_lower_bound({BitMask(15), BitMask(3)}) == 2, "lower bound");
+        require(depth_lower_bound({BitMask(1)}) == 0, "single input bound");
+        require(depth_lower_bound({BitMask(0)}) == 0, "zero row bound");
         ScheduleOptions options;
-        auto balanced = synthesize_schedule({Mask(15)}, 4, options);
+        auto balanced = synthesize_schedule({BitMask(15)}, 4, options);
         require(balanced.cost() == 3 && depth_profile(balanced).depth == 2, "balanced depth");
-        balanced.verify({Mask(15)});
+        balanced.verify({BitMask(15)});
 
         // Without sharing, every row is its own balanced tree.
         options.share_threshold = 0;
-        Rows disjoint{Mask(15), Mask(0xf0)};
+        BitRows disjoint{BitMask(15), BitMask(0xf0)};
         auto lone = synthesize_schedule(disjoint, 8, options);
         require(lone.cost() == (4 - 1) + (4 - 1), "no-sharing cost");
         lone.verify(disjoint);
@@ -38,11 +38,11 @@ int main() {
         auto repaired = rebalanced(chained);
         require(repaired.cost() == chained.cost(), "rebalance kept the gate count");
         require(depth_profile(repaired).depth == 2, "rebalance shortened a chain");
-        repaired.verify({Mask(15)});
+        repaired.verify({BitMask(15)});
         require(rebalanced(repaired).cost() == repaired.cost(), "rebalance is stable");
 
-        Rows rows{Mask(15), Mask(9), Mask(6), Mask(0)};
-        auto shared = ringlab::synthesize(rows, 4);
+        BitRows rows{BitMask(15), BitMask(9), BitMask(6), BitMask(0)};
+        auto shared = synthesize(rows, 4);
         auto fixed = rebalanced(shared);
         fixed.verify(rows);
         require(fixed.cost() <= shared.cost(), "rebalance cost is non-increasing");
