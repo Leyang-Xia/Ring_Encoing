@@ -116,7 +116,9 @@ SearchState SearchState::initial(const BitRows &targets, int inputs,
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
                 options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
-                options.lookahead_depth >= 0,
+                options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
+                options.residual_targets >= 0 &&
+                (options.residual_pairs == 0 || options.residual_targets > 0),
             "invalid bounded search options");
     validate_target_width(targets, inputs);
     SearchState state;
@@ -221,6 +223,91 @@ std::vector<Candidate> SearchState::candidates() const {
     std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
         if (a.support != b.support) return a.support > b.support;
         if (a.arrival_depth != b.arrival_depth) return a.arrival_depth < b.arrival_depth;
+        if (a.left != b.left) return a.left < b.left;
+        return a.right < b.right;
+    });
+    return result;
+}
+
+std::vector<Candidate> SearchState::toggle_candidates() const {
+    check_search_deadline(options_);
+    if (options_.residual_pairs == 0 || options_.residual_targets == 0) return {};
+    struct PairSummary {
+        int left = -1;
+        int right = -1;
+        int support = 0;
+        int depth = 0;
+    };
+    std::vector<PairSummary> pairs;
+    for (int left = 0; left < static_cast<int>(nodes_.size()); ++left) {
+        for (int right = left + 1; right < static_cast<int>(nodes_.size()); ++right) {
+            check_search_deadline(options_);
+            int support = 0;
+            for (const auto &frontier : frontiers_)
+                for (const auto &entry : frontier.entries) {
+                    const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), left) != entry.terms.end();
+                    const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), right) != entry.terms.end();
+                    if (has_left || has_right || options_.allow_empty_toggle) ++support;
+                }
+            if (!support || !candidate_allowed(node_depth(left), node_depth(right),
+                                               options_.max_depth))
+                continue;
+            pairs.push_back(PairSummary{left, right, support,
+                                         candidate_depth(node_depth(left), node_depth(right))});
+        }
+    }
+    std::sort(pairs.begin(), pairs.end(), [](const PairSummary &a, const PairSummary &b) {
+        if (a.support != b.support) return a.support > b.support;
+        if (a.depth != b.depth) return a.depth < b.depth;
+        if (a.left != b.left) return a.left < b.left;
+        return a.right < b.right;
+    });
+    if (pairs.size() > static_cast<std::size_t>(options_.residual_pairs))
+        pairs.resize(static_cast<std::size_t>(options_.residual_pairs));
+    std::vector<Candidate> result;
+    for (const auto &pair : pairs) {
+        int used = 0;
+        for (std::size_t target = 0; target < frontiers_.size() &&
+                                      used < options_.residual_targets; ++target) {
+            for (std::size_t representation = 0;
+                 representation < frontiers_[target].entries.size() &&
+                 used < options_.residual_targets; ++representation) {
+                check_search_deadline(options_);
+                const auto &entry = frontiers_[target].entries[representation];
+                const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), pair.left) != entry.terms.end();
+                const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), pair.right) != entry.terms.end();
+                if (!has_left && !has_right && !options_.allow_empty_toggle) continue;
+                int node = lookup_node(node_by_mask_, nodes_[pair.left].mask ^ nodes_[pair.right].mask);
+                if (node < 0) node = static_cast<int>(nodes_.size());
+                std::vector<int> terms = entry.terms;
+                auto toggle_term = [&](int term) {
+                    auto it = std::find(terms.begin(), terms.end(), term);
+                    if (it == terms.end()) terms.push_back(term);
+                    else terms.erase(it);
+                };
+                toggle_term(pair.left);
+                toggle_term(pair.right);
+                toggle_term(node);
+                const int new_node_depth = node < static_cast<int>(nodes_.size())
+                                               ? node_depth(node)
+                                               : pair.depth;
+                std::vector<int> arrival_depths;
+                arrival_depths.reserve(terms.size());
+                for (int term : terms)
+                    arrival_depths.push_back(term == node ? new_node_depth : node_depth(term));
+                if (combine_depth(arrival_depths) > options_.max_depth) continue;
+                Candidate candidate{pair.left, pair.right, pair.depth, pair.support,
+                                    static_cast<int>(target), static_cast<int>(representation), true};
+                result.push_back(candidate);
+                ++used;
+            }
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
+        if (a.support != b.support) return a.support > b.support;
+        if (a.arrival_depth != b.arrival_depth) return a.arrival_depth < b.arrival_depth;
+        if (a.target != b.target) return a.target < b.target;
+        if (a.representation != b.representation) return a.representation < b.representation;
         if (a.left != b.left) return a.left < b.left;
         return a.right < b.right;
     });
@@ -510,7 +597,9 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
                 options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
-                options.lookahead_depth >= 0,
+                options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
+                options.residual_targets >= 0 &&
+                (options.residual_pairs == 0 || options.residual_targets > 0),
             "invalid bounded search options");
     BoundedScheduleResult result;
     result.requested_depth = options.max_depth;
@@ -619,6 +708,11 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     continue;
                 }
                 auto candidates = state.candidates();
+                if (options.residual_pairs > 0) {
+                    auto toggles = state.toggle_candidates();
+                    result.toggle_candidates += toggles.size();
+                    candidates.insert(candidates.end(), toggles.begin(), toggles.end());
+                }
                 SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
                 if (restart > 0 || options.seed != 0)
                     for (std::size_t i = candidates.size(); i > 1; --i)
@@ -668,7 +762,11 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                 if (candidates.size() > static_cast<std::size_t>(options.branch_width))
                     candidates.resize(static_cast<std::size_t>(options.branch_width));
                 for (const auto &candidate : candidates) {
-                    auto child = state.apply(candidate);
+                    auto child = candidate.toggle
+                                     ? state.apply_toggle(candidate.left, candidate.right,
+                                                          static_cast<std::size_t>(candidate.target),
+                                                          static_cast<std::size_t>(candidate.representation))
+                                     : state.apply(candidate);
                     if (!child.valid()) {
                         ++result.pruned_depth;
                         continue;

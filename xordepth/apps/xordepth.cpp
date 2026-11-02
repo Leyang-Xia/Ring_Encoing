@@ -23,6 +23,9 @@ Options:
   --restarts N       bounded deterministic restarts
   --lookahead-width K  bounded candidates scored with selective lookahead
   --lookahead-depth L  future transitions simulated per scored candidate
+  --residual-pairs N   global pair candidates considered for residual toggles
+  --residual-targets N  target representations expanded per residual pair
+  --allow-empty-toggle allow residual toggles with neither operand present
   --seed N           bounded candidate-order seed
   --timeout SEC      bounded search budget
   --incumbent FILE.json  verified stored circuit(s) used as bounded references
@@ -112,6 +115,12 @@ int main(int argc, char **argv) {
                 bounded_options.lookahead_width = parse_int(value());
             } else if (key == "--lookahead-depth") {
                 bounded_options.lookahead_depth = parse_int(value());
+            } else if (key == "--residual-pairs") {
+                bounded_options.residual_pairs = parse_int(value());
+            } else if (key == "--residual-targets") {
+                bounded_options.residual_targets = parse_int(value());
+            } else if (key == "--allow-empty-toggle") {
+                bounded_options.allow_empty_toggle = true;
             } else if (key == "--seed") {
                 bounded_options.seed = std::stoull(value());
             } else if (key == "--timeout") {

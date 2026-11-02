@@ -23,6 +23,12 @@ EOF
 grep -q '"status": "verified"' "$tmp/referenced.json"
 grep -q '"reference_cost": 3' "$tmp/referenced.json"
 "$tool" verify "$tmp/referenced.json" | grep -q '"status": "verified"'
+
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
+  --residual-pairs 2 --residual-targets 1 --timeout 5 --output "$tmp/residual.json" > /dev/null
+grep -q '"residual_pairs": 2' "$tmp/residual.json"
+grep -q '"residual_targets": 1' "$tmp/residual.json"
+grep -q '"toggle_candidates":' "$tmp/residual.json"
 cp "$tmp/bounded.json" "$tmp/tampered.json"
 perl -0pi -e 's/"depth":\s*2/"depth": 99/' "$tmp/tampered.json"
 expect_fail "$tool" verify "$tmp/tampered.json"

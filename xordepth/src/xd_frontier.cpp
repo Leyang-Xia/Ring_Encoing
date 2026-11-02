@@ -245,11 +245,15 @@ Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                                 {"restarts", options.restarts},
                                 {"lookahead_width", options.lookahead_width},
                                 {"lookahead_depth", options.lookahead_depth},
+                                {"residual_pairs", options.residual_pairs},
+                                {"residual_targets", options.residual_targets},
+                                {"allow_empty_toggle", options.allow_empty_toggle},
                                 {"seed", std::uint64_t(options.seed)},
                                 {"timeout_seconds", options.timeout_seconds},
                                 {"explored_states", std::uint64_t(search.explored_states)},
                                 {"pruned_depth", std::uint64_t(search.pruned_depth)},
                                 {"pruned_bound", std::uint64_t(search.pruned_bound)},
+                                {"toggle_candidates", std::uint64_t(search.toggle_candidates)},
                                 {"reference_cost", search.reference_cost < 0
                                                            ? Json()
                                                            : Json(search.reference_cost)},
@@ -375,12 +379,19 @@ Json verify_bounded_result(const std::string &path) {
         require(data["lookahead_width"].integer() >= 0, "bounded lookahead width must be nonnegative");
     if (data.has("lookahead_depth"))
         require(data["lookahead_depth"].integer() >= 0, "bounded lookahead depth must be nonnegative");
+    if (data.has("residual_pairs"))
+        require(data["residual_pairs"].integer() >= 0, "bounded residual pair limit must be nonnegative");
+    if (data.has("residual_targets"))
+        require(data["residual_targets"].integer() >= 0, "bounded residual target limit must be nonnegative");
     require(std::isfinite(data["timeout_seconds"].number()) &&
                 data["timeout_seconds"].number() > 0,
             "bounded timeout must be finite and positive");
     require(data["explored_states"].integer() >= 0 && data["pruned_depth"].integer() >= 0 &&
                 data["pruned_bound"].integer() >= 0,
             "bounded search counters must be nonnegative");
+    if (data.has("toggle_candidates"))
+        require(data["toggle_candidates"].integer() >= 0,
+                "bounded toggle candidate count must be nonnegative");
     if (data.has("reference_cost") && !data["reference_cost"].null())
         require(data["reference_cost"].integer() >= 0, "bounded reference cost must be nonnegative");
     const std::string status = data["status"].string();

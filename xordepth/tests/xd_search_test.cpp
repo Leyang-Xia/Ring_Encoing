@@ -88,6 +88,15 @@ int main() {
     auto toggle_too_shallow = SearchState::initial({BitMask(15)}, 4, options(1));
     require(!toggle_too_shallow.apply_toggle(0, 1, 0, 0).valid(),
             "residual toggle respects hard depth limit");
+    auto residual_options = options(2);
+    residual_options.residual_pairs = 2;
+    residual_options.residual_targets = 1;
+    auto residual_state = SearchState::initial({BitMask(15), BitMask(7)}, 4,
+                                               residual_options);
+    auto residual_candidates = residual_state.toggle_candidates();
+    require(residual_candidates.size() <= 2, "residual target expansion is bounded");
+    for (const auto &candidate : residual_candidates)
+        require(candidate.toggle, "residual candidate is marked as toggle");
 
     // The second output has alternative producers. The unused producer of
     // mask 7 must not become a mandatory cost of completing mask 15.

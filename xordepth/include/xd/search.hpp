@@ -21,6 +21,9 @@ struct Candidate {
     int right = -1;
     int arrival_depth = 0;
     int support = 0;
+    int target = -1;
+    int representation = -1;
+    bool toggle = false;
 };
 
 struct NodeRecord {
@@ -45,6 +48,7 @@ class SearchState {
     SearchState apply(const Candidate &candidate) const;
     SearchState apply_toggle(int left, int right, std::size_t target,
                              std::size_t representation) const;
+    std::vector<Candidate> toggle_candidates() const;
     bool valid() const { return valid_; }
     bool complete() const;
     int best_cost_lower_bound() const;

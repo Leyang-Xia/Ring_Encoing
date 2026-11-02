@@ -43,6 +43,9 @@ struct BoundedScheduleOptions {
     // otherwise the first K candidates are simulated for L future steps.
     int lookahead_width = 0;
     int lookahead_depth = 0;
+    int residual_pairs = 0;
+    int residual_targets = 0;
+    bool allow_empty_toggle = false;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
     // Internal monotonic deadline used by SearchState; not serialized as a
@@ -59,6 +62,7 @@ struct BoundedScheduleResult {
     std::size_t explored_states = 0;
     std::size_t pruned_depth = 0;
     std::size_t pruned_bound = 0;
+    std::size_t toggle_candidates = 0;
     // Cost of the best externally supplied, verified incumbent that was
     // feasible at the requested depth, or -1 when none was supplied.
     int reference_cost = -1;
