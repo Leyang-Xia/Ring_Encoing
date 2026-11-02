@@ -59,6 +59,7 @@ bool dominates(const std::vector<int> &a, const std::vector<int> &b) {
 }
 
 bool dominates(const Representation &a, const Representation &b) {
+    if (a.future_support > b.future_support) return false;
     return a.terms.size() <= b.terms.size() && a.arrival_depth <= b.arrival_depth &&
            (a.terms.size() < b.terms.size() || a.arrival_depth < b.arrival_depth);
 }
@@ -73,6 +74,8 @@ void pareto_insert(ParetoFrontier &frontier, Representation candidate, std::size
                            frontier.entries.end());
     frontier.entries.push_back(std::move(candidate));
     std::sort(frontier.entries.begin(), frontier.entries.end(), [](const Representation &x, const Representation &y) {
+        if (x.future_support != y.future_support)
+            return x.future_support > y.future_support;
         if (x.terms.size() != y.terms.size()) return x.terms.size() < y.terms.size();
         if (x.arrival_depth != y.arrival_depth) return x.arrival_depth < y.arrival_depth;
         if (x.mask != y.mask) return x.mask < y.mask;
@@ -299,12 +302,10 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
         pairs.resize(static_cast<std::size_t>(options_.residual_pairs));
     std::vector<Candidate> result;
     for (const auto &pair : pairs) {
-        int used = 0;
-        for (std::size_t target = 0; target < frontiers_.size() &&
-                                      used < options_.residual_targets; ++target) {
+        std::vector<Candidate> pair_candidates;
+        for (std::size_t target = 0; target < frontiers_.size(); ++target) {
             for (std::size_t representation = 0;
-                 representation < frontiers_[target].entries.size() &&
-                 used < options_.residual_targets; ++representation) {
+                 representation < frontiers_[target].entries.size(); ++representation) {
                 check_search_deadline(options_);
                 const auto &entry = frontiers_[target].entries[representation];
                 const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), pair.left) != entry.terms.end();
@@ -352,10 +353,23 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
                 candidate.depth_slack = options_.max_depth - new_arrival;
                 candidate.future_support = future_support;
                 candidate.toggle_penalty = std::max(0, -term_reduction);
-                result.push_back(candidate);
-                ++used;
+                pair_candidates.push_back(candidate);
             }
         }
+        std::sort(pair_candidates.begin(), pair_candidates.end(), [](const Candidate &a, const Candidate &b) {
+            if (a.future_support != b.future_support) return a.future_support > b.future_support;
+            if (a.term_reduction != b.term_reduction) return a.term_reduction > b.term_reduction;
+            if (a.affected_targets != b.affected_targets)
+                return a.affected_targets > b.affected_targets;
+            if (a.depth_slack != b.depth_slack) return a.depth_slack > b.depth_slack;
+            if (a.toggle_penalty != b.toggle_penalty)
+                return a.toggle_penalty < b.toggle_penalty;
+            if (a.target != b.target) return a.target < b.target;
+            return a.representation < b.representation;
+        });
+        if (pair_candidates.size() > static_cast<std::size_t>(options_.residual_targets))
+            pair_candidates.resize(static_cast<std::size_t>(options_.residual_targets));
+        result.insert(result.end(), pair_candidates.begin(), pair_candidates.end());
     }
     std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
         if (a.future_support != b.future_support) return a.future_support > b.future_support;
@@ -430,7 +444,8 @@ SearchState SearchState::apply(const Candidate &candidate) const {
 }
 
 SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
-                                      std::size_t representation) const {
+                                      std::size_t representation,
+                                      int future_support) const {
     check_search_deadline(options_);
     SearchState child = *this;
     const int parent_node_count = static_cast<int>(nodes_.size());
@@ -471,6 +486,7 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
     toggle_term(right);
     toggle_term(node);
     auto replacement = child.make_representation(terms);
+    replacement.future_support = future_support;
     if (replacement.arrival_depth > options_.max_depth) {
         child.valid_ = false;
         return child;
@@ -821,7 +837,8 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                          ? state.apply_toggle(
                                                candidates[i].left, candidates[i].right,
                                                static_cast<std::size_t>(candidates[i].target),
-                                               static_cast<std::size_t>(candidates[i].representation))
+                                               static_cast<std::size_t>(candidates[i].representation),
+                                               candidates[i].future_support)
                                          : state.apply(candidates[i]);
                         if (!probe.valid()) continue;
                         int bound = probe.cost_priority();
@@ -838,7 +855,8 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                         ? probe.apply_toggle(
                                               future.left, future.right,
                                               static_cast<std::size_t>(future.target),
-                                              static_cast<std::size_t>(future.representation))
+                                              static_cast<std::size_t>(future.representation),
+                                              future.future_support)
                                         : probe.apply(future);
                             if (!probe.valid()) break;
                             bound = probe.cost_priority();
@@ -867,7 +885,8 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     auto child = candidate.toggle
                                      ? state.apply_toggle(candidate.left, candidate.right,
                                                           static_cast<std::size_t>(candidate.target),
-                                                          static_cast<std::size_t>(candidate.representation))
+                                                          static_cast<std::size_t>(candidate.representation),
+                                                          candidate.future_support)
                                      : state.apply(candidate);
                     if (!child.valid()) {
                         ++result.pruned_depth;

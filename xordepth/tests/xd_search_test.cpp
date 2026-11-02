@@ -85,6 +85,10 @@ int main() {
             "residual toggle preserves target mask");
     require(toggle_state.signature() != toggled.signature(),
             "residual toggle does not mutate parent state");
+    auto scored_toggle = toggle_state.apply_toggle(0, 1, 0, 0, 3);
+    require(scored_toggle.valid(), "scored residual toggle is valid");
+    require(scored_toggle.frontier(0).entries.front().future_support == 3,
+            "residual future support survives frontier insertion");
     auto toggle_too_shallow = SearchState::initial({BitMask(15)}, 4, options(1));
     require(!toggle_too_shallow.apply_toggle(0, 1, 0, 0).valid(),
             "residual toggle respects hard depth limit");

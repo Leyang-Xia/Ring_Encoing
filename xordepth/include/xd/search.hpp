@@ -12,6 +12,7 @@ struct Representation {
     std::vector<int> terms;
     BitMask mask;
     int arrival_depth = 0;
+    int future_support = 0;
 };
 
 struct ParetoFrontier { std::vector<Representation> entries; };
@@ -52,7 +53,7 @@ class SearchState {
     std::vector<Candidate> candidates() const;
     SearchState apply(const Candidate &candidate) const;
     SearchState apply_toggle(int left, int right, std::size_t target,
-                             std::size_t representation) const;
+                             std::size_t representation, int future_support = 0) const;
     std::vector<Candidate> toggle_candidates() const;
     bool valid() const { return valid_; }
     bool complete() const;
