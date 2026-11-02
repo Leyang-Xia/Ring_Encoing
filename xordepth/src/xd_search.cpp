@@ -857,6 +857,8 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                   return a.cost_priority() < b.cost_priority();
                               return a.signature() < b.signature();
                           });
+                if (bucket.second.size() > 1)
+                    bucket.second.resize(1);
             }
             std::vector<std::size_t> cursors(buckets.size(), 0);
             std::vector<SearchState> diverse;

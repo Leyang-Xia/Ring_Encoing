@@ -97,6 +97,11 @@ int main() {
     require(residual_candidates.size() <= 2, "residual target expansion is bounded");
     for (const auto &candidate : residual_candidates)
         require(candidate.toggle, "residual candidate is marked as toggle");
+    for (const auto &candidate : residual_candidates) {
+        require(candidate.affected_targets > 0, "residual candidate reports affected targets");
+        require(candidate.depth_slack >= 0, "residual candidate reports depth slack");
+        require(candidate.toggle_penalty >= 0, "residual candidate reports toggle penalty");
+    }
     auto empty_toggle_state = toggle_state.apply(Candidate{0, 1, 1, 1});
     require(empty_toggle_state.valid(), "state exposes a residual representation");
     auto empty_default = empty_toggle_state.apply_toggle(0, 1, 0, 0);
