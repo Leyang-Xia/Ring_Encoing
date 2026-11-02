@@ -78,6 +78,17 @@ int main() {
     require(shared_child.valid(), "shared pair remains feasible");
     require(shared_child.pair_support(*shared_pair) == 0, "pair support is updated");
 
+    auto toggle_state = SearchState::initial({BitMask(15)}, 4, options(2));
+    auto toggled = toggle_state.apply_toggle(0, 1, 0, 0);
+    require(toggled.valid(), "residual toggle transition is valid");
+    require(toggled.frontier(0).entries.front().mask == BitMask(15),
+            "residual toggle preserves target mask");
+    require(toggle_state.signature() != toggled.signature(),
+            "residual toggle does not mutate parent state");
+    auto toggle_too_shallow = SearchState::initial({BitMask(15)}, 4, options(1));
+    require(!toggle_too_shallow.apply_toggle(0, 1, 0, 0).valid(),
+            "residual toggle respects hard depth limit");
+
     // The second output has alternative producers. The unused producer of
     // mask 7 must not become a mandatory cost of completing mask 15.
     auto alternatives = SearchState::initial({BitMask(3), BitMask(15)},

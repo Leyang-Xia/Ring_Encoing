@@ -43,6 +43,8 @@ class SearchState {
                                const BoundedScheduleOptions &options);
     std::vector<Candidate> candidates() const;
     SearchState apply(const Candidate &candidate) const;
+    SearchState apply_toggle(int left, int right, std::size_t target,
+                             std::size_t representation) const;
     bool valid() const { return valid_; }
     bool complete() const;
     int best_cost_lower_bound() const;

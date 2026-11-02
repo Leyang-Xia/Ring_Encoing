@@ -277,6 +277,62 @@ SearchState SearchState::apply(const Candidate &candidate) const {
     return child;
 }
 
+SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
+                                      std::size_t representation) const {
+    check_search_deadline(options_);
+    SearchState child = *this;
+    if (!valid_ || left < 0 || right < 0 || left >= right ||
+        static_cast<std::size_t>(left) >= nodes_.size() ||
+        static_cast<std::size_t>(right) >= nodes_.size() || target >= frontiers_.size() ||
+        representation >= frontiers_[target].entries.size()) {
+        child.valid_ = false;
+        return child;
+    }
+    const auto &entry = frontiers_[target].entries[representation];
+    const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), left) != entry.terms.end();
+    const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), right) != entry.terms.end();
+    if (!has_left && !has_right) {
+        child.valid_ = false;
+        return child;
+    }
+    const auto result_mask = nodes_[left].mask ^ nodes_[right].mask;
+    const int proposed_depth = candidate_depth(node_depth(left), node_depth(right));
+    if (!candidate_allowed(node_depth(left), node_depth(right), options_.max_depth)) {
+        child.valid_ = false;
+        return child;
+    }
+    int node = lookup_node(child.node_by_mask_, result_mask);
+    if (node < 0) {
+        node = static_cast<int>(child.nodes_.size());
+        child.nodes_.push_back(NodeRecord{result_mask, proposed_depth, left, right});
+        child.node_by_mask_.emplace(result_mask, node);
+    }
+    std::vector<int> terms = entry.terms;
+    auto toggle_term = [&](int term) {
+        auto it = std::find(terms.begin(), terms.end(), term);
+        if (it == terms.end()) terms.push_back(term);
+        else terms.erase(it);
+    };
+    toggle_term(left);
+    toggle_term(right);
+    toggle_term(node);
+    auto replacement = child.make_representation(terms);
+    if (replacement.arrival_depth > options_.max_depth) {
+        child.valid_ = false;
+        return child;
+    }
+    ParetoFrontier next = frontiers_[target];
+    pareto_insert(next, std::move(replacement),
+                  static_cast<std::size_t>(options_.max_representations));
+    if (next.entries.empty()) {
+        child.valid_ = false;
+        return child;
+    }
+    child.frontiers_[target] = std::move(next);
+    child.rebuild_pair_index();
+    return child;
+}
+
 bool SearchState::complete() const {
     check_search_deadline(options_);
     if (!valid_) return false;
