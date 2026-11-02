@@ -809,8 +809,8 @@
         "depth": 6,
         "depth_limit": 8,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1022,
-        "explored_states": 479,
+        "diversity_buckets": 1014,
+        "explored_states": 130,
         "inputs": 32,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -845,7 +845,7 @@
           4
         ],
         "outputs": 24,
-        "pruned_bound": 1,
+        "pruned_bound": 0,
         "pruned_depth": 0,
         "residual_pairs": 8,
         "residual_targets": 2,
@@ -883,7 +883,7 @@
           "40763008"
         ],
         "timeout_seconds": 5,
-        "toggle_candidates": 7664
+        "toggle_candidates": 2080
       },
       "mw_rebalanced": {
         "circuit": {
@@ -3180,8 +3180,8 @@
         "depth": 6,
         "depth_limit": 7,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1020,
-        "explored_states": 465,
+        "diversity_buckets": 1018,
+        "explored_states": 126,
         "inputs": 32,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -3216,7 +3216,7 @@
           5
         ],
         "outputs": 24,
-        "pruned_bound": 2,
+        "pruned_bound": 0,
         "pruned_depth": 0,
         "residual_pairs": 8,
         "residual_targets": 2,
@@ -3254,7 +3254,7 @@
           "3092818120"
         ],
         "timeout_seconds": 5,
-        "toggle_candidates": 7440
+        "toggle_candidates": 2016
       },
       "mw_rebalanced": {
         "circuit": {
@@ -5856,8 +5856,8 @@
         "depth": 6,
         "depth_limit": 6,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1015,
-        "explored_states": 208,
+        "diversity_buckets": 252,
+        "explored_states": 46,
         "inputs": 64,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -5892,7 +5892,7 @@
           6
         ],
         "outputs": 24,
-        "pruned_bound": 1,
+        "pruned_bound": 0,
         "pruned_depth": 0,
         "residual_pairs": 8,
         "residual_targets": 2,
@@ -5930,7 +5930,7 @@
           "293665523899048064"
         ],
         "timeout_seconds": 5,
-        "toggle_candidates": 3328
+        "toggle_candidates": 736
       },
       "mw_rebalanced": {
         "circuit": {

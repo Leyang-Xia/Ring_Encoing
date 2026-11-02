@@ -15,6 +15,10 @@ void check_search_deadline(const BoundedScheduleOptions &options) {
         std::chrono::steady_clock::now() >= options.deadline)
         throw SearchDeadlineExceeded();
 }
+
+std::uint64_t residual_pair_key(int left, int right) {
+    return (std::uint64_t(std::uint32_t(left)) << 32) | std::uint32_t(right);
+}
 }
 
 int combine_depth(const std::vector<int> &depths) {
@@ -147,6 +151,7 @@ SearchState SearchState::initial(const BitRows &targets, int inputs,
                       static_cast<std::size_t>(options.max_representations));
     }
     state.rebuild_pair_index();
+    state.rebuild_residual_pair_index();
     return state;
 }
 
@@ -197,6 +202,42 @@ void SearchState::rebuild_pair_index() {
     }
 }
 
+void SearchState::adjust_residual_pair_index(const ParetoFrontier &frontier,
+                                              int node_count, int delta) {
+    if (options_.residual_pairs == 0 || options_.residual_targets == 0) return;
+    for (const auto &entry : frontier.entries) {
+        std::set<std::uint64_t> seen;
+        if (options_.allow_empty_toggle) {
+            for (int left = 0; left < node_count; ++left)
+                for (int right = left + 1; right < node_count; ++right)
+                    seen.insert(residual_pair_key(left, right));
+        } else {
+            for (int present : entry.terms) {
+                for (int other = 0; other < node_count; ++other) {
+                    if (present == other) continue;
+                    seen.insert(residual_pair_key(std::min(present, other),
+                                                  std::max(present, other)));
+                }
+            }
+        }
+        for (auto key : seen) {
+            auto &value = residual_pair_support_[key];
+            value += delta;
+            if (value < 0)
+                throw std::runtime_error("invalid residual pair support key=" +
+                                         std::to_string(key) + " delta=" +
+                                         std::to_string(delta));
+            if (!value) residual_pair_support_.erase(key);
+        }
+    }
+}
+
+void SearchState::rebuild_residual_pair_index() {
+    residual_pair_support_.clear();
+    for (const auto &frontier : frontiers_)
+        adjust_residual_pair_index(frontier, static_cast<int>(nodes_.size()), 1);
+}
+
 std::vector<Candidate> SearchState::candidates() const {
     check_search_deadline(options_);
     std::map<std::pair<int, int>, Candidate> by_pair;
@@ -239,22 +280,14 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
         int depth = 0;
     };
     std::vector<PairSummary> pairs;
-    for (int left = 0; left < static_cast<int>(nodes_.size()); ++left) {
-        for (int right = left + 1; right < static_cast<int>(nodes_.size()); ++right) {
-            check_search_deadline(options_);
-            int support = 0;
-            for (const auto &frontier : frontiers_)
-                for (const auto &entry : frontier.entries) {
-                    const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), left) != entry.terms.end();
-                    const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), right) != entry.terms.end();
-                    if (has_left || has_right || options_.allow_empty_toggle) ++support;
-                }
-            if (!support || !candidate_allowed(node_depth(left), node_depth(right),
-                                               options_.max_depth))
-                continue;
+    pairs.reserve(residual_pair_support_.size());
+    for (const auto &[key, support] : residual_pair_support_) {
+        int left = static_cast<int>(key >> 32);
+        int right = static_cast<int>(std::uint32_t(key));
+        if (support > 0 && candidate_allowed(node_depth(left), node_depth(right),
+                                             options_.max_depth))
             pairs.push_back(PairSummary{left, right, support,
                                          candidate_depth(node_depth(left), node_depth(right))});
-        }
     }
     std::sort(pairs.begin(), pairs.end(), [](const PairSummary &a, const PairSummary &b) {
         if (a.support != b.support) return a.support > b.support;
@@ -344,6 +377,8 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
 SearchState SearchState::apply(const Candidate &candidate) const {
     check_search_deadline(options_);
     SearchState child = *this;
+    const int parent_node_count = static_cast<int>(nodes_.size());
+    child.rebuild_residual_pair_index();
     if (!valid_ || candidate.left < 0 || candidate.right < 0 ||
         candidate.left >= candidate.right ||
         static_cast<std::size_t>(candidate.left) >= nodes_.size() ||
@@ -365,6 +400,7 @@ SearchState SearchState::apply(const Candidate &candidate) const {
 
     for (std::size_t target = 0; target < child.frontiers_.size(); ++target) {
         check_search_deadline(options_);
+        child.adjust_residual_pair_index(frontiers_[target], parent_node_count, -1);
         ParetoFrontier next;
         for (const auto &entry : frontiers_[target].entries) {
             check_search_deadline(options_);
@@ -386,6 +422,8 @@ SearchState SearchState::apply(const Candidate &candidate) const {
             return child;
         }
         child.frontiers_[target] = std::move(next);
+        child.adjust_residual_pair_index(child.frontiers_[target],
+                                         static_cast<int>(child.nodes_.size()), 1);
     }
     child.rebuild_pair_index();
     return child;
@@ -395,6 +433,8 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
                                       std::size_t representation) const {
     check_search_deadline(options_);
     SearchState child = *this;
+    const int parent_node_count = static_cast<int>(nodes_.size());
+    child.rebuild_residual_pair_index();
     if (!valid_ || left < 0 || right < 0 || left >= right ||
         static_cast<std::size_t>(left) >= nodes_.size() ||
         static_cast<std::size_t>(right) >= nodes_.size() || target >= frontiers_.size() ||
@@ -436,6 +476,7 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
         return child;
     }
     ParetoFrontier next = frontiers_[target];
+    child.adjust_residual_pair_index(frontiers_[target], parent_node_count, -1);
     pareto_insert(next, std::move(replacement),
                   static_cast<std::size_t>(options_.max_representations));
     if (next.entries.empty()) {
@@ -443,6 +484,8 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
         return child;
     }
     child.frontiers_[target] = std::move(next);
+    child.adjust_residual_pair_index(child.frontiers_[target],
+                                     static_cast<int>(child.nodes_.size()), 1);
     child.rebuild_pair_index();
     return child;
 }

@@ -73,9 +73,13 @@ class SearchState {
     std::unordered_map<BitMask, int, BitMaskHash> node_by_mask_;
     std::vector<ParetoFrontier> frontiers_;
     std::unordered_map<BitMask, std::vector<PairRef>, BitMaskHash> pair_index_;
+    std::unordered_map<std::uint64_t, int> residual_pair_support_;
     bool valid_ = true;
 
     void rebuild_pair_index();
+    void rebuild_residual_pair_index();
+    void adjust_residual_pair_index(const ParetoFrontier &frontier, int node_count,
+                                    int delta);
     Representation make_representation(const std::vector<int> &terms) const;
     int node_depth(int node) const;
 };
