@@ -97,6 +97,17 @@ int main() {
     require(residual_candidates.size() <= 2, "residual target expansion is bounded");
     for (const auto &candidate : residual_candidates)
         require(candidate.toggle, "residual candidate is marked as toggle");
+    auto empty_toggle_state = toggle_state.apply(Candidate{0, 1, 1, 1});
+    require(empty_toggle_state.valid(), "state exposes a residual representation");
+    auto empty_default = empty_toggle_state.apply_toggle(0, 1, 0, 0);
+    require(!empty_default.valid(), "empty toggle is disabled by default");
+    auto empty_options = options(2);
+    empty_options.allow_empty_toggle = true;
+    auto empty_enabled = SearchState::initial({BitMask(15)}, 4, empty_options)
+                             .apply(Candidate{0, 1, 1, 1});
+    require(empty_enabled.valid(), "empty toggle setup remains valid");
+    auto empty_transition = empty_enabled.apply_toggle(0, 1, 0, 0);
+    require(empty_transition.valid(), "empty toggle option reaches absent operands");
     require(residual_state.fingerprint() == residual_state.fingerprint(),
             "structure fingerprint is deterministic");
     require(residual_state.fingerprint() != residual_state.apply(*shared_pair).fingerprint(),
