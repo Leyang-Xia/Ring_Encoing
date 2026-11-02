@@ -4,7 +4,7 @@
 
 **Goal:** 让独立 xordepth 搜索生成当前 pair 共存规则无法表达的跨表示共享节点，并用结构多样性 Beam 提高在硬深度 D 下接近 MW_SQ/UBER_XSET 重结合结果的概率。
 
-**Architecture:** 在现有 `SearchState` 上增加受限 residual/toggle 转移，不改变安全 lower bound；候选索引从单表示 pair 扩展为有限的全局 pair 和受影响目标表示；Beam 按结构指纹分桶保留多种共享结构。MW_SQ、UBER_XSET 只作为独立外部对照，不进入搜索状态。
+**Architecture:** 先把 xordepth 的 mask、circuit、JSON、随机数和 CSE core 从 ringlab 完全拆出；再在本地 `xd` core 上增加受限 residual/toggle 转移，不改变安全 lower bound；候选索引从单表示 pair 扩展为有限的全局 pair 和受影响目标表示；Beam 按结构指纹分桶保留多种共享结构。MW_SQ、UBER_XSET 只作为独立外部对照，不进入搜索状态。
 
 **Tech Stack:** C++17、现有 `ringlab::Mask`/`Circuit`、GNU Make、Shell CLI tests；不引入 Python、浮点评分或第三方源码修改。
 
@@ -19,6 +19,7 @@
 - lower bound 只能用于安全剪枝；启发式 priority 不能用于正确性证明。
 - 不修改 `third_party/xsets/X-Sets.cpp` 或 `third_party/uber/Uber.cpp`。
 - 不把 MW_SQ、UBER_XSET 或历史线路作为 xordepth candidate 或 incumbent。
+- xordepth 不包含 `ringlab::` 符号，不包含 `ringlab` header，不链接 `../src`。
 - 保留已有 JSON 证书字节内容；新实验写入独立结果文件。
 - 交付前运行 `make -C xordepth test` 和根目录 `make test`。
 
@@ -31,6 +32,42 @@
 - **Beam 多样性：** 相同 fingerprint 去重、不同 fingerprint 共存；由 Task 3 的结构测试固定。
 
 ---
+
+### Task 0: 独立 xordepth core
+
+**Files:**
+- Create: `xordepth/include/xd/json.hpp`
+- Create: `xordepth/include/xd/core.hpp`
+- Create: `xordepth/src/xd_json.cpp`
+- Create: `xordepth/src/xd_core.cpp`
+- Modify: `xordepth/include/xd/depth.hpp`
+- Modify: `xordepth/include/xd/search.hpp`
+- Modify: `xordepth/include/xd/experiments.hpp`
+- Modify: `xordepth/src/xd_depth.cpp`
+- Modify: `xordepth/src/xd_search.cpp`
+- Modify: `xordepth/src/xd_frontier.cpp`
+- Modify: `xordepth/apps/xordepth.cpp`
+- Modify: `xordepth/tests/xd_test.cpp`
+- Modify: `xordepth/tests/xd_search_test.cpp`
+- Modify: `xordepth/Makefile`
+- Test: `xordepth/tests/independence_test.sh`
+
+**Interfaces:**
+- Produces: `xd::BitMask`, `xd::BitRows`, `xd::Circuit`, `xd::GreedyNetwork`, `xd::Json`, `xd::require`, `xd::SeedRandom`。
+- Consumes: no headers or object files outside `xordepth/include` and `xordepth/src`。
+
+- [ ] 复制并改名精确 JSON、任意长度 mask、DAG circuit、CSE network 和确定性随机数实现；所有公开类型和变量使用 `xd` 命名。
+- [ ] 将 xordepth depth/search/frontier/CLI/test 全部切换到本地 core；保留现有 JSON 字段和 circuit 验证语义。
+- [ ] 修改 Makefile 使 xordepth 单独编译，不再使用 `CORE=../src` 或 `INCLUDE=../include`。
+- [ ] 增加 independence test，grep `ringlab::`、ringlab include 和 `../src`，再运行独立二进制。
+- [ ] 运行 `make -C xordepth test` 和根 `make test`，确保拆分不改变历史 ringlab 代码。
+
+### Task 0.1: 独立 core 回归提交
+
+```bash
+git add xordepth/include xordepth/src xordepth/apps xordepth/tests xordepth/Makefile
+git commit -m "refactor: decouple xordepth core from ringlab"
+```
 
 ### Task 1: Residual/toggle 状态转移
 

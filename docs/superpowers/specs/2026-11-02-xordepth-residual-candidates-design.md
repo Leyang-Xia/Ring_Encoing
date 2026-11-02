@@ -2,9 +2,34 @@
 
 ## 目标
 
-扩展独立的 `xordepth` 深度受限搜索，使它能够生成当前 MW_SQ/UBER_XSET 路径中出现、但不会同时出现在同一 Pareto 表示中的共享节点。第一阶段安全 lower bound 已经修复；本阶段只改变候选生成、表示转移和 Beam 保留策略，不使用 MW_SQ/UBER_XSET 电路作为搜索输入。
+扩展独立的 `xordepth` 深度受限搜索，使它能够生成当前 MW_SQ/UBER_XSET 路径中出现、但不会同时出现在同一 Pareto 表示中的共享节点。第一阶段安全 lower bound 已经修复；本阶段先建立完全独立的 xordepth core，再改变候选生成、表示转移和 Beam 保留策略，不使用 MW_SQ/UBER_XSET 电路作为搜索输入。
 
 目标仍是固定 GF(2) 矩阵和硬深度 `D` 下最小化完整固定输入到固定输出 XOR 门数。所有最终结果必须逐门验证，且不能把启发式搜索结果解释为全局最优。
+
+## 独立 core 边界
+
+当前 xordepth 仍通过 `ringlab::Mask`、`ringlab::Circuit`、`ringlab::Json`、`ringlab::GreedyCircuit` 和 `ringlab::SeedRandom` 编译，并在 Makefile 中直接链接 `../src`。这使搜索逻辑和变量命名依赖 ringlab，不能作为独立算法复用或单独发布。
+
+本阶段先建立 `xd` 自有类型和实现：
+
+```text
+xd::BitMask       任意长度 GF(2) mask、精确 decimal、hash
+xd::BitRows       输出目标集合
+xd::Circuit       DAG、verify、pruned、JSON certificate
+xd::GreedyNetwork CSE/平衡累加构造
+xd::Json          精确 JSON 读写
+xd::require       xordepth 本地错误检查
+xd::SeedRandom    确定性候选顺序
+```
+
+`xordepth/Makefile` 只编译 `xordepth/include` 和 `xordepth/src`，不再包含 `../include`、链接 `../src` 或引用 `ringlab::`。历史 JSON 的字段和数值保持兼容，但由 `xd::Json` 读写；第三方 X-Sets/Uber 源码仍保持独立、不修改。
+
+独立性测试必须同时检查：
+
+1. xordepth 源码和测试不出现 `ringlab::` 或 `#include "ringlab/..."`；
+2. xordepth Makefile 不引用 `../src`；
+3. 本地 core、搜索和 CLI 可单独编译运行；
+4. 既有深度、验证、bounded JSON 和历史结果检查保持通过。
 
 ## 已确认的现状问题
 
