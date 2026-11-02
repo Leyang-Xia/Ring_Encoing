@@ -357,8 +357,8 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
             }
         }
         std::sort(pair_candidates.begin(), pair_candidates.end(), [](const Candidate &a, const Candidate &b) {
-            if (a.future_support != b.future_support) return a.future_support > b.future_support;
             if (a.term_reduction != b.term_reduction) return a.term_reduction > b.term_reduction;
+            if (a.future_support != b.future_support) return a.future_support > b.future_support;
             if (a.affected_targets != b.affected_targets)
                 return a.affected_targets > b.affected_targets;
             if (a.depth_slack != b.depth_slack) return a.depth_slack > b.depth_slack;
@@ -372,8 +372,8 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
         result.insert(result.end(), pair_candidates.begin(), pair_candidates.end());
     }
     std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
-        if (a.future_support != b.future_support) return a.future_support > b.future_support;
         if (a.term_reduction != b.term_reduction) return a.term_reduction > b.term_reduction;
+        if (a.future_support != b.future_support) return a.future_support > b.future_support;
         if (a.affected_targets != b.affected_targets)
             return a.affected_targets > b.affected_targets;
         if (a.depth_slack != b.depth_slack) return a.depth_slack > b.depth_slack;
