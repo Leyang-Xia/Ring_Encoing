@@ -12,10 +12,6 @@ struct Options {
     // Stored result or certificate files whose circuits are offered as extra
     // candidates when they compute the same transform as the matrix.
     std::vector<std::string> also;
-    // Stored result or certificate files used as verified incumbents by the
-    // bounded search.  Only circuits matching the matrix and depth limit are
-    // admitted.
-    std::vector<std::string> incumbents;
     std::string output;
 };
 
@@ -24,8 +20,7 @@ Json frontier(const BitRows &rows, int inputs, const Json &source, const Options
 
 // Run the hard-depth bounded search and serialize one complete result record.
 Json bounded_result(const BitRows &rows, int inputs, const Json &source,
-                    const BoundedScheduleOptions &options,
-                    const std::vector<std::string> &incumbent_files = {});
+                    const BoundedScheduleOptions &options);
 
 // Depth audit of every circuit stored in the given files. Metrics only: the
 // files themselves are never rewritten.

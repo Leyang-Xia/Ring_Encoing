@@ -64,11 +64,6 @@ struct BoundedScheduleResult {
     std::size_t pruned_bound = 0;
     std::size_t toggle_candidates = 0;
     std::size_t diversity_buckets = 0;
-    // Cost of the best externally supplied, verified incumbent that was
-    // feasible at the requested depth, or -1 when none was supplied.
-    int reference_cost = -1;
-    Circuit reference_circuit;
-    bool has_reference = false;
 };
 
 // Internal control flow for the bounded search budget. Public callers normally
@@ -78,8 +73,7 @@ struct SearchDeadlineExceeded final : std::exception {
 };
 
 BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
-                                         const BoundedScheduleOptions &options,
-                                         const std::vector<Circuit> &incumbents = {});
+                                         const BoundedScheduleOptions &options);
 
 // Plank-style common-subexpression scheduling with a depth-aware selection pass
 // and a balanced (Huffman by arrival time) final accumulation. Every output,

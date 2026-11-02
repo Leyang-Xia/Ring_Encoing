@@ -40,15 +40,6 @@ make -j4
 `--depth D` 是最大输出深度；`--beam`、`--branch`、`--representations`、`--restarts`、`--seed` 和 `--timeout` 分别控制 Beam 宽度、每状态候选数、每目标 Pareto 表上限、重启次数、候选重排种子和墙钟预算。
 `--lookahead-width K --lookahead-depth L` 会对每个状态中最多 `K` 个候选做 `L` 步的选择性试走，并使用试走后的下界重新排序；默认两个值都是 `0`，以保持基线搜索行为。它只改变候选优先级，不放宽深度检查。
 
-可以用 `--incumbent FILE.json` 提供 MW_SQ、UBER_XSET、CSE 或历史结果中的已验证线路。文件中的所有电路都会先逐门重放并核对目标掩码，只有当前矩阵匹配且实际深度 `≤ D` 的线路进入 incumbent 集合。搜索从其中门数最少者开始，并用 `lower_bound >= incumbent_cost` 做安全剪枝；因此最终 verified 结果满足：
-
-```text
-result.cost <= best_verified_incumbent.cost
-result.depth <= D
-```
-
-如果搜索预算耗尽，只要有可用 incumbent，结果仍为 `verified` 并返回该线路；没有可用 incumbent 时才会返回 `timeout` 或 `search_failed`。结果 JSON 的 `reference_cost` 是接纳的外部参照门数，`reference_circuit` 保存对应的完整线路，缺少参照时两者都为 `null`。`verify` 会重新审计这条 reference circuit。
-
 ## 固定矩阵结果
 
 实验使用源码修订 `04a5114f8541e5472c3201ecbe876f6c16e697c3`，参数均为 `beam=64`、`branch=16`、`representations=8`、`restarts=8`、`seed=1`、`timeout=180s`。
@@ -80,9 +71,6 @@ result.depth <= D
 重结合只重新安排单消费者 XOR 树，保留 MW_SQ 已经选择的共享节点，因此门数不变；
 `0 3 0` 的 219 门线路在深度 6 预算下仍是一个有效参照。当前 bounded Beam
 在同一 `D=6` 配置下得到 221 门，所以这组结果显示了搜索还没有达到该参照上界。
-把 `mw_sq_vandermonde_8to17_p0_3_0.json` 作为 `--incumbent` 后，搜索至少会返回
-其 219 门、深度 6 的重结合线路；这提供了一个可复现的结果上界，同时仍允许
-bounded Beam 找到更低门数的方案。
 超时配置不提供 XOR 数结论。
 
 完整 verified 电路和目标掩码保存在：
@@ -122,7 +110,7 @@ canonical 顺序。为保证直接 X-Sets 调用与 `ringlab`、xordepth 的参�
 
 早期版本把一个状态中所有 Pareto 表示的依赖节点取并集，并将其作为已支付门数；但这些表示是互相替代的候选，未被最终选择的依赖可以被裁掉。当前版本将分支界限改为：对每个目标取一个合法表示的最小依赖闭包，再对目标取最大值。这个下界较弱，但不会因为互斥表示而高估成本；Beam 排序仍可使用包含替代结构的启发式优先级。
 
-固定 `beam=64`、`branch=16`、`representations=8`、`restarts=4`、`seed=1`，且不传入任何 incumbent，得到如下直接矩阵结果：
+固定 `beam=64`、`branch=16`、`representations=8`、`restarts=4`、`seed=1`，得到如下直接矩阵结果：
 
 | 矩阵 | `D` | xordepth | MW_SQ + 重结合 | UBER_XSET + 重结合 |
 |---|---:|---:|---:|---:|
@@ -136,7 +124,7 @@ canonical 顺序。为保证直接 X-Sets 调用与 `ringlab`、xordepth 的参�
 
 当前 xordepth 已经使用自己的 `xd::BitMask`、`xd::Circuit`、`xd::Json`、`xd::GreedyNetwork` 和 `xd::SeedRandom`，Makefile 不再链接 ringlab 的 `../src`。`tests/independence_test.sh` 会检查源码、头文件和构建入口没有 ringlab 依赖。
 
-Residual 模式通过 `R' = normalize(R XOR {a,b,a XOR b})` 暴露跨表示共享节点，并用结构 fingerprint 分桶保留多种 Beam 状态。默认 `residual_pairs=0`，所以基础结果保持兼容；实验配置为 `residual_pairs=8`、`residual_targets=2`、`lookahead_width=8`、`lookahead_depth=2`、`beam=64`、`branch=16`、`restarts=4`、`seed=1`，不使用 incumbent。
+Residual 模式通过 `R' = normalize(R XOR {a,b,a XOR b})` 暴露跨表示共享节点，并用结构 fingerprint 分桶保留多种 Beam 状态。默认 `residual_pairs=0`，所以基础结果保持兼容；实验配置为 `residual_pairs=8`、`residual_targets=2`、`lookahead_width=8`、`lookahead_depth=2`、`beam=64`、`branch=16`、`restarts=4`、`seed=1`。
 
 | 矩阵 | `D` | xordepth residual/diversity | MW_SQ + 重结合 | UBER_XSET + 重结合 |
 |---|---:|---:|---:|---:|

@@ -12,8 +12,7 @@
     "branch": 16,
     "representations": 8,
     "restarts": 4,
-    "seed": 1,
-    "incumbent": null
+    "seed": 1
   },
   "entries": [
     {
@@ -848,8 +847,6 @@
         "outputs": 24,
         "pruned_bound": 36,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "restarts": 4,
         "scope": "fixed-input-to-fixed-output XOR network",
         "seed": 1,
@@ -4739,8 +4736,6 @@
         "outputs": 24,
         "pruned_bound": 238,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "restarts": 4,
         "scope": "fixed-input-to-fixed-output XOR network",
         "seed": 1,
@@ -8880,8 +8875,6 @@
         "outputs": 24,
         "pruned_bound": 4,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "restarts": 4,
         "scope": "fixed-input-to-fixed-output XOR network",
         "seed": 1,

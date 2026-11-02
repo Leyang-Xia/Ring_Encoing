@@ -24,6 +24,11 @@ struct Candidate {
     int target = -1;
     int representation = -1;
     bool toggle = false;
+    int affected_targets = 0;
+    int term_reduction = 0;
+    int depth_slack = 0;
+    int future_support = 0;
+    int toggle_penalty = 0;
 };
 
 struct NodeRecord {

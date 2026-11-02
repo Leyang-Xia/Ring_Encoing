@@ -196,40 +196,8 @@ Json frontier(const BitRows &rows, int inputs, const Json &source, const Options
 }
 
 Json bounded_result(const BitRows &rows, int inputs, const Json &source,
-                    const BoundedScheduleOptions &options,
-                    const std::vector<std::string> &incumbent_files) {
-    std::vector<Circuit> incumbents;
-    auto references = Json::array();
-    for (const auto &path : incumbent_files) {
-        std::vector<Found> found;
-        collect(Json::read(path), "", found);
-        int used = 0, eligible = 0, skipped = 0;
-        std::vector<Found> unique;
-        for (const auto &entry : found) {
-            bool duplicate = false;
-            for (const auto &previous : unique)
-                if (entry.same(previous)) duplicate = true;
-            if (duplicate) {
-                ++skipped;
-                continue;
-            }
-            unique.push_back(entry);
-            try {
-                entry.circuit.verify(rows);
-                incumbents.push_back(entry.circuit);
-                if (depth_profile(entry.circuit).depth <= options.max_depth) ++eligible;
-                ++used;
-            } catch (const std::exception &) {
-                ++skipped;
-            }
-        }
-        require(used > 0, "incumbent file has no verified circuit for this matrix: " + path);
-        references.arr.push_back(Json::object({{"file", path},
-                                               {"used", used},
-                                               {"eligible_at_depth", eligible},
-                                               {"skipped", skipped}}));
-    }
-    auto search = synthesize_bounded(rows, inputs, options, incumbents);
+                    const BoundedScheduleOptions &options) {
+    auto search = synthesize_bounded(rows, inputs, options);
     auto result = Json::object({{"status", search.status},
                                 {"method", "DEPTH_BOUNDED_XSET_BEAM"},
                                 {"scope", "fixed-input-to-fixed-output XOR network"},
@@ -255,12 +223,6 @@ Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                                 {"pruned_bound", std::uint64_t(search.pruned_bound)},
                                 {"toggle_candidates", std::uint64_t(search.toggle_candidates)},
                                 {"diversity_buckets", std::uint64_t(search.diversity_buckets)},
-                                {"reference_cost", search.reference_cost < 0
-                                                           ? Json()
-                                                           : Json(search.reference_cost)},
-                                {"reference_circuit", search.has_reference
-                                                               ? search.reference_circuit.json()
-                                                               : Json()},
                                 {"cost", Json()},
                                 {"note", "Depth is a hard output constraint; verified results are "
                                          "heuristic upper bounds."}});
@@ -275,7 +237,6 @@ Json bounded_result(const BitRows &rows, int inputs, const Json &source,
         for (auto value : profile.output_depth) result["output_depth"].arr.emplace_back(value);
         result["circuit"] = search.circuit.json();
     }
-    if (!incumbent_files.empty()) result["incumbents"] = references;
     return result;
 }
 
@@ -396,8 +357,6 @@ Json verify_bounded_result(const std::string &path) {
     if (data.has("diversity_buckets"))
         require(data["diversity_buckets"].integer() >= 0,
                 "bounded diversity bucket count must be nonnegative");
-    if (data.has("reference_cost") && !data["reference_cost"].null())
-        require(data["reference_cost"].integer() >= 0, "bounded reference cost must be nonnegative");
     const std::string status = data["status"].string();
     require(status == "verified" || status == "timeout" || status == "search_failed" ||
                 status == "infeasible_by_lower_bound",
@@ -424,24 +383,6 @@ Json verify_bounded_result(const std::string &path) {
     auto profile = depth_profile(circuit);
     require(profile.depth == data["depth"].integer(), "bounded depth mismatch");
     require(profile.depth <= depth_limit, "bounded depth limit exceeded");
-    if (data.has("reference_cost") && !data["reference_cost"].null()) {
-        require(data.has("reference_circuit") && !data["reference_circuit"].null(),
-                "bounded reference cost is missing its circuit");
-        auto reference = Circuit::from_json(data["reference_circuit"]);
-        reference.verify(rows);
-        require(reference.inputs == inputs && reference.outputs.size() == rows.size(),
-                "bounded reference circuit dimensions mismatch");
-        auto reference_profile = depth_profile(reference);
-        require(reference.cost() == data["reference_cost"].integer(),
-                "bounded reference cost mismatch");
-        require(reference_profile.depth <= depth_limit,
-                "bounded reference circuit exceeds depth limit");
-        require(data["reference_cost"].integer() <= circuit.cost(),
-                "bounded result regressed below its reference cost");
-    } else if (data.has("reference_circuit")) {
-        require(data["reference_circuit"].null(),
-                "bounded null reference cost must have no reference circuit");
-    }
     require(data.has("max_fanout") && data["max_fanout"].integer() == profile.max_fanout,
             "bounded fanout mismatch");
     require(data.has("output_depth") && data["output_depth"].type == Json::Type::Array &&

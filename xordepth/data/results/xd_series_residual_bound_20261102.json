@@ -12,8 +12,7 @@
     "residual_targets": 2,
     "lookahead_width": 8,
     "lookahead_depth": 2,
-    "allow_empty_toggle": false,
-    "incumbent": null
+    "allow_empty_toggle": false
   },
   "entries": [
     {
@@ -810,8 +809,8 @@
         "depth": 6,
         "depth_limit": 8,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1019,
-        "explored_states": 965,
+        "diversity_buckets": 1022,
+        "explored_states": 465,
         "inputs": 32,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -846,10 +845,8 @@
           4
         ],
         "outputs": 24,
-        "pruned_bound": 16,
+        "pruned_bound": 1,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "residual_pairs": 8,
         "residual_targets": 2,
         "restarts": 4,
@@ -885,8 +882,8 @@
           "28770112",
           "40763008"
         ],
-        "timeout_seconds": 10,
-        "toggle_candidates": 15440
+        "timeout_seconds": 5,
+        "toggle_candidates": 7440
       },
       "mw_rebalanced": {
         "circuit": {
@@ -3183,8 +3180,8 @@
         "depth": 6,
         "depth_limit": 7,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1019,
-        "explored_states": 893,
+        "diversity_buckets": 1020,
+        "explored_states": 460,
         "inputs": 32,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -3219,10 +3216,8 @@
           5
         ],
         "outputs": 24,
-        "pruned_bound": 3,
+        "pruned_bound": 2,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "residual_pairs": 8,
         "residual_targets": 2,
         "restarts": 4,
@@ -3258,8 +3253,8 @@
           "1546441956",
           "3092818120"
         ],
-        "timeout_seconds": 10,
-        "toggle_candidates": 14288
+        "timeout_seconds": 5,
+        "toggle_candidates": 7360
       },
       "mw_rebalanced": {
         "circuit": {
@@ -5861,8 +5856,8 @@
         "depth": 6,
         "depth_limit": 6,
         "depth_lower_bound": 5,
-        "diversity_buckets": 1019,
-        "explored_states": 408,
+        "diversity_buckets": 1015,
+        "explored_states": 201,
         "inputs": 64,
         "lookahead_depth": 2,
         "lookahead_width": 8,
@@ -5897,10 +5892,8 @@
           6
         ],
         "outputs": 24,
-        "pruned_bound": 25,
+        "pruned_bound": 0,
         "pruned_depth": 0,
-        "reference_circuit": null,
-        "reference_cost": null,
         "residual_pairs": 8,
         "residual_targets": 2,
         "restarts": 4,
@@ -5936,8 +5929,8 @@
           "146692024469590080",
           "293665523899048064"
         ],
-        "timeout_seconds": 10,
-        "toggle_candidates": 6528
+        "timeout_seconds": 5,
+        "toggle_candidates": 3216
       },
       "mw_rebalanced": {
         "circuit": {

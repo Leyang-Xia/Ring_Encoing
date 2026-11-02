@@ -14,16 +14,6 @@ grep -q '"status": "verified"' "$tmp/bounded.json"
 grep -q '"depth_limit": 2' "$tmp/bounded.json"
 "$tool" verify "$tmp/bounded.json" | grep -q '"status": "verified"'
 
-cat > "$tmp/incumbent.json" <<'EOF'
-{"inputs":4,"zero_node":null,"ops":[[4,0,1],[5,2,3],[6,4,5]],"outputs":[6],"cost":3}
-EOF
-"$tool" bounded "$tmp/four.txt" --depth 2 --beam 1 --branch 1 --restarts 1 \
-  --lookahead-width 2 --lookahead-depth 1 --incumbent "$tmp/incumbent.json" \
-  --timeout 0.000001 --output "$tmp/referenced.json" > /dev/null
-grep -q '"status": "verified"' "$tmp/referenced.json"
-grep -q '"reference_cost": 3' "$tmp/referenced.json"
-"$tool" verify "$tmp/referenced.json" | grep -q '"status": "verified"'
-
 "$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
   --residual-pairs 2 --residual-targets 1 --timeout 5 --output "$tmp/residual.json" > /dev/null
 grep -q '"residual_pairs": 2' "$tmp/residual.json"

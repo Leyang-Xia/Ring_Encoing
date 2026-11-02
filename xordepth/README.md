@@ -11,7 +11,7 @@
 2. 在**不增加任何门**的前提下，深度还能压低多少；
 3. 要再往下压，需要付出多少门。
 
-这是一个独立实验：它不参与 `ringlab` 的命令行、证据文件或验证流程。它只复用 `../src` 下的四个核心文件（精确 JSON、比特掩码、线路构造、Plank 式 CSE），不引用 ringlab 的实验层。
+这是一个独立实验：它不参与仓库其他命令行、证据文件或验证流程。xordepth 自己实现精确 JSON、任意长度 bit mask、线路构造、Plank 式 CSE 和验证逻辑。
 
 ## 构建
 
@@ -21,7 +21,7 @@ make -j4          # 生成 build/xordepth
 make test         # 单元检查 + CLI 检查
 ```
 
-只依赖 C++17 编译器和 GNU Make。若要独立分发，把 `../include` 与 `../src` 的四个核心文件一起带走即可（`CORE=` / `INCLUDE=` 可覆盖路径）。
+只依赖 C++17 编译器和 GNU Make。xordepth 可以在没有仓库其他 core 源码的情况下单独编译。
 
 ## 用法
 
@@ -43,11 +43,6 @@ make test         # 单元检查 + CLI 检查
   --seed 1 --timeout 180 --output /tmp/bounded.json
 ./build/xordepth verify /tmp/bounded.json
 
-# 4. 用已验证的 MW_SQ/X-Sets 结果作为 D=6 的 incumbent 参照
-./build/xordepth bounded data/matrices/vandermonde_8to17_direct.txt \
-  --depth 6 --incumbent data/results/mw_sq_vandermonde_8to17_p0_3_0.json \
-  --lookahead-width 8 --lookahead-depth 2 --timeout 180 \
-  --output /tmp/bounded-with-reference.json
 ```
 
 `MATRIX.txt`：每行一个输出，每列一个输入，只允许 `0`/`1` 与空白。
@@ -57,7 +52,6 @@ make test         # 单元检查 + CLI 检查
 - `--also FILE`：从任意结果/证据 JSON 中挑出**能算出同一个变换**的线路，作为额外候选（不能算出同一变换的会被跳过并计数）。
 - `bounded` 的 `--depth D` 是所有输出的硬深度上限；`--beam`、`--branch`、`--representations`、`--restarts`、`--seed` 和 `--timeout` 控制启发式搜索预算。
 - `--lookahead-width K --lookahead-depth L` 对每个状态的前 `K` 个候选试走最多 `L` 步，再按后续下界排序；两个参数为 `0` 时关闭这一步。
-- `--incumbent FILE` 从结果或证书 JSON 中读取电路，逐门验证后只接纳与当前矩阵相同且深度不超过 `D` 的线路。若搜索超时或剪枝耗尽，仍返回这个已验证 incumbent，因此输出门数不会劣于它；结果中的 `reference_cost` 和 `reference_circuit` 记录该参照。
 
 ## 主要结果
 

@@ -295,17 +295,44 @@ std::vector<Candidate> SearchState::toggle_candidates() const {
                 arrival_depths.reserve(terms.size());
                 for (int term : terms)
                     arrival_depths.push_back(term == node ? new_node_depth : node_depth(term));
-                if (combine_depth(arrival_depths) > options_.max_depth) continue;
+                const int new_arrival = combine_depth(arrival_depths);
+                if (new_arrival > options_.max_depth) continue;
+                const int term_reduction = static_cast<int>(entry.terms.size()) -
+                                           static_cast<int>(terms.size());
+                int future_support = 0;
+                const auto new_mask = nodes_[pair.left].mask ^ nodes_[pair.right].mask;
+                for (int term : terms) {
+                    if (term == node && node >= static_cast<int>(nodes_.size())) continue;
+                    const auto edge = new_mask ^ nodes_[term].mask;
+                    auto edge_it = pair_index_.find(edge);
+                    if (edge_it != pair_index_.end())
+                        future_support = std::max(future_support,
+                                                  static_cast<int>(edge_it->second.size()));
+                }
+                if (term_reduction <= 0 && new_arrival >= entry.arrival_depth &&
+                    pair.support <= 1 && future_support == 0)
+                    continue;
                 Candidate candidate{pair.left, pair.right, pair.depth, pair.support,
                                     static_cast<int>(target), static_cast<int>(representation), true};
+                candidate.affected_targets = pair.support;
+                candidate.term_reduction = term_reduction;
+                candidate.depth_slack = options_.max_depth - new_arrival;
+                candidate.future_support = future_support;
+                candidate.toggle_penalty = std::max(0, -term_reduction);
                 result.push_back(candidate);
                 ++used;
             }
         }
     }
     std::sort(result.begin(), result.end(), [](const Candidate &a, const Candidate &b) {
+        if (a.future_support != b.future_support) return a.future_support > b.future_support;
+        if (a.term_reduction != b.term_reduction) return a.term_reduction > b.term_reduction;
+        if (a.affected_targets != b.affected_targets)
+            return a.affected_targets > b.affected_targets;
+        if (a.depth_slack != b.depth_slack) return a.depth_slack > b.depth_slack;
+        if (a.toggle_penalty != b.toggle_penalty)
+            return a.toggle_penalty < b.toggle_penalty;
         if (a.support != b.support) return a.support > b.support;
-        if (a.arrival_depth != b.arrival_depth) return a.arrival_depth < b.arrival_depth;
         if (a.target != b.target) return a.target < b.target;
         if (a.representation != b.representation) return a.representation < b.representation;
         if (a.left != b.left) return a.left < b.left;
@@ -378,7 +405,7 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
     const auto &entry = frontiers_[target].entries[representation];
     const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), left) != entry.terms.end();
     const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), right) != entry.terms.end();
-    if (!has_left && !has_right) {
+    if (!has_left && !has_right && !options_.allow_empty_toggle) {
         child.valid_ = false;
         return child;
     }
@@ -516,11 +543,16 @@ std::string SearchState::fingerprint() const {
     for (const auto &frontier : frontiers_) {
         int min_terms = INT_MAX;
         int min_depth = INT_MAX;
+        std::vector<int> depths;
         for (const auto &entry : frontier.entries) {
             min_terms = std::min(min_terms, static_cast<int>(entry.terms.size()));
             min_depth = std::min(min_depth, entry.arrival_depth);
+            depths.push_back(entry.arrival_depth);
         }
-        out << min_terms << ':' << min_depth << ':' << frontier.entries.size() << ';';
+        std::sort(depths.begin(), depths.end());
+        out << min_terms << ':' << min_depth << ':' << frontier.entries.size() << ':';
+        for (int depth : depths) out << depth << ',';
+        out << ';';
     }
     std::vector<int> supports;
     supports.reserve(pair_index_.size());
@@ -529,7 +561,12 @@ std::string SearchState::fingerprint() const {
     if (supports.size() > 8) supports.resize(8);
     out << "support=";
     for (int support : supports) out << support << ',';
-    out << "nodes=" << nodes_.size() << ";pairs=" << pair_index_.size();
+    int toggle_representations = 0;
+    for (const auto &frontier : frontiers_)
+        if (frontier.entries.size() > 1) ++toggle_representations;
+    out << "toggle=" << toggle_representations
+        << ";closure=" << cost_priority()
+        << ";nodes=" << nodes_.size() << ";pairs=" << pair_index_.size();
     return out.str();
 }
 
@@ -615,8 +652,7 @@ Circuit SearchState::export_circuit() const {
 }
 
 BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
-                                         const BoundedScheduleOptions &options,
-                                         const std::vector<Circuit> &incumbents) {
+                                         const BoundedScheduleOptions &options) {
     validate_target_width(targets, inputs);
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
@@ -631,22 +667,6 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
     if (options.max_depth < result.depth_lower_bound) {
         result.status = "infeasible_by_lower_bound";
         return result;
-    }
-
-    // References are validated before the timed search starts.  This keeps the
-    // guarantee useful even when the search budget is too small to initialize
-    // a beam: a verified depth-feasible incumbent is still returned.
-    for (const auto &incumbent : incumbents) {
-        incumbent.verify(targets);
-        auto profile = depth_profile(incumbent);
-        if (profile.depth > options.max_depth) continue;
-        if (result.reference_cost < 0 || incumbent.cost() < result.reference_cost) {
-            result.reference_cost = incumbent.cost();
-            result.reference_circuit = incumbent;
-            result.has_reference = true;
-            result.circuit = incumbent;
-            result.status = "verified";
-        }
     }
 
     const auto started = std::chrono::steady_clock::now();
@@ -677,7 +697,7 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
         result.status = "timeout";
         return result;
     }
-    auto consider_incumbent = [&](Circuit circuit) {
+    auto consider_candidate = [&](Circuit circuit) {
         if (std::chrono::steady_clock::now() >= deadline) throw SearchDeadlineExceeded();
         circuit.verify(targets);
         auto profile = depth_profile(circuit);
@@ -693,10 +713,10 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
     baseline_options.depth_aware = true;
     try {
         if (!deadline_reached())
-            consider_incumbent(synthesize_schedule(targets, inputs, baseline_options, 0, deadline));
+            consider_candidate(synthesize_schedule(targets, inputs, baseline_options, 0, deadline));
         if (!deadline_reached()) {
             auto baseline = synthesize_schedule(targets, inputs, baseline_options, 0, deadline);
-            consider_incumbent(rebalanced(baseline, deadline));
+            consider_candidate(rebalanced(baseline, deadline));
         }
     } catch (const SearchDeadlineExceeded &) {
         if (result.status != "verified") result.status = "timeout";
@@ -754,7 +774,12 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     ranked.reserve(width);
                     std::vector<bool> scored(candidates.size(), false);
                     for (std::size_t i = 0; i < width; ++i) {
-                        auto probe = state.apply(candidates[i]);
+                        auto probe = candidates[i].toggle
+                                         ? state.apply_toggle(
+                                               candidates[i].left, candidates[i].right,
+                                               static_cast<std::size_t>(candidates[i].target),
+                                               static_cast<std::size_t>(candidates[i].representation))
+                                         : state.apply(candidates[i]);
                         if (!probe.valid()) continue;
                         int bound = probe.cost_priority();
                         for (int step = 1; step < options.lookahead_depth && !probe.complete();

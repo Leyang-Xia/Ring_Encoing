@@ -28,7 +28,6 @@ Options:
   --allow-empty-toggle allow residual toggles with neither operand present
   --seed N           bounded candidate-order seed
   --timeout SEC      bounded search budget
-  --incumbent FILE.json  verified stored circuit(s) used as bounded references
   --output FILE      write the complete result
 
 MATRIX.txt holds one output per line and one input per column, 0/1 and whitespace only.
@@ -98,8 +97,6 @@ int main(int argc, char **argv) {
                 o.depth_aware = true;
             } else if (key == "--also") {
                 o.also.push_back(value());
-            } else if (key == "--incumbent") {
-                o.incumbents.push_back(value());
             } else if (key == "--depth") {
                 bounded_options.max_depth = parse_int(value());
                 depth_set = true;
@@ -151,8 +148,7 @@ int main(int argc, char **argv) {
             int inputs = 0;
             auto rows = read_matrix(positional[0], inputs);
             result = bounded_result(rows, inputs,
-                                    Json::object({{"matrix", positional[0]}}), bounded_options,
-                                    o.incumbents);
+                                    Json::object({{"matrix", positional[0]}}), bounded_options);
         } else if (command == "audit") {
             require(!positional.empty(), "audit needs at least one JSON file");
             result = audit(positional);
