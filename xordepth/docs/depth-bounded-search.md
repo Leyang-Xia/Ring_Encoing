@@ -133,3 +133,22 @@ Residual 模式通过 `R' = normalize(R XOR {a,b,a XOR b})` 暴露跨表示共�
 | Vandermonde 8→17 | 6 | 221 / 6 | 219 / 6 | 212 / 8 |
 
 完整 bounded circuit、参数、toggle 计数、Beam bucket 计数和外部重结合参照保存在 `data/results/xd_series_residual_bound_20261102.json`。Residual 候选扩大了可达状态空间，但在这组预算下尚未降低三类矩阵的 XOR 数；后续应继续优化候选评分和增量状态更新。
+
+## 219 门 MW_SQ trace 回放
+
+为了区分“搜索没有选到”与“状态模型无法表达”，对
+`data/results/mw_sq_vandermonde_8to17_p0_3_0.json` 的原始 `ops` 做了逐门回放。
+按当前普通 pair 规则，第一处不可达门固定为：
+
+```text
+step 56: node 120 = input 3 XOR node 118
+```
+
+在该时刻，`input 3` 出现在 3 个 representation 中，`node 118` 出现在 1 个
+representation 中，两者没有共存于同一个 representation。因此普通 `apply()` 无法
+生成该门。新增的跨表示 bridge transition 可以在两个 representation 上同步执行
+`R' = normalize(R XOR {3,118,120})`，测试已经确认该门在状态模型中可表达。
+
+当前 Vandermonde 搜索仍得到 `221 XOR / depth 6`。bridge 候选已经生成，但还需要记录
+`bridge_scored`、`bridge_expanded` 和 `bridge_pruned_by_beam`，以定位它在 lookahead、
+branch width、transposition 或 fingerprint Beam 阶段的剩余损失。
