@@ -24,9 +24,13 @@ $(BUILD)/xd-test: tests/xd_test.cpp $(LOCAL) $(CORE) | $(BUILD)
 $(BUILD)/xd-search-test: tests/xd_search_test.cpp $(LOCAL) $(CORE) | $(BUILD)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-test: all $(BUILD)/xd-test $(BUILD)/xd-search-test
+$(BUILD)/trace-replay-test: tests/trace_replay_test.cpp $(CORE) | $(BUILD)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+test: all $(BUILD)/xd-test $(BUILD)/xd-search-test $(BUILD)/trace-replay-test
 	$(BUILD)/xd-test
 	$(BUILD)/xd-search-test
+	$(BUILD)/trace-replay-test
 	bash tests/cli_test.sh $(BUILD)/xordepth
 	bash tests/independence_test.sh
 
