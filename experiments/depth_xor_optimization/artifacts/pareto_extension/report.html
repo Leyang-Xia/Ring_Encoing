@@ -1,0 +1,137 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>XOR Pareto 对比</title><style>body{max-width:1250px;margin:30px auto;padding:0 18px;font:16px/1.6 system-ui;color:#202a35}table{border-collapse:collapse;width:100%;margin:18px 0}td,th{border:1px solid #d6dce3;padding:8px;text-align:left;overflow-wrap:anywhere}th{background:#edf2f7}img{width:100%}small{color:#52606f}.label{max-width:650px;font-size:13px}</style><h1>四种固定矩阵：观察到的 Pareto 前沿</h1><p>点的格式为（XOR 门数，实际深度），两者均越小越好。我们的旧版和新版均独立合成，不载入仓库线路。旧版16次重启；新版两种策略各8次。</p><p>仓库列汇总原有候选、重平衡版本、深度感知调度变体及已完成束搜索；历史搜索预算不同，不能解释为统一时间预算下的优劣证明。</p><table><tr><th>矩阵</th><th>仓库已有候选</th><th>旧版</th><th>新版</th></tr>
+<tr><td>Vandermonde（24×64）</td><td>(336, 5)、(203, 6)</td><td>(221, 5)、(218, 6)</td><td>(217, 5)</td></tr>
+<tr><td>系统化 RS（24×32）</td><td>(168, 5)、(140, 6)、(133, 7)、(127, 9)、(126, 11)、(124, 14)</td><td>(145, 5)</td><td>(147, 5)、(146, 6)</td></tr>
+<tr><td>Cauchy（24×32）</td><td>(224, 5)、(150, 6)</td><td>(147, 5)、(144, 6)</td><td>(144, 5)、(143, 6)</td></tr>
+<tr><td>GF(2⁸) 展开（80×80）</td><td>(1830, 6)、(1219, 7)</td><td>(1241, 6)、(1217, 7)</td><td>(1231, 6)、(1210, 7)</td></tr>
+</table><h2>扩展深度后的结果</h2><p>新上限没有产生更少门数的独立合成点。RS额外测试了仓库前沿对应的9、11、14层。所有122条线路记录通过独立逐门审计；其中可能有不同方法产生的重复点。完整数据包括被支配的点，均列于下方。</p><img src="pareto_comparison.png" alt="Pareto comparison">
+<h2>Vandermonde（24×64）：全部候选</h2><p>合并后观察前沿：(217, 5)、(203, 6)</p><table><tr><th>来源</th><th>标签</th><th>请求上限</th><th>XOR</th><th>实际深度</th><th>自身方法前沿点</th></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained</td><td class="label">—</td><td class="label">220</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained-rebalanced</td><td class="label">—</td><td class="label">220</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share2</td><td class="label">—</td><td class="label">220</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share3</td><td class="label">—</td><td class="label">243</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-noshare</td><td class="label">—</td><td class="label">336</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_cse</td><td class="label">—</td><td class="label">217</td><td class="label">13</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_cse-rebalanced</td><td class="label">—</td><td class="label">217</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/1/circuit</td><td class="label">—</td><td class="label">331</td><td class="label">99</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/1/circuit-rebalanced</td><td class="label">—</td><td class="label">312</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/2/circuit</td><td class="label">—</td><td class="label">283</td><td class="label">75</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/2/circuit-rebalanced</td><td class="label">—</td><td class="label">277</td><td class="label">17</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/3/circuit</td><td class="label">—</td><td class="label">261</td><td class="label">82</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_uber/3/circuit-rebalanced</td><td class="label">—</td><td class="label">257</td><td class="label">31</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_xsets/MW_SQ/circuit</td><td class="label">—</td><td class="label">219</td><td class="label">12</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_xsets/MW_SQ/circuit-rebalanced</td><td class="label">—</td><td class="label">219</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_xsets/UBER_XSET/circuit</td><td class="label">—</td><td class="label">212</td><td class="label">15</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/direct_xsets/UBER_XSET/circuit-rebalanced</td><td class="label">—</td><td class="label">212</td><td class="label">8</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring</td><td class="label">—</td><td class="label">203</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring-rebalanced</td><td class="label">—</td><td class="label">203</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_cse</td><td class="label">—</td><td class="label">204</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_cse-rebalanced</td><td class="label">—</td><td class="label">204</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_mw_pipeline/ring</td><td class="label">—</td><td class="label">203</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_mw_pipeline/ring-rebalanced</td><td class="label">—</td><td class="label">203</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_uber_pipeline/ring</td><td class="label">—</td><td class="label">204</td><td class="label">12</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">structured_ring_example.json:/ring_uber_pipeline/ring-rebalanced</td><td class="label">—</td><td class="label">203</td><td class="label">8</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_vandermonde:CSE-chained</td><td class="label">—</td><td class="label">220</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_vandermonde:CSE-chained-rebalanced</td><td class="label">—</td><td class="label">220</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_vandermonde:CSE-share2-depth</td><td class="label">—</td><td class="label">221</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_vandermonde:CSE-share3-depth</td><td class="label">—</td><td class="label">245</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_vandermonde:CSE-noshare-depth</td><td class="label">—</td><td class="label">336</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">beam_vandermonde_d6:DEPTH_BOUNDED_XSET_BEAM</td><td class="label">6</td><td class="label">221</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">5</td><td class="label">221</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">5</td><td class="label">218</td><td class="label">5</td><td class="label">否</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">6</td><td class="label">218</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">6</td><td class="label">217</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">7</td><td class="label">218</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">7</td><td class="label">217</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">8</td><td class="label">218</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">8</td><td class="label">217</td><td class="label">5</td><td class="label">是</td></tr>
+</table>
+<h2>系统化 RS（24×32）：全部候选</h2><p>合并后观察前沿：(145, 5)、(140, 6)、(133, 7)、(127, 9)、(126, 11)、(124, 14)</p><table><tr><th>来源</th><th>标签</th><th>请求上限</th><th>XOR</th><th>实际深度</th><th>自身方法前沿点</th></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained</td><td class="label">—</td><td class="label">149</td><td class="label">8</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained-rebalanced</td><td class="label">—</td><td class="label">149</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share2</td><td class="label">—</td><td class="label">149</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share3</td><td class="label">—</td><td class="label">168</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-noshare</td><td class="label">—</td><td class="label">247</td><td class="label">5</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/direct_cse</td><td class="label">—</td><td class="label">146</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/direct_cse-rebalanced</td><td class="label">—</td><td class="label">146</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/4/circuit</td><td class="label">—</td><td class="label">126</td><td class="label">12</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/4/circuit-rebalanced</td><td class="label">—</td><td class="label">126</td><td class="label">11</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit</td><td class="label">—</td><td class="label">140</td><td class="label">8</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit-rebalanced</td><td class="label">—</td><td class="label">140</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/6/circuit</td><td class="label">—</td><td class="label">141</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/6/circuit-rebalanced</td><td class="label">—</td><td class="label">141</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/7/circuit</td><td class="label">—</td><td class="label">134</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/7/circuit-rebalanced</td><td class="label">—</td><td class="label">132</td><td class="label">9</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/8/circuit</td><td class="label">—</td><td class="label">129</td><td class="label">15</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/8/circuit-rebalanced</td><td class="label">—</td><td class="label">129</td><td class="label">11</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/10/circuit</td><td class="label">—</td><td class="label">136</td><td class="label">10</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/10/circuit-rebalanced</td><td class="label">—</td><td class="label">136</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/11/circuit</td><td class="label">—</td><td class="label">133</td><td class="label">11</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/11/circuit-rebalanced</td><td class="label">—</td><td class="label">133</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/ring</td><td class="label">—</td><td class="label">124</td><td class="label">15</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4/ring-rebalanced</td><td class="label">—</td><td class="label">124</td><td class="label">14</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4-ring12/ring</td><td class="label">—</td><td class="label">127</td><td class="label">11</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">practical_mds_examples.json:/examples/systematic-rs-7-4-ring12/ring-rebalanced</td><td class="label">—</td><td class="label">127</td><td class="label">9</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_rs:CSE-chained</td><td class="label">—</td><td class="label">149</td><td class="label">8</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_rs:CSE-chained-rebalanced</td><td class="label">—</td><td class="label">149</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_rs:CSE-share2-depth</td><td class="label">—</td><td class="label">149</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_rs:CSE-share3-depth</td><td class="label">—</td><td class="label">168</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_rs:CSE-noshare-depth</td><td class="label">—</td><td class="label">247</td><td class="label">5</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">beam_rs_d6:DEPTH_BOUNDED_XSET_BEAM</td><td class="label">6</td><td class="label">149</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">5</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">5</td><td class="label">147</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">6</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">6</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">7</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">7</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">8</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">8</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">9</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">9</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">11</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">11</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">14</td><td class="label">145</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">14</td><td class="label">146</td><td class="label">6</td><td class="label">是</td></tr>
+</table>
+<h2>Cauchy（24×32）：全部候选</h2><p>合并后观察前沿：(144, 5)、(143, 6)</p><table><tr><th>来源</th><th>标签</th><th>请求上限</th><th>XOR</th><th>实际深度</th><th>自身方法前沿点</th></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained</td><td class="label">—</td><td class="label">150</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained-rebalanced</td><td class="label">—</td><td class="label">150</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share2</td><td class="label">—</td><td class="label">150</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share3</td><td class="label">—</td><td class="label">173</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-noshare</td><td class="label">—</td><td class="label">224</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_cauchy:CSE-chained</td><td class="label">—</td><td class="label">150</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_cauchy:CSE-chained-rebalanced</td><td class="label">—</td><td class="label">150</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_cauchy:CSE-share2-depth</td><td class="label">—</td><td class="label">150</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_cauchy:CSE-share3-depth</td><td class="label">—</td><td class="label">173</td><td class="label">6</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_cauchy:CSE-noshare-depth</td><td class="label">—</td><td class="label">224</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">beam_cauchy_d6:DEPTH_BOUNDED_XSET_BEAM</td><td class="label">6</td><td class="label">150</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">5</td><td class="label">147</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">5</td><td class="label">144</td><td class="label">5</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">6</td><td class="label">144</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">6</td><td class="label">143</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">7</td><td class="label">144</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">7</td><td class="label">143</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">8</td><td class="label">144</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">8</td><td class="label">143</td><td class="label">6</td><td class="label">是</td></tr>
+</table>
+<h2>GF(2⁸) 展开（80×80）：全部候选</h2><p>合并后观察前沿：(1231, 6)、(1210, 7)</p><table><tr><th>来源</th><th>标签</th><th>请求上限</th><th>XOR</th><th>实际深度</th><th>自身方法前沿点</th></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained</td><td class="label">—</td><td class="label">1219</td><td class="label">15</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-chained-rebalanced</td><td class="label">—</td><td class="label">1219</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share2</td><td class="label">—</td><td class="label">1219</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-share3</td><td class="label">—</td><td class="label">1376</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">CSE-noshare</td><td class="label">—</td><td class="label">1830</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_gf8:CSE-chained</td><td class="label">—</td><td class="label">1219</td><td class="label">15</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_gf8:CSE-chained-rebalanced</td><td class="label">—</td><td class="label">1219</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_gf8:CSE-share2-depth</td><td class="label">—</td><td class="label">1219</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_gf8:CSE-share3-depth</td><td class="label">—</td><td class="label">1378</td><td class="label">7</td><td class="label">否</td></tr>
+<tr><td class="label">Repository</td><td class="label">native_depth_aware_gf8:CSE-noshare-depth</td><td class="label">—</td><td class="label">1830</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">Repository</td><td class="label">beam_gf8_d7:DEPTH_BOUNDED_XSET_BEAM</td><td class="label">7</td><td class="label">1219</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">6</td><td class="label">1241</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">6</td><td class="label">1231</td><td class="label">6</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">7</td><td class="label">1217</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">7</td><td class="label">1210</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">8</td><td class="label">1217</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">8</td><td class="label">1210</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V1</td><td class="label">OUR_DCCSE</td><td class="label">9</td><td class="label">1217</td><td class="label">7</td><td class="label">是</td></tr>
+<tr><td class="label">V2</td><td class="label">OUR_DCCSE_V2</td><td class="label">9</td><td class="label">1210</td><td class="label">7</td><td class="label">是</td></tr>
+</table>
+<p>数据与边界详见 README.txt、all_candidates.csv、summary.json 及原始证据。脚本与证据保留了每次实际深度和功能验证结果。</p></html>

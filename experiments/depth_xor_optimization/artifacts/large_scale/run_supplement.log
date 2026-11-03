@@ -1,0 +1,8 @@
+300x200_sparse ours_plus130 exit=0
+300x200_sparse ours_min30 exit=0
+192x128_dense ours_min30 exit=124
+192x128_dense ours_plus130 exit=124
+300x200_blocks ours_min30 exit=0
+300x200_blocks ours_plus130 exit=0
+300x200_dense ours_min30 exit=124
+300x200_dense ours_plus130 exit=124

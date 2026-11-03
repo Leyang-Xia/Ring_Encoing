@@ -1,0 +1,257 @@
+make: Entering directory '/workspace/scratch/14e94f4a5e35/strict_alignment/repo'
+g++ -Iinclude -DRINGLAB_ROOT='"/workspace/scratch/14e94f4a5e35/strict_alignment/repo"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread apps/ringlab.cpp build/json.o build/bitvector.o build/field.o build/circuit.o build/cse.o build/depth_cse.o build/benchmark_inputs.o build/matrices.o build/verification.o build/search.o build/backend.o  -o build/ringlab
+build/depth-cse-test
+depth-CSE: sharing, reproducibility, wide masks, aliases, hard limits and refinements passed
+build/core-test data/certificates
+core: exact integers, invalid circuits, field arithmetic, 100 historical CSE seeds passed
+build/experiment-test data/certificates
+experiments: field baselines, wide masks, live reuse and incomplete status passed
+build/ringlab verify --exhaustive
+{
+  "family": {
+    "examples": {
+      "scaled-eight": {
+        "best_completed_direct": 251,
+        "matrix_family": "scaled_extension",
+        "nonzero_minors": 164,
+        "percent": 11.55378486055777,
+        "random_vectors": 1000,
+        "ring": 222
+      },
+      "scaled-ten": {
+        "best_completed_direct": 343,
+        "matrix_family": "scaled_extension",
+        "nonzero_minors": 285,
+        "percent": 21.282798833819243,
+        "random_vectors": 1000,
+        "ring": 270
+      },
+      "vandermonde-11d-k12": {
+        "best_completed_direct": 338,
+        "matrix_family": "vandermonde",
+        "nonzero_minors": 454,
+        "percent": 7.6923076923076925,
+        "random_vectors": 1000,
+        "ring": 312
+      },
+      "vandermonde-11d-k8": {
+        "best_completed_direct": 212,
+        "matrix_family": "vandermonde",
+        "nonzero_minors": 164,
+        "percent": 2.830188679245283,
+        "random_vectors": 1000,
+        "ring": 206
+      },
+      "vandermonde-1d7-k8": {
+        "best_completed_direct": 220,
+        "matrix_family": "vandermonde",
+        "nonzero_minors": 164,
+        "percent": 7.2727272727272725,
+        "random_vectors": 1000,
+        "ring": 204
+      }
+    },
+    "primary_additional_runs": 8
+  },
+  "original": {
+    "all_saved_circuits_verified": true,
+    "checked_nonzero_minors": 164,
+    "complete_ring_pipelines": {
+      "MW_SQ": 203,
+      "UBER_XSET": 204
+    },
+    "direct_cse_100_seeds": 217,
+    "direct_xsets": {
+      "MW_SQ": 219,
+      "UBER_XSET": 212
+    },
+    "main_xors": 152,
+    "matrix_identity": true,
+    "projection_xors": 51,
+    "random_data_vectors": 1000,
+    "ring_total": 203,
+    "systematic_code": [
+      11,
+      8,
+      4
+    ]
+  },
+  "practical": {
+    "cauchy-7-4-0": {
+      "best_completed_direct": 141,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "cauchy",
+      "main_xors": 147,
+      "net_saved": -27,
+      "nonzero_minors": 34,
+      "projection_xors": 21,
+      "random_vectors": 1000,
+      "ring": 168,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "cauchy-7-4-1": {
+      "best_completed_direct": 158,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "cauchy",
+      "main_xors": 150,
+      "net_saved": -10,
+      "nonzero_minors": 34,
+      "projection_xors": 18,
+      "random_vectors": 1000,
+      "ring": 168,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "cauchy-7-4-2": {
+      "best_completed_direct": 154,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "cauchy",
+      "main_xors": 148,
+      "net_saved": -15,
+      "nonzero_minors": 34,
+      "projection_xors": 21,
+      "random_vectors": 1000,
+      "ring": 169,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "cauchy-7-4-3": {
+      "best_completed_direct": 152,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "cauchy",
+      "main_xors": 151,
+      "net_saved": -19,
+      "nonzero_minors": 34,
+      "projection_xors": 20,
+      "random_vectors": 1000,
+      "ring": 171,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "systematic-rs-17-14-preliminary": {
+      "best_completed_direct": 547,
+      "comparison_status": "strong_direct_search_incomplete",
+      "kind": "systematic_rs_moments",
+      "main_xors": 285,
+      "net_saved": null,
+      "nonzero_minors": 679,
+      "projection_xors": 209,
+      "random_vectors": 1000,
+      "ring": 494,
+      "systematic_code": [
+        17,
+        14,
+        4
+      ]
+    },
+    "systematic-rs-7-4": {
+      "best_completed_direct": 126,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "systematic_rs",
+      "main_xors": 112,
+      "net_saved": 2,
+      "nonzero_minors": 34,
+      "projection_xors": 12,
+      "random_vectors": 1000,
+      "ring": 124,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "systematic-rs-7-4-powers": {
+      "best_completed_direct": 158,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "systematic_rs",
+      "main_xors": 167,
+      "net_saved": -30,
+      "nonzero_minors": 34,
+      "projection_xors": 21,
+      "random_vectors": 1000,
+      "ring": 188,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    },
+    "systematic-rs-7-4-ring12": {
+      "best_completed_direct": 126,
+      "comparison_status": "completed_heuristic_comparison",
+      "kind": "systematic_rs",
+      "main_xors": 91,
+      "net_saved": -1,
+      "nonzero_minors": 34,
+      "projection_xors": 36,
+      "random_vectors": 1000,
+      "ring": 127,
+      "systematic_code": [
+        7,
+        4,
+        4
+      ]
+    }
+  },
+  "small": {
+    "all_saved_circuits_verified": true,
+    "cauchy_matrix": true,
+    "direct_cse_100_seeds_best": 36,
+    "direct_cse_default": 38,
+    "direct_cse_histogram": {
+      "36": 11,
+      "37": 17,
+      "38": 71,
+      "39": 1
+    },
+    "exhaustive_inputs": 65536,
+    "matrix_identity": true,
+    "nonzero_2x2_minors": [
+      6,
+      5,
+      13,
+      12,
+      9,
+      7
+    ],
+    "ring_main": 27,
+    "ring_projection": 8,
+    "ring_total": 35,
+    "systematic_code": [
+      6,
+      4,
+      3
+    ],
+    "uber_costs": {
+      "1": 48,
+      "2": 40,
+      "3": 38,
+      "4": 38
+    },
+    "xsets_best_direct": 32,
+    "xsets_best_ring_with_projection": 35
+  }
+}
+bash tests/cli_test.sh build/ringlab
+CLI: verification, profiles, aliases, timeouts, backend errors and finite search passed
+CLI: custom definitions and cancellation cleanup passed
+CLI: OUR_DCCSE analyze/verify and depth rejection passed
+CLI: V2 synthesis, incumbent verification and hard-depth rejection passed
+bash tests/xsets_quiet.sh build/xsets
+X-Sets: quiet mode preserves verified schedule output
+bash tests/xsets_parallel.sh build/xsets
+X-Sets: serial and parallel candidate evaluation outputs match
+make: Leaving directory '/workspace/scratch/14e94f4a5e35/strict_alignment/repo'

@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><title>Large XOR matrix comparisons</title><style>body{font:16px system-ui;max-width:1400px;margin:40px auto;color:#243247}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}p{line-height:1.6}</style>
+<h1>更大矩阵的 XOR 门数、深度与限时求解</h1>
+<p>9 个新生成矩阵：128×96、192×128、300×200（输出×输入），每档稀疏、稠密、重复公共块各一例，固定 seed=123。所有算法均通过接入仓库的 C++ 原生 CLI 运行。它们是扩展输入，不是原四组官方固定基准。</p>
+<p>主比较每个任务 10 秒；内部计时后端与 Beam 有 12 秒外部保护。统一 XSETS_THREADS=1，最多 4 个并发任务。30 秒的 OUR 补充结果单列。任务预算相同并不等于等算力：frontier 一次生成多个候选。时间为整条命令的墙钟时间。</p>
+<h2>主比较：10 秒上限</h2><table><tr><th>规模/类型</th><th>D₀</th><th>CSE＋重平衡</th><th>share≥3</th><th>仓库 no-share</th><th>我们 D₀</th><th>我们 D₀+1</th><th>Beam D₀+1</th></tr>
+<tr><td>128x96_blocks</td><td>6</td><td>974 / 8</td><td>1085 / 7</td><td>1591 / 6</td><td>1017 / 6</td><td>996 / 7</td><td>975 / 7</td></tr>
+<tr><td>128x96_dense</td><td>6</td><td>2223 / 7</td><td>2510 / 7</td><td>3285 / 6</td><td>2301 / 6</td><td>2214 / 7</td><td>2217 / 7</td></tr>
+<tr><td>128x96_sparse</td><td>5</td><td>1097 / 5</td><td>1204 / 5</td><td>1465 / 5</td><td>1100 / 5</td><td>1100 / 5</td><td>1097 / 5</td></tr>
+<tr><td>192x128_blocks</td><td>7</td><td>1851 / 8</td><td>2033 / 8</td><td>2945 / 7</td><td>1871 / 7</td><td>1868 / 8</td><td>1861 / 8</td></tr>
+<tr><td>192x128_dense</td><td>7</td><td>4179 / 7</td><td>4699 / 7</td><td>6222 / 7</td><td>超时</td><td>超时</td><td>超时</td></tr>
+<tr><td>192x128_sparse</td><td>5</td><td>2064 / 6</td><td>2273 / 5</td><td>2778 / 5</td><td>2085 / 5</td><td>2084 / 6</td><td>2064 / 6</td></tr>
+<tr><td>300x200_blocks</td><td>7</td><td>4285 / 9</td><td>4745 / 8</td><td>6726 / 7</td><td>超时</td><td>超时</td><td>超时</td></tr>
+<tr><td>300x200_dense</td><td>7</td><td>9721 / 8</td><td>未完成/未测</td><td>14305 / 7</td><td>超时</td><td>超时</td><td>超时</td></tr>
+<tr><td>300x200_sparse</td><td>6</td><td>4866 / 6</td><td>5404 / 6</td><td>6565 / 6</td><td>超时</td><td>超时</td><td>超时</td></tr>
+</table><p>每格为门数 / 实际最大深度。300×200 稠密的完整 share2/3/0 扫描未在 10 秒内完成；CSE＋重平衡和 no-share 来自补跑的基础 frontier --share 0。MW_SQ、UBER_XSET 均采用原参数 (0,3,0)，本轮各 9/9 超时，不能据此比较最终电路质量。Beam 使用缩小预算的 8/4/4/1 配置，不是前一轮 180 秒官方配置。</p>
+<h2>额外 30 秒补充：相同算法与种子</h2><table><tr><th>规模/类型</th><th>我们 D₀</th><th>耗时</th><th>我们 D₀+1</th><th>耗时</th></tr>
+<tr><td>192x128_dense</td><td>超时</td><td>30.004s</td><td>超时</td><td>30.005s</td></tr>
+<tr><td>300x200_blocks</td><td>4431 / 7</td><td>25.216s</td><td>4308 / 8</td><td>26.579s</td></tr>
+<tr><td>300x200_dense</td><td>超时</td><td>30.004s</td><td>超时</td><td>30.003s</td></tr>
+<tr><td>300x200_sparse</td><td>4873 / 6</td><td>29.625s</td><td>4873 / 6</td><td>29.471s</td></tr>
+</table><h2>命令时间</h2><table><tr><th>规模/类型</th><th>整个原生 frontier 扫描</th><th>我们 D₀（10s）</th><th>我们 D₀+1（10s）</th></tr>
+<tr><td>128x96_blocks</td><td>0.074s</td><td>0.794s</td><td>0.703s</td></tr>
+<tr><td>128x96_dense</td><td>0.512s</td><td>7.841s</td><td>8.639s</td></tr>
+<tr><td>128x96_sparse</td><td>0.058s</td><td>0.767s</td><td>0.671s</td></tr>
+<tr><td>192x128_blocks</td><td>0.269s</td><td>3.411s</td><td>3.408s</td></tr>
+<tr><td>192x128_dense</td><td>3.015s</td><td>10.005s</td><td>10.006s</td></tr>
+<tr><td>192x128_sparse</td><td>0.229s</td><td>3.435s</td><td>3.435s</td></tr>
+<tr><td>300x200_blocks</td><td>2.558s</td><td>10.006s</td><td>10.003s</td></tr>
+<tr><td>300x200_dense</td><td>7.524s（基础模式）</td><td>10.006s</td><td>10.007s</td></tr>
+<tr><td>300x200_sparse</td><td>2.480s</td><td>10.004s</td><td>10.002s</td></tr>
+</table><p>全部 62 条完整电路通过原生 verify 和独立 GF(2) 逐门审计，核对输入矩阵、每个门、全部输出、存活门数和深度。超时不代表不可行。本轮只有每类型一个固定种子，不作统计优越性或物理 ASIC 时序结论。完整参数和限制见 README.md，逐任务状态见 tasks.csv。</p>
