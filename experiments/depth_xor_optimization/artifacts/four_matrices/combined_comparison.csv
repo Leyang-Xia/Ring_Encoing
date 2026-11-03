@@ -1,0 +1,9 @@
+matrix,depth_limit,native_best_gates,native_best_depth,native_best_label,beam_status,beam_gates,beam_depth,ours_gates,ours_depth,saving_vs_native_pct
+vandermonde,5,336,5,CSE-noshare,timeout,,,221,5,34.226190476190474
+vandermonde,6,203,6,structured_ring_example.json:/ring-rebalanced,verified,221,6,218,6,-7.389162561576355
+rs,5,168,5,CSE-share3,timeout,,,150,5,10.714285714285714
+rs,6,140,6,practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit-rebalanced,verified,149,6,150,5,-7.142857142857143
+cauchy,5,224,5,CSE-noshare,timeout,,,147,5,34.375
+cauchy,6,150,6,CSE-chained-rebalanced,verified,150,6,147,5,2.0
+gf8,6,1830,6,CSE-noshare,external_timeout_190s,,,1247,6,31.85792349726776
+gf8,7,1219,7,CSE-chained-rebalanced,verified,1219,7,1224,7,-0.41017227235438886

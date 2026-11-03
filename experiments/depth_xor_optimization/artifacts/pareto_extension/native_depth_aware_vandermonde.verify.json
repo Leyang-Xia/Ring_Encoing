@@ -1,0 +1,37 @@
+{
+  "candidates": [
+    {
+      "cost": 220,
+      "depth": 10,
+      "label": "CSE-chained",
+      "status": "verified"
+    },
+    {
+      "cost": 220,
+      "depth": 6,
+      "label": "CSE-chained-rebalanced",
+      "status": "verified"
+    },
+    {
+      "cost": 221,
+      "depth": 6,
+      "label": "CSE-share2-depth",
+      "status": "verified"
+    },
+    {
+      "cost": 245,
+      "depth": 6,
+      "label": "CSE-share3-depth",
+      "status": "verified"
+    },
+    {
+      "cost": 336,
+      "depth": 5,
+      "label": "CSE-noshare-depth",
+      "status": "verified"
+    }
+  ],
+  "candidates_verified": 5,
+  "file": "/workspace/scratch/14e94f4a5e35/pareto_extension/native_depth_aware_vandermonde.json",
+  "status": "verified"
+}

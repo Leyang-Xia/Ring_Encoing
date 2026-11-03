@@ -1,0 +1,9 @@
+matrix,depth_limit,native_best,native_best_depth,beam_status,beam_gates,beam_depth,v1_gates,v1_depth,v1r16_gates,v1r16_depth,standalone_gates,standalone_depth,standalone_seconds,standalone_source,warm_gates,warm_depth,warm_seconds,warm_source
+vandermonde,5,336,5,timeout,,,221,5,221,5,218,5,0.494,own synthesis,218,5,0.51,own synthesis
+vandermonde,6,203,6,verified,221,6,218,6,218,6,217,5,0.505,own synthesis,203,6,0.53,/workspace/scratch/14e94f4a5e35/four_matrices/vandermonde_native_frontier.json:structured_ring_example.json:/ring-rebalanced
+rs,5,168,5,timeout,,,150,5,145,5,147,5,0.221,own synthesis,147,5,0.24,own synthesis
+rs,6,140,6,verified,149,6,150,5,145,5,146,6,0.244,own synthesis,139,6,0.259,/workspace/scratch/14e94f4a5e35/four_matrices/rs_native_frontier.json:practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit-rebalanced
+cauchy,5,224,5,timeout,,,147,5,147,5,144,5,0.199,own synthesis,144,5,0.231,own synthesis
+cauchy,6,150,6,verified,150,6,147,5,144,6,143,6,0.235,own synthesis,143,6,0.235,own synthesis
+gf8,6,1830,6,external_timeout_190s,,,1247,6,1241,6,1231,6,34.261,own synthesis,1231,6,33.652,own synthesis
+gf8,7,1219,7,verified,1219,7,1224,7,1217,7,1210,7,36.076,own synthesis,1210,7,36.369,own synthesis

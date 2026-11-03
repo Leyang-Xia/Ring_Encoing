@@ -1,0 +1,5 @@
+INDEPENDENTLY_VERIFIED 122 TASKS 38
+{"matrix": "vandermonde", "lower": 5, "max_tested_depth": 8, "frontiers": {"Repository": [[336, 5], [203, 6]], "V1": [[221, 5], [218, 6]], "V2": [[217, 5]]}, "full_repository_frontier": [[336, 5], [203, 6]], "combined_frontier": [[217, 5], [203, 6]]}
+{"matrix": "rs", "lower": 5, "max_tested_depth": 14, "frontiers": {"Repository": [[168, 5], [140, 6], [133, 7], [127, 9], [126, 11], [124, 14]], "V1": [[145, 5]], "V2": [[147, 5], [146, 6]]}, "full_repository_frontier": [[168, 5], [140, 6], [133, 7], [127, 9], [126, 11], [124, 14]], "combined_frontier": [[145, 5], [140, 6], [133, 7], [127, 9], [126, 11], [124, 14]]}
+{"matrix": "cauchy", "lower": 5, "max_tested_depth": 8, "frontiers": {"Repository": [[224, 5], [150, 6]], "V1": [[147, 5], [144, 6]], "V2": [[144, 5], [143, 6]]}, "full_repository_frontier": [[224, 5], [150, 6]], "combined_frontier": [[144, 5], [143, 6]]}
+{"matrix": "gf8", "lower": 6, "max_tested_depth": 9, "frontiers": {"Repository": [[1830, 6], [1219, 7]], "V1": [[1241, 6], [1217, 7]], "V2": [[1231, 6], [1210, 7]]}, "full_repository_frontier": [[1830, 6], [1219, 7]], "combined_frontier": [[1231, 6], [1210, 7]]}
