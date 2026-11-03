@@ -46,6 +46,31 @@ int main() {
     require(first_unreachable == 56, "MW_SQ trace first unreachable step changed");
     require(left_representations == 3 && right_representations == 1,
             "MW_SQ trace operands are no longer split across representations");
+    const int left = 3;
+    const int right = 118;
+    const int node = 120;
+    int left_index = -1;
+    int right_index = -1;
+    for (std::size_t i = 0; i < representations.size(); ++i) {
+        if (representations[i].count(left) && left_index < 0)
+            left_index = static_cast<int>(i);
+        if (representations[i].count(right) && right_index < 0)
+            right_index = static_cast<int>(i);
+    }
+    require(left_index >= 0 && right_index >= 0 && left_index != right_index,
+            "MW_SQ trace split representations are distinct");
+    for (int index : {left_index, right_index}) {
+        auto &terms = representations[static_cast<std::size_t>(index)];
+        for (int term : {left, right}) {
+            auto it = terms.find(term);
+            if (it != terms.end()) terms.erase(it);
+            else terms.insert(term);
+        }
+        terms.insert(node);
+    }
+    require(representations[static_cast<std::size_t>(left_index)].count(node) &&
+                representations[static_cast<std::size_t>(right_index)].count(node),
+            "bridge transition exposes node 120 to both representations");
     std::cout << "MW_SQ trace replay: first unreachable node 120 at step 56, "
-              << "operands split across 3 and 1 representations\n";
+              << "operands split across 3 and 1 representations, bridge is expressible\n";
 }
