@@ -75,7 +75,8 @@ make test         # 单元检查 + CLI 检查
 
 ```text
 include/xd/          深度度量与调度接口
-src/xd_depth.cpp     深度、下界、平衡调度、重结合
+src/xd_depth.cpp     深度、下界、平衡调度
+src/xd_rebalance.cpp 单消费者累加锥重结合
 src/xd_search.cpp    深度硬约束 X-Sets Beam Search
 src/xd_frontier.cpp  前沿、审计、证据复核、矩阵解析
 apps/xordepth.cpp    命令行
@@ -85,7 +86,7 @@ data/results/        测量结果（每条候选都带完整线路与目标掩�
 docs/                方法、证明与完整数据
 ```
 
-方法与完整结果见 [计数–深度前沿](docs/count-depth-frontier.md) 和 [深度硬约束搜索](docs/depth-bounded-search.md)。
+方法与完整结果见 [计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md) 和 [rebalance 模块](docs/rebalance.md)。
 
 ## 边界
 
