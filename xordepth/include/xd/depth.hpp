@@ -63,6 +63,7 @@ struct BoundedScheduleResult {
     std::size_t pruned_depth = 0;
     std::size_t pruned_bound = 0;
     std::size_t toggle_candidates = 0;
+    std::size_t bridge_candidates = 0;
     std::size_t diversity_buckets = 0;
 };
 

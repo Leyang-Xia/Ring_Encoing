@@ -903,7 +903,7 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     result.toggle_candidates += toggles.size();
                     candidates.insert(candidates.end(), toggles.begin(), toggles.end());
                     auto bridges = state.bridge_candidates();
-                    result.toggle_candidates += bridges.size();
+                    result.bridge_candidates += bridges.size();
                     candidates.insert(candidates.end(), bridges.begin(), bridges.end());
                 }
                 SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
@@ -939,6 +939,7 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                 auto toggles = probe.toggle_candidates();
                                 next.insert(next.end(), toggles.begin(), toggles.end());
                                 auto bridges = probe.bridge_candidates();
+                                result.bridge_candidates += bridges.size();
                                 next.insert(next.end(), bridges.begin(), bridges.end());
                             }
                             if (next.empty()) break;
