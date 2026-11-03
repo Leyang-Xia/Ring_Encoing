@@ -929,7 +929,14 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                                static_cast<std::size_t>(candidates[i].target),
                                                static_cast<std::size_t>(candidates[i].representation),
                                                candidates[i].future_support)
-                                         : state.apply(candidates[i]);
+                                         : candidates[i].bridge
+                                             ? state.apply_bridge(
+                                                   candidates[i].left, candidates[i].right,
+                                                   static_cast<std::size_t>(candidates[i].target),
+                                                   static_cast<std::size_t>(candidates[i].representation),
+                                                   static_cast<std::size_t>(candidates[i].target2),
+                                                   static_cast<std::size_t>(candidates[i].representation2))
+                                             : state.apply(candidates[i]);
                         if (!probe.valid()) continue;
                         int bound = probe.cost_priority();
                         for (int step = 1; step < options.lookahead_depth && !probe.complete();
