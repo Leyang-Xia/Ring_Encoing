@@ -125,6 +125,7 @@ SearchState SearchState::initial(const BitRows &targets, int inputs,
                 options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
                 options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
                 options.residual_targets >= 0 &&
+                options.rewrite_trials >= 0 &&
                 (options.residual_pairs == 0 || options.residual_targets > 0),
             "invalid bounded search options");
     validate_target_width(targets, inputs);
@@ -846,6 +847,9 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
     auto consider_candidate = [&](Circuit circuit) {
         if (std::chrono::steady_clock::now() >= deadline) throw SearchDeadlineExceeded();
         circuit.verify(targets);
+        if (options.rewrite_trials > 0)
+            circuit = rewrite_depth_gates(circuit, targets, options.max_depth,
+                                           options.rewrite_trials, deadline);
         auto profile = depth_profile(circuit);
         if (profile.depth > options.max_depth) return;
         if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {

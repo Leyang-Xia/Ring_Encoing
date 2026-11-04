@@ -49,6 +49,21 @@ int main() {
         require(depth_profile(fixed).depth <= depth_profile(shared).depth,
                 "rebalance depth is non-increasing");
 
+        // A shared gate can be removed only by rewriting all of its consumers
+        // as one transaction while preserving the hard depth limit.
+        Circuit multi;
+        multi.inputs = 4;
+        multi.zero_node = 4;
+        multi.ops = {{{5, 0, 1}}, {{6, 0, 2}}, {{7, 0, 3}}, {{8, 5, 2}}, {{9, 5, 3}}};
+        multi.outputs = {6, 7, 8, 9};
+        BitRows multi_rows{BitMask(5), BitMask(9), BitMask(7), BitMask(11)};
+        multi.verify(multi_rows);
+        auto rewritten = rewrite_depth_gates(multi, multi_rows, 2, 40);
+        rewritten.verify(multi_rows);
+        require(rewritten.cost() == 4, "shared-gate rewrite removes one gate");
+        require(depth_profile(rewritten).depth <= 2, "shared-gate rewrite keeps depth");
+        rejects([&] { rewrite_depth_gates(multi, multi_rows, 1, 40); });
+
         // Malformed circuits are rejected, not silently measured.
         rejects([] { depth_profile(Circuit()); });
         auto broken = chained;

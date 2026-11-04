@@ -26,6 +26,7 @@ Options:
   --residual-pairs N   global pair candidates considered for residual toggles
   --residual-targets N  target representations expanded per residual pair
   --allow-empty-toggle allow residual toggles with neither operand present
+  --rewrite-trials N  bounded post-search shared-gate rewrite attempts
   --seed N           bounded candidate-order seed
   --timeout SEC      bounded search budget
   --output FILE      write the complete result
@@ -118,6 +119,8 @@ int main(int argc, char **argv) {
                 bounded_options.residual_targets = parse_int(value());
             } else if (key == "--allow-empty-toggle") {
                 bounded_options.allow_empty_toggle = true;
+            } else if (key == "--rewrite-trials") {
+                bounded_options.rewrite_trials = parse_int(value());
             } else if (key == "--seed") {
                 bounded_options.seed = std::stoull(value());
             } else if (key == "--timeout") {

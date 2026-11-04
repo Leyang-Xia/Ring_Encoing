@@ -21,6 +21,12 @@ grep -q '"residual_targets": 1' "$tmp/residual.json"
 grep -q '"toggle_candidates":' "$tmp/residual.json"
 grep -q '"bridge_candidates":' "$tmp/residual.json"
 grep -q '"diversity_buckets":' "$tmp/residual.json"
+
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
+  --timeout 5 --rewrite-trials 40 --output "$tmp/rewrite.json" > /dev/null
+grep -q '"rewrite_trials": 40' "$tmp/rewrite.json"
+"$tool" verify "$tmp/rewrite.json" | grep -q '"status": "verified"'
+
 cp "$tmp/bounded.json" "$tmp/tampered.json"
 perl -0pi -e 's/"depth":\s*2/"depth": 99/' "$tmp/tampered.json"
 expect_fail "$tool" verify "$tmp/tampered.json"

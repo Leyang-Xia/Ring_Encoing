@@ -46,6 +46,7 @@ struct BoundedScheduleOptions {
     int residual_pairs = 0;
     int residual_targets = 0;
     bool allow_empty_toggle = false;
+    int rewrite_trials = 0;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
     // Internal monotonic deadline used by SearchState; not serialized as a
@@ -92,4 +93,12 @@ Circuit rebalanced(
     const Circuit &circuit,
     std::chrono::steady_clock::time_point deadline =
         std::chrono::steady_clock::time_point::max());
+
+// Try to remove non-output shared gates by rewriting all consumers in one
+// transaction. The returned circuit preserves the target masks and hard depth
+// limit, and is accepted only when its live XOR count is strictly smaller.
+Circuit rewrite_depth_gates(const Circuit &circuit, const BitRows &targets, int max_depth,
+                            int max_trials = 400,
+                            std::chrono::steady_clock::time_point deadline =
+                                std::chrono::steady_clock::time_point::max());
 } // namespace xd
