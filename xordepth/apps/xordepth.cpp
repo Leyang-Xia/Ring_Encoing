@@ -1,5 +1,6 @@
 #include "xd/experiments.hpp"
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 using namespace xd;
@@ -9,6 +10,7 @@ const char *help = R"(xordepth: XOR count / critical-path depth frontier (C++17)
 
   xordepth frontier MATRIX.txt [options] --output FILE
   xordepth bounded MATRIX.txt --depth D [options] --output FILE
+  xordepth merge BASE.json CANDIDATE.json... --output FILE
   xordepth audit FILE.json... [--output FILE]
   xordepth verify FILE.json
 
@@ -21,6 +23,8 @@ Options:
   --branch N         bounded candidates expanded per state
   --representations N  bounded representations retained per target
   --restarts N       bounded deterministic restarts
+  --greedy-restarts N  completable greedy portfolio attempts (0 = disabled)
+  --greedy-mwsq      MW_SQ-style lookahead rescoring of greedy tie sets
   --lookahead-width K  bounded candidates scored with selective lookahead
   --lookahead-depth L  future transitions simulated per scored candidate
   --residual-pairs N   global pair candidates considered for residual toggles
@@ -29,6 +33,10 @@ Options:
   --rewrite-trials N  bounded post-search shared-gate rewrite attempts
   --seed N           bounded candidate-order seed
   --timeout SEC      bounded search budget
+  --no-timeout       bounded search without a wall-clock deadline
+  --max-states N     hard search-state budget (always finite)
+  --incumbent FILE   offer a verified circuit to the bounded candidate pool
+                     (repeatable; zero search time)
   --output FILE      write the complete result
 
 MATRIX.txt holds one output per line and one input per column, 0/1 and whitespace only.
@@ -98,6 +106,8 @@ int main(int argc, char **argv) {
                 o.depth_aware = true;
             } else if (key == "--also") {
                 o.also.push_back(value());
+            } else if (key == "--incumbent") {
+                bounded_options.incumbent_paths.push_back(value());
             } else if (key == "--depth") {
                 bounded_options.max_depth = parse_int(value());
                 depth_set = true;
@@ -109,6 +119,10 @@ int main(int argc, char **argv) {
                 bounded_options.max_representations = parse_int(value());
             } else if (key == "--restarts") {
                 bounded_options.restarts = parse_int(value());
+            } else if (key == "--greedy-restarts") {
+                bounded_options.greedy_restarts = parse_int(value());
+            } else if (key == "--greedy-mwsq") {
+                bounded_options.greedy_mwsq = true;
             } else if (key == "--lookahead-width") {
                 bounded_options.lookahead_width = parse_int(value());
             } else if (key == "--lookahead-depth") {
@@ -128,6 +142,13 @@ int main(int argc, char **argv) {
                 std::size_t count = 0;
                 bounded_options.timeout_seconds = std::stod(text, &count);
                 require(count == text.size(), "invalid timeout");
+            } else if (key == "--no-timeout") {
+                bounded_options.timeout_seconds = 0;
+            } else if (key == "--max-states") {
+                const auto parsed = Json::numeric(value()).uint64();
+                require(parsed <= std::numeric_limits<std::size_t>::max(),
+                        "max_states exceeds the supported size range");
+                bounded_options.max_states = static_cast<std::size_t>(parsed);
             } else if (key == "--output") {
                 o.output = value();
             } else if (key.rfind("--", 0) == 0) {
@@ -152,6 +173,10 @@ int main(int argc, char **argv) {
             auto rows = read_matrix(positional[0], inputs);
             result = bounded_result(rows, inputs,
                                     Json::object({{"matrix", positional[0]}}), bounded_options);
+        } else if (command == "merge") {
+            require(!positional.empty(), "merge needs a base result");
+            require(!o.output.empty(), "merge requires --output");
+            result = merge_results(positional);
         } else if (command == "audit") {
             require(!positional.empty(), "audit needs at least one JSON file");
             result = audit(positional);

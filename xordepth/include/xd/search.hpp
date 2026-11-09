@@ -33,6 +33,11 @@ struct Candidate {
     int depth_slack = 0;
     int future_support = 0;
     int toggle_penalty = 0;
+    // UBER-style completion progress accumulated while scanning pair refs
+    // (near-complete count, total remaining terms). Sorting reads these
+    // directly instead of re-looking the pair up in a std::map comparator.
+    int progress_first = 0;
+    int progress_second = 0;
 };
 
 struct NodeRecord {
@@ -80,6 +85,10 @@ class SearchState {
     std::vector<NodeRecord> nodes_;
     std::unordered_map<BitMask, int, BitMaskHash> node_by_mask_;
     std::vector<ParetoFrontier> frontiers_;
+    // Pair references grouped by edge mask. Every consumer is order
+    // insensitive (candidates() ends in total-order sorts, fingerprint()
+    // sorts the collected support counts, pair_support/toggle/bridge only
+    // count), so the map's iteration order is not observable.
     std::unordered_map<BitMask, std::vector<PairRef>, BitMaskHash> pair_index_;
     std::unordered_map<std::uint64_t, int> residual_pair_support_;
     bool valid_ = true;
@@ -88,11 +97,17 @@ class SearchState {
     void rebuild_residual_pair_index();
     void adjust_residual_pair_index(const ParetoFrontier &frontier, int node_count,
                                     int delta);
+    // Copy for apply/apply_toggle/apply_bridge: pair_index_ and
+    // residual_pair_support_ are derived indexes that every transition fully
+    // rebuilds (or the child is invalid and never read), so copying the
+    // parent's entries into each child is pure allocation waste.
+    SearchState transition_base() const;
     Representation make_representation(const std::vector<int> &terms) const;
     int node_depth(int node) const;
 };
 
 int combine_depth(const std::vector<int> &arrival_depths);
+std::size_t completion_round_limit(std::size_t outputs, int max_depth);
 std::vector<int> normalize_terms(const std::vector<int> &terms);
 bool dominates(const std::vector<int> &a, const std::vector<int> &b);
 bool dominates(const Representation &a, const Representation &b);

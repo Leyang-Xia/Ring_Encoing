@@ -3,7 +3,9 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <functional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <string>
 
@@ -25,6 +27,13 @@ DepthProfile depth_profile(const Circuit &circuit);
 // sharing and fanout, so it is weak: it is a floor, not a target.
 int depth_lower_bound(const BitRows &targets);
 
+// MW_SQ-style support summary over node-id rows: counts every unordered pair of
+// node ids within each row and returns (maximum support, number of pairs that
+// attain it). Empty rows and rows with fewer than two entries contribute
+// nothing, so an all-trivial input yields (0, 0). Cost is O(sum t(t-1)/2).
+std::pair<std::size_t, std::size_t> mwsq_support_summary(
+    const std::vector<std::vector<int>> &rows);
+
 struct ScheduleOptions {
     // A pair of signals must appear in at least this many output rows before it
     // is materialized as a shared node. 0 or 1 disables sharing entirely.
@@ -39,6 +48,11 @@ struct BoundedScheduleOptions {
     int branch_width = 16;
     int max_representations = 8;
     int restarts = 8;
+    // Total completable-greedy attempts, alternating plain and lookahead.
+    int greedy_restarts = 2;
+    // MW_SQ-style lookahead rescoring of greedy tie sets. Off by default; when
+    // off every greedy attempt is bit-identical to the previous behavior.
+    bool greedy_mwsq = false;
     // Optional selective lookahead. Zero disables the extra probing pass;
     // otherwise the first K candidates are simulated for L future steps.
     int lookahead_width = 0;
@@ -47,6 +61,10 @@ struct BoundedScheduleOptions {
     int residual_targets = 0;
     bool allow_empty_toggle = false;
     int rewrite_trials = 0;
+    // Repeatable external incumbent files whose verified circuits join the
+    // unified candidate pool with zero search time.
+    std::vector<std::string> incumbent_paths;
+    std::size_t max_states = 10000;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
     // Internal monotonic deadline used by SearchState; not serialized as a
@@ -66,6 +84,14 @@ struct BoundedScheduleResult {
     std::size_t toggle_candidates = 0;
     std::size_t bridge_candidates = 0;
     std::size_t diversity_buckets = 0;
+    std::size_t state_limit = 0;
+    std::size_t round_limit = 0;
+    std::size_t max_rounds = 0;
+    std::size_t published_candidates = 0;
+    std::size_t incumbents_used = 0;
+    std::size_t incumbents_skipped = 0;
+    std::size_t rewrite_trials_used = 0;
+    std::string best_source;
 };
 
 // Internal control flow for the bounded search budget. Public callers normally
@@ -76,6 +102,23 @@ struct SearchDeadlineExceeded final : std::exception {
 
 BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                          const BoundedScheduleOptions &options);
+
+// Called once for every successful greedy attempt so a caller can publish each
+// result immediately instead of waiting for the whole portfolio to finish.
+using CircuitObserver = std::function<void(const Circuit &)>;
+
+// Strictly term-reducing common-subexpression elimination. Every accepted pair
+// preserves a feasible earliest-ready completion within max_depth. Restarts
+// alternate plain and bounded-lookahead attempts with the same seed; each pair
+// of attempts advances the seed by one.
+Circuit synthesize_completable(
+    const BitRows &targets, int inputs, int max_depth, int restarts, std::uint64_t seed = 0,
+    std::chrono::steady_clock::time_point deadline =
+        std::chrono::steady_clock::time_point::max(),
+    CircuitObserver observer = {},
+    // MW_SQ-style rescoring of tied greedy candidates; false keeps the
+    // historical random choice among ties.
+    bool mwsq_tiebreak = false);
 
 // Plank-style common-subexpression scheduling with a depth-aware selection pass
 // and a balanced (Huffman by arrival time) final accumulation. Every output,
@@ -97,8 +140,11 @@ Circuit rebalanced(
 // Try to remove non-output shared gates by rewriting all consumers in one
 // transaction. The returned circuit preserves the target masks and hard depth
 // limit, and is accepted only when its live XOR count is strictly smaller.
+// used_trials reports the exact number of trials consumed so callers can share
+// one total rewrite budget across several invocations.
 Circuit rewrite_depth_gates(const Circuit &circuit, const BitRows &targets, int max_depth,
                             int max_trials = 400,
                             std::chrono::steady_clock::time_point deadline =
-                                std::chrono::steady_clock::time_point::max());
+                                std::chrono::steady_clock::time_point::max(),
+                            int *used_trials = nullptr);
 } // namespace xd

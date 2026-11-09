@@ -1,9 +1,13 @@
 #include "xd/experiments.hpp"
+#include "xd/search.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace xd {
 namespace {
@@ -43,8 +47,17 @@ Json masks_to_json(const BitRows &rows) {
 BitRows json_to_masks(const Json &value) {
     require(value.type == Json::Type::Array, "mask list must be an array");
     BitRows rows;
-    for (const auto &item : value.arr)
-        rows.push_back(BitMask::decimal(item.string()));
+    for (const auto &item : value.arr) {
+        if (item.type == Json::Type::String) {
+            rows.push_back(BitMask::decimal(item.string()));
+        } else if (item.type == Json::Type::Number) {
+            // Numeric masks are exact uint64 values. Validate with uint64() and
+            // use its exact decimal spelling; never route a mask through a float.
+            rows.push_back(BitMask::decimal(std::to_string(item.uint64())));
+        } else {
+            require(false, "mask must be a decimal string or an unsigned integer");
+        }
+    }
     return rows;
 }
 
@@ -100,6 +113,81 @@ std::string share_label(int share, bool depth_aware) {
     return label;
 }
 } // namespace
+
+std::vector<Circuit> collect_circuits(const Json &value) {
+    std::vector<Found> found;
+    collect(value, "", found);
+    std::vector<Circuit> result;
+    result.reserve(found.size());
+    for (auto &entry : found) result.push_back(std::move(entry.circuit));
+    return result;
+}
+
+Json merge_results(const std::vector<std::string> &paths) {
+    require(!paths.empty(), "merge requires a base result");
+    const auto base = Json::read(paths[0]);
+    require(base.has("target_masks") && base.has("depth_limit"),
+            "merge base must be a bounded result with target_masks and depth_limit");
+    const auto rows = json_to_masks(base["target_masks"]);
+    const int depth_limit = base["depth_limit"].int32();
+    require(depth_limit >= 0, "merge base depth limit must be nonnegative");
+
+    Circuit best;
+    bool found = false;
+    std::pair<int, int> metric{0, 0};
+    std::string best_source;
+    std::set<std::string> seen;
+    std::size_t published = 0, used = 0, skipped = 0;
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+        const auto data = i == 0 ? base : Json::read(paths[i]);
+        for (const auto &circuit : collect_circuits(data)) {
+            if (!seen.insert(circuit.json().dump(-1)).second) {
+                ++skipped;  // duplicate circuit
+                continue;
+            }
+            try {
+                circuit.verify(rows);
+            } catch (const std::exception &) {
+                ++skipped;  // wrong transform
+                continue;
+            }
+            const auto profile = depth_profile(circuit);
+            if (profile.depth > depth_limit) {
+                ++skipped;  // over depth
+                continue;
+            }
+            ++used;
+            ++published;
+            const std::pair<int, int> m{circuit.cost(), profile.depth};
+            if (!found || m < metric) {
+                best = circuit;
+                metric = m;
+                best_source = paths[i];
+                found = true;
+            }
+        }
+    }
+    require(found, "merge found no verified circuit within the depth limit");
+
+    auto incumbent_files = Json::array();
+    for (const auto &path : paths) incumbent_files.arr.emplace_back(path);
+    auto out = base;
+    const auto profile = depth_profile(best);
+    out["status"] = "verified";
+    out["cost"] = best.cost();
+    out["depth"] = profile.depth;
+    out["max_fanout"] = profile.max_fanout;
+    out["output_depth"] = Json::array();
+    for (auto value : profile.output_depth) out["output_depth"].arr.emplace_back(value);
+    out["circuit"] = best.json();
+    out["published_candidates"] = std::uint64_t(published);
+    out["incumbents_used"] = std::uint64_t(used);
+    out["incumbents_skipped"] = std::uint64_t(skipped);
+    out["rewrite_trials_used"] = std::uint64_t(0);
+    out["best_source"] = best_source;
+    out["incumbent_files"] = incumbent_files;
+    return out;
+}
 
 BitRows read_matrix(const std::string &path, int &inputs) {
     std::ifstream file(path);
@@ -198,6 +286,8 @@ Json frontier(const BitRows &rows, int inputs, const Json &source, const Options
 Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                     const BoundedScheduleOptions &options) {
     auto search = synthesize_bounded(rows, inputs, options);
+    auto incumbent_files = Json::array();
+    for (const auto &path : options.incumbent_paths) incumbent_files.arr.emplace_back(path);
     auto result = Json::object({{"status", search.status},
                                 {"method", "DEPTH_BOUNDED_XSET_BEAM"},
                                 {"scope", "fixed-input-to-fixed-output XOR network"},
@@ -211,20 +301,31 @@ Json bounded_result(const BitRows &rows, int inputs, const Json &source,
                                 {"branch_width", options.branch_width},
                                 {"max_representations", options.max_representations},
                                 {"restarts", options.restarts},
+                                {"greedy_restarts", options.greedy_restarts},
+                                {"greedy_mwsq", options.greedy_mwsq},
                                 {"lookahead_width", options.lookahead_width},
                                 {"lookahead_depth", options.lookahead_depth},
                                 {"residual_pairs", options.residual_pairs},
                                 {"residual_targets", options.residual_targets},
                                 {"allow_empty_toggle", options.allow_empty_toggle},
                                 {"rewrite_trials", options.rewrite_trials},
+                                {"max_states", std::uint64_t(options.max_states)},
+                                {"round_limit", std::uint64_t(search.round_limit)},
                                 {"seed", std::uint64_t(options.seed)},
                                 {"timeout_seconds", options.timeout_seconds},
                                 {"explored_states", std::uint64_t(search.explored_states)},
+                                {"max_rounds", std::uint64_t(search.max_rounds)},
                                 {"pruned_depth", std::uint64_t(search.pruned_depth)},
                                 {"pruned_bound", std::uint64_t(search.pruned_bound)},
                                 {"toggle_candidates", std::uint64_t(search.toggle_candidates)},
                                 {"bridge_candidates", std::uint64_t(search.bridge_candidates)},
                                 {"diversity_buckets", std::uint64_t(search.diversity_buckets)},
+                                {"published_candidates", std::uint64_t(search.published_candidates)},
+                                {"incumbents_used", std::uint64_t(search.incumbents_used)},
+                                {"incumbents_skipped", std::uint64_t(search.incumbents_skipped)},
+                                {"rewrite_trials_used", std::uint64_t(search.rewrite_trials_used)},
+                                {"best_source", search.best_source},
+                                {"incumbent_files", incumbent_files},
                                 {"cost", Json()},
                                 {"note", "Depth is a hard output constraint; verified results are "
                                          "heuristic upper bounds."}});
@@ -339,6 +440,15 @@ Json verify_bounded_result(const std::string &path) {
     require(data["beam_width"].integer() > 0 && data["branch_width"].integer() > 0 &&
                 data["max_representations"].integer() > 0 && data["restarts"].integer() > 0,
             "bounded search parameters must be positive");
+    if (data.has("greedy_restarts"))
+        require(data["greedy_restarts"].integer() >= 0,
+                "bounded greedy restart limit must be nonnegative");
+    // The MW_SQ tie-rescore flag postdates older results; when present it must
+    // be an exact boolean.
+    if (data.has("greedy_mwsq"))
+        require(data["greedy_mwsq"].type == Json::Type::Boolean &&
+                    (data["greedy_mwsq"].text == "true" || data["greedy_mwsq"].text == "false"),
+                "bounded greedy_mwsq must be a boolean");
     if (data.has("lookahead_width"))
         require(data["lookahead_width"].integer() >= 0, "bounded lookahead width must be nonnegative");
     if (data.has("lookahead_depth"))
@@ -347,21 +457,59 @@ Json verify_bounded_result(const std::string &path) {
         require(data["residual_pairs"].integer() >= 0, "bounded residual pair limit must be nonnegative");
     if (data.has("residual_targets"))
         require(data["residual_targets"].integer() >= 0, "bounded residual target limit must be nonnegative");
+    std::int64_t rewrite_budget = 0;
+    if (data.has("rewrite_trials")) {
+        rewrite_budget = data["rewrite_trials"].integer();
+        require(rewrite_budget >= 0, "bounded rewrite trial limit must be nonnegative");
+    }
+    const bool has_max_states = data.has("max_states");
+    std::uint64_t max_states = 0;
+    if (has_max_states) {
+        max_states = data["max_states"].uint64();
+        require(max_states > 0, "bounded state limit must be positive");
+    }
+    const bool has_round_limit = data.has("round_limit");
+    std::uint64_t round_limit = 0;
+    if (has_round_limit) {
+        round_limit = data["round_limit"].uint64();
+        require(round_limit == completion_round_limit(rows.size(), depth_limit),
+                "bounded round limit mismatch");
+    }
+    const bool has_max_rounds = data.has("max_rounds");
+    std::uint64_t max_rounds = 0;
+    if (has_max_rounds)
+        max_rounds = data["max_rounds"].uint64();
+    if (has_round_limit && has_max_rounds)
+        require(max_rounds <= round_limit, "bounded maximum rounds exceed the round limit");
     require(std::isfinite(data["timeout_seconds"].number()) &&
-                data["timeout_seconds"].number() > 0,
-            "bounded timeout must be finite and positive");
-    require(data["explored_states"].integer() >= 0 && data["pruned_depth"].integer() >= 0 &&
-                data["pruned_bound"].integer() >= 0,
-            "bounded search counters must be nonnegative");
+                data["timeout_seconds"].number() >= 0,
+            "bounded timeout must be finite and nonnegative");
+    const auto explored_states = data["explored_states"].uint64();
+    (void)data["pruned_depth"].uint64();
+    (void)data["pruned_bound"].uint64();
+    if (has_max_states)
+        require(explored_states <= max_states, "bounded explored states exceed the state limit");
     if (data.has("toggle_candidates"))
-        require(data["toggle_candidates"].integer() >= 0,
-                "bounded toggle candidate count must be nonnegative");
+        (void)data["toggle_candidates"].uint64();
     if (data.has("bridge_candidates"))
-        require(data["bridge_candidates"].integer() >= 0,
-                "bounded bridge candidate count must be nonnegative");
+        (void)data["bridge_candidates"].uint64();
     if (data.has("diversity_buckets"))
-        require(data["diversity_buckets"].integer() >= 0,
-                "bounded diversity bucket count must be nonnegative");
+        (void)data["diversity_buckets"].uint64();
+    // Candidate-pool metadata is optional: historical results predate it, but
+    // when present it must be exact unsigned counts and stay within budget.
+    if (data.has("published_candidates")) (void)data["published_candidates"].uint64();
+    if (data.has("incumbents_used")) (void)data["incumbents_used"].uint64();
+    if (data.has("incumbents_skipped")) (void)data["incumbents_skipped"].uint64();
+    std::uint64_t rewrite_used = 0;
+    if (data.has("rewrite_trials_used")) rewrite_used = data["rewrite_trials_used"].uint64();
+    require(rewrite_used <= static_cast<std::uint64_t>(rewrite_budget),
+            "bounded rewrite trials used exceed the declared budget");
+    if (data.has("best_source")) (void)data["best_source"].string();
+    if (data.has("incumbent_files")) {
+        require(data["incumbent_files"].type == Json::Type::Array,
+                "bounded incumbent_files must be an array");
+        for (const auto &entry : data["incumbent_files"].arr) (void)entry.string();
+    }
     const std::string status = data["status"].string();
     require(status == "verified" || status == "timeout" || status == "search_failed" ||
                 status == "infeasible_by_lower_bound",

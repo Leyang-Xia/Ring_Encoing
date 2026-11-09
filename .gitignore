@@ -13,3 +13,5 @@ __pycache__/
 /inverse_mapping_matrix*.txt
 /uber_output_*.txt
 /xsets_output_*.txt
+.DS_Store
+.workbuddy/

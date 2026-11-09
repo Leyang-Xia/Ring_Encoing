@@ -34,6 +34,7 @@ class Json {
         return type == Type::Null;
     }
     std::int64_t integer() const;
+    std::uint64_t uint64() const;
     int int32() const;
     double number() const;
     const std::string &string() const;

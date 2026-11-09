@@ -1,0 +1,13 @@
+# 12-matrix correctness sample; paths are relative to this manifest.
+generated/dense_10x10_seed123.txt
+generated/dense_40x64_seed123.txt
+generated/sparse_12x20_seed123.txt
+generated/sparse_100x100_seed123.txt
+generated/blocks_24x40_seed123.txt
+generated/blocks_100x100_seed456.txt
+generated/modular_10x10_seed456.txt
+generated/modular_64x96_seed456.txt
+cauchy_7_4_direct.txt
+systematic_rs_7_4_direct.txt
+vandermonde_8to17_direct.txt
+gf8_10x10_expanded.txt

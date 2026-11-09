@@ -33,6 +33,16 @@ Json verify_result(const std::string &path);
 // Re-check one hard-depth bounded result record.
 Json verify_bounded_result(const std::string &path);
 
+// Recursively collect every circuit object (has ops/outputs/cost) nested in a
+// JSON value. Malformed circuit objects surface as exceptions.
+std::vector<Circuit> collect_circuits(const Json &value);
+
+// Zero-search-time merge of a base bounded result and one or more candidate
+// result files: verify every nested circuit against the base target masks,
+// enforce the base depth limit, choose the best by (cost, depth), and write a
+// complete bounded result in the base shape. Input files are never rewritten.
+Json merge_results(const std::vector<std::string> &paths);
+
 // Parse a 01 matrix: one output per line, one input per column.
 BitRows read_matrix(const std::string &path, int &inputs);
 } // namespace xd

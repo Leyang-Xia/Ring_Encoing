@@ -40,6 +40,14 @@ make -j4
 `--depth D` 是最大输出深度；`--beam`、`--branch`、`--representations`、`--restarts`、`--seed` 和 `--timeout` 分别控制 Beam 宽度、每状态候选数、每目标 Pareto 表上限、重启次数、候选重排种子和墙钟预算。
 `--lookahead-width K --lookahead-depth L` 会对每个状态中最多 `K` 个候选做 `L` 步的选择性试走，并使用试走后的下界重新排序；默认两个值都是 `0`，以保持基线搜索行为。它只改变候选优先级，不放宽深度检查。
 
+## Completable greedy 与有限终止
+
+`--greedy-restarts N` 在 Beam 前运行严格减少表达式项数的深度可行 greedy，普通和有限 lookahead 尝试按相同 seed 成对执行；默认 `N=2`，`N=0` 可恢复纯 Beam 对照。每个输出维护一个 GF(2) 表达式，候选只有在替换后仍满足固定叶子集合的完成深度预算时才接受。新门至少服务两个输出，复用门至少服务一个输出，因此每轮表达式项数严格下降，主循环有限。最终使用 earliest-ready 合并，并逐门验证功能和实际深度。
+
+`--no-timeout` 只关闭墙钟截止，不关闭结构性预算。`--max-states N` 限制跨 restart 累计的 Beam 取状态数；每个 restart 还受 `outputs * (2^(D+1)-1)` 轮次上界约束，算术使用饱和无符号运算。预算或轮次耗尽不是不可行证明。若已经得到 verified incumbent，后续状态预算、墙钟或重写截止不会丢弃它。
+
+2026-11-04 的 12 矩阵对照中，纯 Beam 仅 4/12 verified；加入 completable greedy 和 400 次重写预算后为 12/12，并在全部样本上达到 PR #6 V2 相同的 `(cost, depth)`。完整数据及 MW_SQ+重结合参照见 [PR sample 对比](pr6-sample-comparison.md)。
+
 ## 固定矩阵结果
 
 实验使用源码修订 `04a5114f8541e5472c3201ecbe876f6c16e697c3`，参数均为 `beam=64`、`branch=16`、`representations=8`、`restarts=8`、`seed=1`、`timeout=180s`。

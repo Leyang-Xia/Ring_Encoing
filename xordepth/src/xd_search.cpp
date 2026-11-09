@@ -1,14 +1,20 @@
 #include "xd/search.hpp"
+#include "xd/experiments.hpp"
 #include <chrono>
 #include <climits>
+#include <limits>
 #include <map>
 #include <numeric>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace xd {
 namespace {
+
+using Deadline = std::chrono::steady_clock::time_point;
 
 void check_search_deadline(const BoundedScheduleOptions &options) {
     if (options.deadline != std::chrono::steady_clock::time_point::max() &&
@@ -19,6 +25,106 @@ void check_search_deadline(const BoundedScheduleOptions &options) {
 std::uint64_t residual_pair_key(int left, int right) {
     return (std::uint64_t(std::uint32_t(left)) << 32) | std::uint32_t(right);
 }
+
+// Unified candidate pool. Every source calls publish_candidate(); a circuit is
+// admitted only after symbolic verification against the exact target masks and
+// a hard depth check, and the best is selected by (cost, depth) lexicographic
+// order. Published lines survive any later deadline/state-budget exhaustion.
+struct CandidatePool {
+    const BitRows &targets;
+    const BoundedScheduleOptions &options;
+    Deadline deadline;
+    int max_depth;
+
+    Circuit best;
+    bool found = false;
+    std::pair<int, int> best_metric{std::numeric_limits<int>::max(),
+                                    std::numeric_limits<int>::max()};
+    std::string best_source;
+    std::size_t published_candidates = 0;
+    std::size_t incumbents_used = 0;
+    std::size_t incumbents_skipped = 0;
+    std::size_t rewrite_trials_used = 0;
+    std::set<std::string> seen_incumbents;
+    bool rewriting = false;
+
+    CandidatePool(const BitRows &t, const BoundedScheduleOptions &o, Deadline d, int md)
+        : targets(t), options(o), deadline(d), max_depth(md) {}
+
+    int rewrite_budget_left() const {
+        if (options.rewrite_trials <= 0) return 0;
+        const auto budget = static_cast<std::size_t>(options.rewrite_trials);
+        return rewrite_trials_used < budget
+                   ? static_cast<int>(budget - rewrite_trials_used)
+                   : 0;
+    }
+
+    // Verify + hard depth + (cost, depth) selection. Returns {accepted, new_best}.
+    std::pair<bool, bool> offer(const Circuit &c, const std::string &source) {
+        try {
+            c.verify(targets);
+        } catch (const std::exception &) {
+            return {false, false};  // wrong transform
+        }
+        const auto profile = depth_profile(c);
+        if (profile.depth > max_depth) return {false, false};  // over depth
+        ++published_candidates;
+        const std::pair<int, int> metric{c.cost(), profile.depth};
+        const bool new_best = !found || metric < best_metric;
+        if (new_best) {
+            best = c;
+            best_metric = metric;
+            best_source = source;
+            found = true;
+        }
+        return {true, new_best};
+    }
+
+    void rewrite_new_best() {
+        const int remaining = rewrite_budget_left();
+        if (remaining <= 0) return;
+        rewriting = true;
+        int used = 0;
+        Circuit rewritten;
+        try {
+            rewritten = rewrite_depth_gates(best, targets, max_depth, remaining,
+                                            deadline, &used);
+        } catch (...) {
+            rewriting = false;
+            rewrite_trials_used += static_cast<std::size_t>(used);
+            throw;  // caller catches the deadline and keeps the incumbent
+        }
+        rewriting = false;
+        rewrite_trials_used += static_cast<std::size_t>(used);
+        // Route the derived output through the same unified gate, but without
+        // re-triggering a rewrite (bounded, shared, and no recursion).
+        publish_candidate(rewritten, "rewrite", false);
+    }
+
+    // The single entry point used by every source.
+    bool publish_candidate(const Circuit &c, const std::string &source,
+                           bool allow_rewrite = true) {
+        const auto [accepted, new_best] = offer(c, source);
+        if (!accepted) return false;
+        if (new_best && allow_rewrite && !rewriting && rewrite_budget_left() > 0)
+            rewrite_new_best();
+        return true;
+    }
+
+    // External, already-verified evidence: deduplicate, verify against current
+    // targets, enforce the depth bound, and publish without spending rewrite
+    // trials (loading is meant to be zero-search-time).
+    void load_incumbent(const Circuit &c) {
+        if (!seen_incumbents.insert(c.json().dump(-1)).second) {
+            ++incumbents_skipped;  // duplicate
+            return;
+        }
+        if (publish_candidate(c, "incumbent", false))
+            ++incumbents_used;
+        else
+            ++incumbents_skipped;  // wrong transform or over depth
+    }
+};
 }
 
 int combine_depth(const std::vector<int> &depths) {
@@ -34,6 +140,18 @@ int combine_depth(const std::vector<int> &depths) {
         level = std::max(level, ready);
     }
     return level;
+}
+
+std::size_t completion_round_limit(std::size_t outputs, int max_depth) {
+    require(max_depth >= 0, "negative completion depth");
+    if (outputs == 0) return 0;
+    const auto maximum = std::numeric_limits<std::size_t>::max();
+    const std::size_t tree_nodes =
+        max_depth >= std::numeric_limits<std::size_t>::digits - 1
+            ? maximum
+            : (std::size_t{1} << (max_depth + 1)) - 1;
+    if (tree_nodes > maximum / outputs) return maximum;
+    return outputs * tree_nodes;
 }
 
 std::vector<int> normalize_terms(const std::vector<int> &terms) {
@@ -122,10 +240,12 @@ SearchState SearchState::initial(const BitRows &targets, int inputs,
     require(inputs > 0, "invalid input count");
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
+                options.greedy_restarts >= 0 &&
+                options.timeout_seconds >= 0 && options.lookahead_width >= 0 &&
                 options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
                 options.residual_targets >= 0 &&
                 options.rewrite_trials >= 0 &&
+                options.max_states > 0 &&
                 (options.residual_pairs == 0 || options.residual_targets > 0),
             "invalid bounded search options");
     validate_target_width(targets, inputs);
@@ -245,6 +365,11 @@ void SearchState::rebuild_residual_pair_index() {
 std::vector<Candidate> SearchState::candidates() const {
     check_search_deadline(options_);
     std::map<std::pair<int, int>, Candidate> by_pair;
+    // Cheap UBER_XSET-style progress summary for tie breaking.  It estimates
+    // how close the affected representations are to completion after this
+    // pair is materialized, without cloning the whole search state.  The
+    // progress is accumulated directly on the per-pair candidate so the
+    // ordering comparator needs no extra map lookups.
     for (const auto &[edge, refs] : pair_index_) {
         check_search_deadline(options_);
         for (const auto &ref : refs) {
@@ -253,13 +378,23 @@ std::vector<Candidate> SearchState::candidates() const {
                                    options_.max_depth))
                 continue;
             auto key = std::make_pair(ref.left, ref.right);
-            auto it = by_pair.find(key);
-            if (it == by_pair.end()) {
-                by_pair.emplace(key, Candidate{ref.left, ref.right,
-                                               candidate_depth(node_depth(ref.left),
-                                                              node_depth(ref.right)),
-                                               static_cast<int>(refs.size())});
-            }
+            const auto &entry = frontiers_[static_cast<std::size_t>(ref.target)]
+                                     .entries[static_cast<std::size_t>(ref.representation)];
+            const BitMask new_mask = nodes_[ref.left].mask ^ nodes_[ref.right].mask;
+            const int existing = lookup_node(node_by_mask_, new_mask);
+            const bool cancels_existing = existing >= 0 &&
+                std::find(entry.terms.begin(), entry.terms.end(), existing) != entry.terms.end();
+            const int remaining = std::max(0, static_cast<int>(entry.terms.size()) -
+                                              (cancels_existing ? 3 : 1));
+            auto it = by_pair.lower_bound(key);
+            if (it == by_pair.end() || it->first != key)
+                it = by_pair.emplace_hint(it, key,
+                                          Candidate{ref.left, ref.right,
+                                                    candidate_depth(node_depth(ref.left),
+                                                                    node_depth(ref.right)),
+                                                    static_cast<int>(refs.size())});
+            it->second.progress_second += remaining;
+            if (remaining <= 1) ++it->second.progress_first;
         }
     }
     std::vector<Candidate> result;
@@ -270,6 +405,12 @@ std::vector<Candidate> SearchState::candidates() const {
         if (a.arrival_depth != b.arrival_depth) return a.arrival_depth < b.arrival_depth;
         if (a.left != b.left) return a.left < b.left;
         return a.right < b.right;
+    });
+    std::sort(result.begin(), result.end(), [&](const Candidate &a, const Candidate &b) {
+        if (a.support != b.support) return a.support > b.support;
+        if (a.progress_first != b.progress_first) return a.progress_first > b.progress_first;
+        if (a.progress_second != b.progress_second) return a.progress_second < b.progress_second;
+        return false;
     });
     return result;
 }
@@ -434,9 +575,22 @@ std::vector<Candidate> SearchState::bridge_candidates() const {
     return result;
 }
 
+SearchState SearchState::transition_base() const {
+    SearchState child;
+    child.inputs_ = inputs_;
+    child.options_ = options_;
+    child.valid_ = valid_;
+    child.nodes_ = nodes_;
+    child.node_by_mask_ = node_by_mask_;
+    child.frontiers_ = frontiers_;
+    // pair_index_ / residual_pair_support_ stay empty: they are rebuilt before
+    // any valid child is consumed, and invalid children are never read.
+    return child;
+}
+
 SearchState SearchState::apply(const Candidate &candidate) const {
     check_search_deadline(options_);
-    SearchState child = *this;
+    SearchState child = transition_base();
     const int parent_node_count = static_cast<int>(nodes_.size());
     child.rebuild_residual_pair_index();
     if (!valid_ || candidate.left < 0 || candidate.right < 0 ||
@@ -448,6 +602,7 @@ SearchState SearchState::apply(const Candidate &candidate) const {
         child.valid_ = false;
         return child;
     }
+    child.pair_index_.reserve(pair_index_.size());
     auto result_mask = nodes_[candidate.left].mask ^ nodes_[candidate.right].mask;
     int new_depth = candidate_depth(node_depth(candidate.left), node_depth(candidate.right));
     int node = lookup_node(child.node_by_mask_, result_mask);
@@ -460,6 +615,31 @@ SearchState SearchState::apply(const Candidate &candidate) const {
 
     for (std::size_t target = 0; target < child.frontiers_.size(); ++target) {
         check_search_deadline(options_);
+        // Frontiers whose no representation contains both operands keep the
+        // copy already made by transition_base(): re-running pareto_insert
+        // over the parent's Pareto entries reproduces them entry for entry
+        // (an already-Pareto set re-inserted into itself cannot lose or gain
+        // entries), so skipping the rebuild is value-identical.
+        bool affected = false;
+        for (const auto &entry : frontiers_[target].entries) {
+            check_search_deadline(options_);
+            auto left = std::find(entry.terms.begin(), entry.terms.end(), candidate.left);
+            if (left == entry.terms.end()) continue;
+            auto right = std::find(entry.terms.begin(), entry.terms.end(), candidate.right);
+            if (right != entry.terms.end()) {
+                affected = true;
+                break;
+            }
+        }
+        if (!affected) {
+            // Value-identical skip: only the frontier rebuild is elided; the
+            // residual index adjustments run exactly as before on the
+            // unchanged (already copied) frontier.
+            child.adjust_residual_pair_index(frontiers_[target], parent_node_count, -1);
+            child.adjust_residual_pair_index(child.frontiers_[target],
+                                             static_cast<int>(child.nodes_.size()), 1);
+            continue;
+        }
         child.adjust_residual_pair_index(frontiers_[target], parent_node_count, -1);
         ParetoFrontier next;
         for (const auto &entry : frontiers_[target].entries) {
@@ -493,7 +673,7 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
                                       std::size_t representation,
                                       int future_support) const {
     check_search_deadline(options_);
-    SearchState child = *this;
+    SearchState child = transition_base();
     const int parent_node_count = static_cast<int>(nodes_.size());
     child.rebuild_residual_pair_index();
     if (!valid_ || left < 0 || right < 0 || left >= right ||
@@ -503,6 +683,7 @@ SearchState SearchState::apply_toggle(int left, int right, std::size_t target,
         child.valid_ = false;
         return child;
     }
+    child.pair_index_.reserve(pair_index_.size());
     const auto &entry = frontiers_[target].entries[representation];
     const bool has_left = std::find(entry.terms.begin(), entry.terms.end(), left) != entry.terms.end();
     const bool has_right = std::find(entry.terms.begin(), entry.terms.end(), right) != entry.terms.end();
@@ -557,7 +738,7 @@ SearchState SearchState::apply_bridge(int left, int right, std::size_t left_targ
                                       std::size_t right_target,
                                       std::size_t right_representation) const {
     check_search_deadline(options_);
-    SearchState child = *this;
+    SearchState child = transition_base();
     if (!valid_ || left_target >= frontiers_.size() || right_target >= frontiers_.size() ||
         left_representation >= frontiers_[left_target].entries.size() ||
         right_representation >= frontiers_[right_target].entries.size() || left == right)
@@ -565,6 +746,7 @@ SearchState SearchState::apply_bridge(int left, int right, std::size_t left_targ
     if (!candidate_allowed(node_depth(std::min(left, right)), node_depth(std::max(left, right)),
                            options_.max_depth))
         return child.valid_ = false, child;
+    child.pair_index_.reserve(pair_index_.size());
     const auto mask = nodes_[left].mask ^ nodes_[right].mask;
     int node = lookup_node(child.node_by_mask_, mask);
     if (node < 0) {
@@ -612,23 +794,36 @@ bool SearchState::complete() const {
 int SearchState::best_cost_lower_bound() const {
     check_search_deadline(options_);
     int bound = 0;
+    // Stamp-based visited marking: one generation counter per entry replaces a
+    // fresh std::set per entry (the set only ever answered "seen already?",
+    // so size and membership are reproduced exactly).
+    std::vector<int> stamp(nodes_.size(), 0);
+    int generation = 0;
+    std::vector<int> pending;
     for (const auto &frontier : frontiers_) {
         int target_bound = INT_MAX;
         for (const auto &entry : frontier.entries) {
-            std::set<int> live;
-            std::vector<int> pending = entry.terms;
+            check_search_deadline(options_);
+            ++generation;
+            int live_count = 0;
+            pending = entry.terms;
             while (!pending.empty()) {
                 check_search_deadline(options_);
                 int node = pending.back();
                 pending.pop_back();
-                if (node < inputs_ || !live.insert(node).second) continue;
+                if (node < inputs_) continue;
+                // Bounds before the stamp access; an out-of-range node must
+                // fail the same require the original set version raised.
                 require(static_cast<std::size_t>(node) < nodes_.size(), "invalid closure node");
+                if (stamp[static_cast<std::size_t>(node)] == generation) continue;
+                stamp[static_cast<std::size_t>(node)] = generation;
+                ++live_count;
                 require(nodes_[node].left >= 0 && nodes_[node].right >= 0,
                         "closure gate is missing a producer");
                 pending.push_back(nodes_[node].left);
                 pending.push_back(nodes_[node].right);
             }
-            target_bound = std::min(target_bound, static_cast<int>(live.size()));
+            target_bound = std::min(target_bound, live_count);
         }
         if (target_bound != INT_MAX) bound = std::max(bound, target_bound);
     }
@@ -648,7 +843,10 @@ int SearchState::cost_priority() const {
     // Nodes can be created by a transition whose replacement is later removed
     // by Pareto pruning.  Such nodes are not part of the exported circuit and
     // must not inflate the lower bound used for branch-and-bound pruning.
-    std::set<int> live;
+    // The live set spans all frontiers here, so one stamp generation covers
+    // the whole walk (same membership and size as the previous std::set).
+    std::vector<int> stamp(nodes_.size(), 0);
+    int live_count = 0;
     std::vector<int> pending;
     for (const auto &frontier : frontiers_) {
         check_search_deadline(options_);
@@ -661,14 +859,19 @@ int SearchState::cost_priority() const {
         check_search_deadline(options_);
         const int node = pending.back();
         pending.pop_back();
-        if (node < inputs_ || !live.insert(node).second) continue;
+        if (node < inputs_) continue;
+        // Bounds before the stamp access; an out-of-range node must fail the
+        // same require the original set version raised.
         require(static_cast<std::size_t>(node) < nodes_.size(), "invalid live search node");
+        if (stamp[static_cast<std::size_t>(node)] != 0) continue;
+        stamp[static_cast<std::size_t>(node)] = 1;
+        ++live_count;
         require(nodes_[node].left >= 0 && nodes_[node].right >= 0,
                 "live gate is missing a producer");
         pending.push_back(nodes_[node].left);
         pending.push_back(nodes_[node].right);
     }
-    int bound = static_cast<int>(live.size());
+    int bound = live_count;
     for (const auto &frontier : frontiers_) {
         check_search_deadline(options_);
         int remaining = INT_MAX;
@@ -677,8 +880,7 @@ int SearchState::cost_priority() const {
             remaining = std::min(remaining, static_cast<int>(entry.terms.size()));
         }
         if (remaining != INT_MAX)
-            bound = std::max(bound, static_cast<int>(live.size()) +
-                                      std::max(0, remaining - 1));
+            bound = std::max(bound, live_count + std::max(0, remaining - 1));
     }
     return bound;
 }
@@ -803,104 +1005,108 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
     validate_target_width(targets, inputs);
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.timeout_seconds > 0 && options.lookahead_width >= 0 &&
+                options.greedy_restarts >= 0 &&
+                options.timeout_seconds >= 0 && options.lookahead_width >= 0 &&
                 options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
                 options.residual_targets >= 0 &&
+                options.rewrite_trials >= 0 &&
+                options.max_states > 0 &&
                 (options.residual_pairs == 0 || options.residual_targets > 0),
             "invalid bounded search options");
     BoundedScheduleResult result;
     result.requested_depth = options.max_depth;
+    result.state_limit = options.max_states;
+    result.round_limit = completion_round_limit(targets.size(), options.max_depth);
     result.depth_lower_bound = depth_lower_bound(targets);
     if (options.max_depth < result.depth_lower_bound) {
         result.status = "infeasible_by_lower_bound";
         return result;
     }
 
+    const auto no_deadline = std::chrono::steady_clock::time_point::max();
     const auto started = std::chrono::steady_clock::now();
-    const auto deadline = started + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-                                      std::chrono::duration<double>(options.timeout_seconds));
+    const auto deadline = options.timeout_seconds == 0
+        ? no_deadline
+        : started + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+              std::chrono::duration<double>(options.timeout_seconds));
+    const auto deadline_reached = [&]() {
+        return deadline != no_deadline && std::chrono::steady_clock::now() >= deadline;
+    };
     auto search_options = options;
     search_options.deadline = deadline;
-    SearchState initial;
-    try {
-        initial = SearchState::initial(targets, inputs, search_options);
-    } catch (const SearchDeadlineExceeded &) {
-        if (result.status != "verified") result.status = "timeout";
-        return result;
-    }
-    if (!initial.valid()) {
-        if (result.status != "verified") result.status = "search_failed";
-        return result;
-    }
-    if (std::chrono::steady_clock::now() >= deadline) {
-        if (result.status != "verified") result.status = "timeout";
-        return result;
-    }
-    std::vector<SearchState> beam{initial};
-    std::unordered_map<std::string, int> transposition;
-    try {
-        transposition.emplace(initial.signature(), initial.best_cost_lower_bound());
-    } catch (const SearchDeadlineExceeded &) {
-        result.status = "timeout";
-        return result;
-    }
-    auto consider_candidate = [&](Circuit circuit) {
-        if (std::chrono::steady_clock::now() >= deadline) throw SearchDeadlineExceeded();
-        circuit.verify(targets);
-        if (options.rewrite_trials > 0)
-            circuit = rewrite_depth_gates(circuit, targets, options.max_depth,
-                                           options.rewrite_trials, deadline);
-        auto profile = depth_profile(circuit);
-        if (profile.depth > options.max_depth) return;
-        if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {
-            result.circuit = std::move(circuit);
-            result.status = "verified";
-        }
-    };
-    const auto deadline_reached = [&]() { return std::chrono::steady_clock::now() >= deadline; };
-    ScheduleOptions baseline_options;
-    baseline_options.share_threshold = 2;
-    baseline_options.depth_aware = true;
-    try {
-        if (!deadline_reached())
-            consider_candidate(synthesize_schedule(targets, inputs, baseline_options, 0, deadline));
-        if (!deadline_reached()) {
-            auto baseline = synthesize_schedule(targets, inputs, baseline_options, 0, deadline);
-            consider_candidate(rebalanced(baseline, deadline));
-        }
-    } catch (const SearchDeadlineExceeded &) {
-        if (result.status != "verified") result.status = "timeout";
-        return result;
-    }
-    if (deadline_reached()) {
-        if (result.status != "verified") result.status = "timeout";
-        return result;
-    }
+    CandidatePool pool{targets, options, deadline, options.max_depth};
     bool timed_out = false;
     try {
+        // Phase 0: cheap external incumbents. Malformed JSON propagates (fails);
+        // wrong-transform / duplicate / over-depth lines are skipped and counted.
+        for (const auto &path : options.incumbent_paths) {
+            const auto data = Json::read(path);
+            for (const auto &circuit : collect_circuits(data))
+                pool.load_incumbent(circuit);
+        }
+
+        // Phase 1: cheap CSE / rebalanced baselines, published BEFORE the
+        // expensive greedy portfolio and Beam so a wall-clock cutoff cannot
+        // swallow the verified CSE baseline.
+        ScheduleOptions baseline_options;
+        baseline_options.share_threshold = 2;
+        baseline_options.depth_aware = true;
+        if (!deadline_reached()) {
+            auto baseline = synthesize_schedule(targets, inputs, baseline_options, 0, deadline);
+            pool.publish_candidate(baseline, "cse_baseline");
+            if (!deadline_reached())
+                pool.publish_candidate(rebalanced(baseline, deadline), "rebalanced_baseline");
+        }
+
+        // Phase 2: each successful greedy attempt is published immediately via
+        // the observer instead of waiting for the portfolio to finish.
+        if (options.greedy_restarts > 0 && !deadline_reached()) {
+            CircuitObserver observer = [&](const Circuit &c) {
+                pool.publish_candidate(c, "greedy");
+            };
+            synthesize_completable(targets, inputs, options.max_depth,
+                                   options.greedy_restarts, options.seed, deadline,
+                                   observer, options.greedy_mwsq);
+        }
+
+        // Phase 3: Beam. Building the initial state also observes the deadline.
+        SearchState initial = SearchState::initial(targets, inputs, search_options);
+        std::vector<SearchState> beam;
+        std::unordered_map<std::string, int> transposition;
+        if (initial.valid()) {
+            beam.push_back(initial);
+            transposition.emplace(initial.signature(), initial.best_cost_lower_bound());
+        }
     for (int restart = 0; restart < options.restarts && !timed_out; ++restart) {
         if (restart > 0) beam = {initial};
+        std::size_t rounds = 0;
         while (!beam.empty()) {
             if (deadline_reached()) {
                 timed_out = true;
                 break;
             }
+            if (result.explored_states == options.max_states) {
+                timed_out = true;
+                break;
+            }
+            if (rounds == result.round_limit) break;
+            ++rounds;
+            result.max_rounds = std::max(result.max_rounds, rounds);
             std::vector<SearchState> next;
             for (const auto &state : beam) {
+                if (result.explored_states == options.max_states) {
+                    timed_out = true;
+                        break;
+                }
                 ++result.explored_states;
                 if (state.complete()) {
-                    if (deadline_reached()) throw SearchDeadlineExceeded();
                     auto circuit = state.export_circuit();
-                    auto profile = depth_profile(circuit);
-                    circuit.verify(targets);
-                    if (deadline_reached()) throw SearchDeadlineExceeded();
-                    require(profile.depth <= options.max_depth, "bounded result exceeds depth limit");
-                    if (result.status != "verified" || circuit.cost() < result.circuit.cost()) {
-                        result.circuit = std::move(circuit);
-                        result.status = "verified";
-                    }
+                    require(depth_profile(circuit).depth <= options.max_depth,
+                            "bounded result exceeds depth limit");
+                    pool.publish_candidate(circuit, "beam");
                     continue;
                 }
+                if (rounds == result.round_limit) continue;
                 auto candidates = state.candidates();
                 if (options.residual_pairs > 0) {
                     auto toggles = state.toggle_candidates();
@@ -1009,8 +1215,7 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                         ++result.pruned_depth;
                         continue;
                     }
-                    if (result.status == "verified" &&
-                        child.best_cost_lower_bound() >= result.circuit.cost()) {
+                    if (pool.found && child.best_cost_lower_bound() >= pool.best.cost()) {
                         ++result.pruned_bound;
                         continue;
                     }
@@ -1059,12 +1264,22 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
         }
     }
     } catch (const SearchDeadlineExceeded &) {
-        if (result.status != "verified") result.status = "timeout";
-        return result;
+        // A deadline anywhere (including a rewrite) must not discard lines
+        // already published into the pool; the caller keeps the incumbent.
+        timed_out = true;
     }
-    if (result.status == "verified") return result;
-    result.status = timed_out ? "timeout" : "search_failed";
-    result.circuit = Circuit();
+    result.published_candidates = pool.published_candidates;
+    result.incumbents_used = pool.incumbents_used;
+    result.incumbents_skipped = pool.incumbents_skipped;
+    result.rewrite_trials_used = pool.rewrite_trials_used;
+    result.best_source = pool.best_source;
+    if (pool.found) {
+        result.status = "verified";
+        result.circuit = pool.best;
+    } else {
+        result.status = timed_out ? "timeout" : "search_failed";
+        result.circuit = Circuit();
+    }
     return result;
 }
 

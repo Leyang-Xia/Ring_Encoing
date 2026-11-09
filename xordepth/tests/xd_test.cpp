@@ -73,6 +73,35 @@ int main() {
         duplicated.ops.push_back(duplicated.ops[0]);
         rejects([&] { depth_profile(duplicated); });
 
+        // MW_SQ support summary: (max pair support, ties at max) over rows of
+        // node ids. Golden values lock the exact counting semantics (the fast
+        // flat-key implementation must reproduce them bit for bit).
+        require(mwsq_support_summary({}) == std::pair<std::size_t, std::size_t>{0, 0},
+                "empty summary");
+        require(mwsq_support_summary({{1}, {}}) ==
+                    std::pair<std::size_t, std::size_t>{0, 0},
+                "no pairable rows");
+        // A row with a repeated id contributes that (id, id) pair once.
+        require(mwsq_support_summary({{1}, {}, {7, 7}}) ==
+                    std::pair<std::size_t, std::size_t>{1, 1},
+                "repeated id counts as one pair");
+        // Rows {1,2},{2,3},{1,2}: pair (1,2) twice, (2,3) once -> max 2, ties 1.
+        require(mwsq_support_summary({{1, 2}, {2, 3}, {1, 2}}) ==
+                    std::pair<std::size_t, std::size_t>{2, 1},
+                "max support with one winner");
+        // Rows {0,1},{0,1},{1,2},{1,2}: (0,1)=2 and (1,2)=2 -> max 2, ties 2.
+        require(mwsq_support_summary({{0, 1}, {0, 1}, {1, 2}, {1, 2}}) ==
+                    std::pair<std::size_t, std::size_t>{2, 2},
+                "ties at max");
+        // One wide row: every pair appears exactly once.
+        require(mwsq_support_summary({{3, 1, 2}}) ==
+                    std::pair<std::size_t, std::size_t>{1, 3},
+                "unsorted row with all singleton pairs");
+        // Mixed: {1,2},{1,3},{2,3},{1,2}: (1,2)=2, (1,3)=1, (2,3)=1 -> (2,1).
+        require(mwsq_support_summary({{1, 2}, {1, 3}, {2, 3}, {1, 2}}) ==
+                    std::pair<std::size_t, std::size_t>{2, 1},
+                "triangle plus duplicate");
+
         std::cout << "xd: depth metrics, balanced scheduling and re-association passed\n";
         return 0;
     } catch (const std::exception &e) {

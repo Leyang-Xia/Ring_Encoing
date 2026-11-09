@@ -18,7 +18,8 @@
 ```bash
 cd xordepth
 make -j4          # 生成 build/xordepth
-make test         # 单元检查 + CLI 检查
+make test         # 单元检查 + CLI 检查 + 12 矩阵 sample
+make test-full    # 再运行 57 矩阵完整集合
 ```
 
 只依赖 C++17 编译器和 GNU Make。xordepth 可以在没有仓库其他 core 源码的情况下单独编译。
@@ -51,7 +52,12 @@ make test         # 单元检查 + CLI 检查
 - `--depth-aware`：频次相同的候选里优先选最早就绪的一对。
 - `--also FILE`：从任意结果/证据 JSON 中挑出**能算出同一个变换**的线路，作为额外候选（不能算出同一变换的会被跳过并计数）。
 - `bounded` 的 `--depth D` 是所有输出的硬深度上限；`--beam`、`--branch`、`--representations`、`--restarts`、`--seed` 和 `--timeout` 控制启发式搜索预算。
+- `--greedy-restarts N` 控制 Beam 前的可完成 greedy portfolio，默认 2，0 表示纯 Beam；`--rewrite-trials N` 控制可行线路的多消费者重写。
+- `--greedy-mwsq` 对 greedy 每轮的并列候选做 MW2/MW_SQ 式重评分（Plank DSN'12）：试替换后度量剩余 pair 支持度分布，选剩余共享结构最集中的候选；默认关闭，关闭时结果与之前版本逐位一致。
+- `--no-timeout` 关闭墙钟截止，但 `--max-states N` 和每 restart 的有限轮次上界仍保证搜索有限；预算耗尽保留已验证 incumbent。
 - `--lookahead-width K --lookahead-depth L` 对每个状态的前 `K` 个候选试走最多 `L` 步，再按后续下界排序；两个参数为 `0` 时关闭这一步。
+- `--incumbent FILE`（可重复）在搜索前注入外部已验证线路；所有来源（外部 incumbent、CSE 基线、greedy attempt、Beam、重写）进入同一候选池，按 `(门数, 深度)` 字典序取最优，来源记录在 `best_source`。
+- `merge BASE.json CANDIDATE.json... --output FILE` 零搜索时间合并多个已有结果，逐门验证后输出最优线路；用于把不同预算/参数下的最优 incumbent 汇总成一份结果。
 
 ## 主要结果
 
@@ -77,6 +83,7 @@ make test         # 单元检查 + CLI 检查
 include/xd/          深度度量与调度接口
 src/xd_depth.cpp     深度、下界、平衡调度
 src/xd_rebalance.cpp 单消费者累加锥重结合
+src/xd_greedy.cpp    严格缩减表达式的可完成 greedy portfolio
 src/xd_search.cpp    深度硬约束 X-Sets Beam Search
 src/xd_frontier.cpp  前沿、审计、证据复核、矩阵解析
 apps/xordepth.cpp    命令行
@@ -86,7 +93,7 @@ data/results/        测量结果（每条候选都带完整线路与目标掩�
 docs/                方法、证明与完整数据
 ```
 
-方法与完整结果见 [计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md) 和 [深度约束后的共享门重写](docs/rewrite-depth-gates.md)。
+方法与完整结果见 [计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md)、[深度约束后的共享门重写](docs/rewrite-depth-gates.md)、[矩阵测试集合](docs/matrix-suite.md) 和 [PR/MW_SQ sample 对比](docs/pr6-sample-comparison.md)。
 
 ## 边界
 

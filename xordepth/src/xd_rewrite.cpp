@@ -129,7 +129,8 @@ bool rebuild_without(const RewriteState &state, int victim, int max_depth, Circu
 } // namespace
 
 Circuit rewrite_depth_gates(const Circuit &circuit, const BitRows &targets, int max_depth,
-                            int max_trials, Deadline deadline) {
+                            int max_trials, Deadline deadline, int *used_trials) {
+    if (used_trials) *used_trials = 0;
     require(max_depth >= 0, "negative rewrite depth limit");
     require(max_trials >= 0, "negative rewrite trial budget");
     RewriteState state = inspect(circuit, targets, max_depth, deadline);
@@ -149,8 +150,12 @@ Circuit rewrite_depth_gates(const Circuit &circuit, const BitRows &targets, int 
             return state.uses[a] < state.uses[b];
         });
         for (int victim : victims) {
-            if (trials++ >= max_trials)
+            if (trials >= max_trials)
                 break;
+            ++trials;
+            // Track partial usage so a caller that catches a deadline exception
+            // can still account for the trials actually spent.
+            if (used_trials) *used_trials = trials;
             Circuit candidate;
             if (!rebuild_without(state, victim, max_depth, candidate, deadline))
                 continue;

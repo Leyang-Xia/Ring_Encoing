@@ -50,6 +50,18 @@ std::int64_t Json::integer() const {
     require(n == text.size(), "expected integral number");
     return v;
 }
+std::uint64_t Json::uint64() const {
+    require(type == Type::Number && !text.empty(), "expected unsigned integer");
+    std::uint64_t value = 0;
+    const auto maximum = std::numeric_limits<std::uint64_t>::max();
+    for (char c : text) {
+        require(c >= '0' && c <= '9', "expected unsigned integer");
+        const auto digit = static_cast<std::uint64_t>(c - '0');
+        require(value <= (maximum - digit) / 10, "unsigned integer overflow");
+        value = value * 10 + digit;
+    }
+    return value;
+}
 double Json::number() const {
     require(type == Type::Number, "expected number");
     return std::stod(text);

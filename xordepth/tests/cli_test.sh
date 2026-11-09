@@ -9,10 +9,29 @@ expect_fail() { if "$@" >"$tmp/out" 2>"$tmp/err"; then printf 'unexpected succes
 printf '0111\n1011\n1100\n' > "$tmp/matrix.txt"
 printf '1111\n' > "$tmp/four.txt"
 "$tool" bounded "$tmp/four.txt" --depth 2 --beam 8 --branch 8 \
-  --representations 8 --restarts 1 --seed 0 --timeout 5 --output "$tmp/bounded.json" > /dev/null
+  --representations 8 --restarts 1 --greedy-restarts 2 --seed 0 --timeout 5 \
+  --output "$tmp/bounded.json" > /dev/null
 grep -q '"status": "verified"' "$tmp/bounded.json"
 grep -q '"depth_limit": 2' "$tmp/bounded.json"
+grep -q '"greedy_restarts": 2' "$tmp/bounded.json"
+grep -q '"greedy_mwsq": false' "$tmp/bounded.json"
 "$tool" verify "$tmp/bounded.json" | grep -q '"status": "verified"'
+
+# The MW_SQ greedy tie rescore is recorded in the result and verifies; legacy
+# JSON without the field still verifies.
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 8 --branch 8 \
+  --representations 8 --restarts 1 --greedy-restarts 2 --seed 0 --timeout 5 \
+  --greedy-mwsq --output "$tmp/mwsq.json" > /dev/null
+grep -q '"status": "verified"' "$tmp/mwsq.json"
+grep -q '"greedy_mwsq": true' "$tmp/mwsq.json"
+"$tool" verify "$tmp/mwsq.json" | grep -q '"status": "verified"'
+cp "$tmp/mwsq.json" "$tmp/legacy-mwsq.json"
+perl -0pi -e 's/\s*"greedy_mwsq":\s*(true|false),//' "$tmp/legacy-mwsq.json"
+! grep -q '"greedy_mwsq"' "$tmp/legacy-mwsq.json"
+"$tool" verify "$tmp/legacy-mwsq.json" | grep -q '"status": "verified"'
+cp "$tmp/mwsq.json" "$tmp/tampered-mwsq.json"
+perl -0pi -e 's/"greedy_mwsq":\s*true/"greedy_mwsq": 1/' "$tmp/tampered-mwsq.json"
+expect_fail "$tool" verify "$tmp/tampered-mwsq.json"
 
 "$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
   --residual-pairs 2 --residual-targets 1 --timeout 5 --output "$tmp/residual.json" > /dev/null
@@ -27,6 +46,40 @@ grep -q '"diversity_buckets":' "$tmp/residual.json"
 grep -q '"rewrite_trials": 40' "$tmp/rewrite.json"
 "$tool" verify "$tmp/rewrite.json" | grep -q '"status": "verified"'
 
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
+  --no-timeout --output "$tmp/no-timeout.json" > /dev/null
+grep -q '"timeout_seconds": 0' "$tmp/no-timeout.json"
+
+"$tool" bounded "$tmp/four.txt" --depth 63 --beam 1 --branch 1 --restarts 1 \
+  --greedy-restarts 0 --no-timeout --max-states 18446744073709551615 \
+  --output "$tmp/saturation.json" > /dev/null
+grep -q '"max_states": 18446744073709551615' "$tmp/saturation.json"
+grep -q '"round_limit": 18446744073709551615' "$tmp/saturation.json"
+"$tool" verify "$tmp/saturation.json" | grep -q '"status": "verified"'
+
+printf '0111\n1111\n' > "$tmp/state-limited.txt"
+"$tool" bounded "$tmp/state-limited.txt" --depth 2 --beam 1 --branch 1 --restarts 1 \
+  --greedy-restarts 0 --no-timeout --max-states 1 --output "$tmp/state-limited.json" > /dev/null
+grep -q '"status": "timeout"' "$tmp/state-limited.json"
+grep -q '"greedy_restarts": 0' "$tmp/state-limited.json"
+grep -q '"explored_states": 1' "$tmp/state-limited.json"
+grep -q '"round_limit": 14' "$tmp/state-limited.json"
+grep -q '"max_rounds": 1' "$tmp/state-limited.json"
+"$tool" verify "$tmp/state-limited.json" | grep -q '"result_status": "timeout"'
+
+cp "$tmp/state-limited.json" "$tmp/legacy-bounded.json"
+perl -0pi -e 's/\s*"max_states":\s*\d+,//; s/\s*"round_limit":\s*\d+,//; s/\s*"max_rounds":\s*\d+,//' "$tmp/legacy-bounded.json"
+"$tool" verify "$tmp/legacy-bounded.json" | grep -q '"status": "verified"'
+cp "$tmp/state-limited.json" "$tmp/tampered-explored-states.json"
+perl -0pi -e 's/"explored_states":\s*1/"explored_states": 2/' "$tmp/tampered-explored-states.json"
+expect_fail "$tool" verify "$tmp/tampered-explored-states.json"
+cp "$tmp/state-limited.json" "$tmp/tampered-round-limit.json"
+perl -0pi -e 's/"round_limit":\s*14/"round_limit": 15/' "$tmp/tampered-round-limit.json"
+expect_fail "$tool" verify "$tmp/tampered-round-limit.json"
+
+cp "$tmp/bounded.json" "$tmp/tampered-greedy-restarts.json"
+perl -0pi -e 's/"greedy_restarts":\s*2/"greedy_restarts": -1/' "$tmp/tampered-greedy-restarts.json"
+expect_fail "$tool" verify "$tmp/tampered-greedy-restarts.json"
 cp "$tmp/bounded.json" "$tmp/tampered.json"
 perl -0pi -e 's/"depth":\s*2/"depth": 99/' "$tmp/tampered.json"
 expect_fail "$tool" verify "$tmp/tampered.json"
@@ -66,6 +119,8 @@ grep -q '"skipped"' "$tmp/also.json"
 expect_fail "$tool" frontier "$tmp/matrix.txt"
 expect_fail "$tool" frontier "$tmp/matrix.txt" --share abc --output "$tmp/bad.json"
 expect_fail "$tool" frontier "$tmp/matrix.txt" --unknown-flag --output "$tmp/bad.json"
+expect_fail "$tool" bounded "$tmp/four.txt" --depth 2 --greedy-restarts nope --output "$tmp/bad.json"
+expect_fail "$tool" bounded "$tmp/four.txt" --depth 2 --max-states -1 --output "$tmp/bad.json"
 expect_fail "$tool" frontier "$tmp/absent.txt" --output "$tmp/bad.json"
 expect_fail "$tool" frontier "$tmp/matrix.txt" --also "$tmp/absent.json" --output "$tmp/bad.json"
 printf '01x\n' > "$tmp/bad.txt"
@@ -76,4 +131,52 @@ expect_fail "$tool" audit
 expect_fail "$tool" verify "$tmp/matrix.txt"
 expect_fail "$tool" bogus-command
 
-printf 'CLI: frontier, verify, audit and error paths passed\n'
+# --- unified incumbent candidate pool: --incumbent and merge ---------------
+# A verified bounded result is offered as an external incumbent. The near-zero
+# timeout means only the zero-search-time incumbent path can publish.
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
+  --timeout 0.000000001 --incumbent "$tmp/bounded.json" \
+  --output "$tmp/with-inc.json" > /dev/null
+grep -q '"status": "verified"' "$tmp/with-inc.json"
+grep -q '"incumbents_used": 1' "$tmp/with-inc.json"
+grep -q '"best_source": "incumbent"' "$tmp/with-inc.json"
+grep -q '"published_candidates":' "$tmp/with-inc.json"
+grep -q '"rewrite_trials_used":' "$tmp/with-inc.json"
+grep -q '"incumbent_files":' "$tmp/with-inc.json"
+"$tool" verify "$tmp/with-inc.json" | grep -q '"status": "verified"'
+
+# --incumbent is repeatable; a duplicate circuit is skipped, not counted twice.
+"$tool" bounded "$tmp/four.txt" --depth 2 --beam 4 --branch 4 --restarts 1 \
+  --timeout 0.000000001 --incumbent "$tmp/bounded.json" \
+  --incumbent "$tmp/bounded.json" --output "$tmp/with-inc2.json" > /dev/null
+grep -q '"incumbents_skipped": 1' "$tmp/with-inc2.json"
+
+# merge: zero-search-time recombination of already-verified results.
+"$tool" merge "$tmp/bounded.json" "$tmp/with-inc.json" \
+  --output "$tmp/merged.json" > /dev/null
+grep -q '"status": "verified"' "$tmp/merged.json"
+grep -q '"published_candidates":' "$tmp/merged.json"
+grep -q '"best_source":' "$tmp/merged.json"
+grep -q '"incumbent_files":' "$tmp/merged.json"
+"$tool" verify "$tmp/merged.json" | grep -q '"status": "verified"'
+
+# BASE target_masks may be exact uint64 numbers as well as decimal strings.
+cp "$tmp/bounded.json" "$tmp/base-num.json"
+perl -0pi -e 's/"target_masks":\s*\[\s*"\d+"\s*\]/"target_masks": [15]/' "$tmp/base-num.json"
+grep -q '"target_masks": \[15\]' "$tmp/base-num.json"
+"$tool" merge "$tmp/base-num.json" "$tmp/bounded.json" \
+  --output "$tmp/merged-num.json" > /dev/null
+"$tool" verify "$tmp/merged-num.json" | grep -q '"status": "verified"'
+
+# Tampered merge output and a malformed incumbent file are rejected.
+cp "$tmp/merged.json" "$tmp/tampered-merge.json"
+perl -0pi -e 's/"depth":\s*\d+/"depth": 99/' "$tmp/tampered-merge.json"
+expect_fail "$tool" verify "$tmp/tampered-merge.json"
+cp "$tmp/merged.json" "$tmp/tampered-rewrite.json"
+perl -0pi -e 's/"rewrite_trials_used":\s*0/"rewrite_trials_used": 999999/' "$tmp/tampered-rewrite.json"
+expect_fail "$tool" verify "$tmp/tampered-rewrite.json"
+printf '{ malformed json' > "$tmp/bad-incumbent.json"
+expect_fail "$tool" bounded "$tmp/four.txt" --depth 2 --timeout 0.000000001 \
+  --incumbent "$tmp/bad-incumbent.json" --output "$tmp/bad-inc.json"
+
+printf 'CLI: frontier, verify, audit, incumbent, merge and error paths passed\n'
