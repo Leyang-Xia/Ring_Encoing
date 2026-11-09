@@ -1,0 +1,23 @@
+{
+  "cost": 21,
+  "depth": 3,
+  "depth_limit": 3,
+  "lookahead": false,
+  "method": "OUR_DCCSE",
+  "refine": true,
+  "seed": 1,
+  "seeds": 2,
+  "status": "verified",
+  "target_masks": [
+    262,
+    561,
+    97,
+    268,
+    270,
+    162,
+    859,
+    529,
+    127,
+    638
+  ]
+}

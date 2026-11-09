@@ -1,0 +1,58 @@
+matrix	D	status	cost	depth	best_source
+dense_10x10_seed123	4	verified	20	3	xordepth/data/results/xordepth_full_mwsq_20261106/dense_10x10_seed123.json
+dense_10x10_seed456	4	verified	21	3	xordepth/data/results/xordepth_full_merged_20261106/dense_10x10_seed456.json
+dense_12x20_seed123	5	verified	54	4	xordepth/data/results/xordepth_full_mwsq_20261106/dense_12x20_seed123.json
+dense_12x20_seed456	5	verified	59	5	xordepth/data/results/xordepth_full_merged_20261106/dense_12x20_seed456.json
+dense_24x40_seed123	5	verified	204	5	xordepth/data/results/xordepth_full_mwsq_20261106/dense_24x40_seed123.json
+dense_24x40_seed456	5	verified	211	5	xordepth/data/results/xordepth_full_mwsq_20261106/dense_24x40_seed456.json
+dense_40x64_seed123	6	verified	510	6	xordepth/data/results/xordepth_full_mwsq_20261106/dense_40x64_seed123.json
+dense_40x64_seed456	6	verified	521	6	xordepth/data/results/xordepth_full_merged_20261106/dense_40x64_seed456.json
+dense_64x96_seed123	6	verified	1222	6	xordepth/data/results/xordepth_full_mwsq_20261106/dense_64x96_seed123.json
+dense_64x96_seed456	6	verified	1209	6	xordepth/data/results/xordepth_full_mwsq_20261106/dense_64x96_seed456.json
+dense_100x100_seed123	7	verified	1783	7	xordepth/data/results/xordepth_full_mwsq_20261106/dense_100x100_seed123.json
+dense_100x100_seed456	7	verified	1814	7	xordepth/data/results/xordepth_full_mwsq_20261106/dense_100x100_seed456.json
+sparse_10x10_seed123	4	verified	16	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_10x10_seed123.json
+sparse_10x10_seed456	4	verified	14	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_10x10_seed456.json
+sparse_12x20_seed123	5	verified	24	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_12x20_seed123.json
+sparse_12x20_seed456	5	verified	20	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_12x20_seed456.json
+sparse_24x40_seed123	5	verified	46	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_24x40_seed123.json
+sparse_24x40_seed456	5	verified	44	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_24x40_seed456.json
+sparse_40x64_seed123	6	verified	77	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_40x64_seed123.json
+sparse_40x64_seed456	6	verified	76	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_40x64_seed456.json
+sparse_64x96_seed123	6	verified	125	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_64x96_seed123.json
+sparse_64x96_seed456	6	verified	124	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_64x96_seed456.json
+sparse_100x100_seed123	7	verified	194	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_100x100_seed123.json
+sparse_100x100_seed456	7	verified	194	2	xordepth/data/results/xordepth_full_merged_20261106/sparse_100x100_seed456.json
+blocks_10x10_seed123	4	verified	0	0	xordepth/data/results/xordepth_full_merged_20261106/blocks_10x10_seed123.json
+blocks_10x10_seed456	4	verified	3	1	xordepth/data/results/xordepth_full_merged_20261106/blocks_10x10_seed456.json
+blocks_12x20_seed123	5	verified	7	2	xordepth/data/results/xordepth_full_merged_20261106/blocks_12x20_seed123.json
+blocks_12x20_seed456	5	verified	13	2	xordepth/data/results/xordepth_full_merged_20261106/blocks_12x20_seed456.json
+blocks_24x40_seed123	5	verified	55	3	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_24x40_seed123.json
+blocks_24x40_seed456	5	verified	62	4	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_24x40_seed456.json
+blocks_40x64_seed123	6	verified	153	5	xordepth/data/results/xordepth_full_merged_20261106/blocks_40x64_seed123.json
+blocks_40x64_seed456	6	verified	156	5	xordepth/data/results/xordepth_full_merged_20261106/blocks_40x64_seed456.json
+blocks_64x96_seed123	6	verified	342	6	xordepth/data/results/xordepth_full_merged_20261106/blocks_64x96_seed123.json
+blocks_64x96_seed456	6	verified	355	6	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_64x96_seed456.json
+blocks_100x100_seed123	7	verified	544	5	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_100x100_seed123.json
+blocks_100x100_seed456	7	verified	545	6	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_100x100_seed456.json
+modular_10x10_seed123	4	verified	22	3	xordepth/data/results/xordepth_full_merged_20261106/modular_10x10_seed123.json
+modular_10x10_seed456	4	verified	23	4	xordepth/data/results/xordepth_full_merged_20261106/modular_10x10_seed456.json
+modular_12x20_seed123	5	verified	54	4	xordepth/data/results/xordepth_full_mwsq_20261106/modular_12x20_seed123.json
+modular_12x20_seed456	5	verified	57	5	xordepth/data/results/xordepth_full_merged_20261106/modular_12x20_seed456.json
+modular_24x40_seed123	5	verified	130	5	xordepth/data/results/xordepth_full_mwsq_20261106/modular_24x40_seed123.json
+modular_24x40_seed456	5	verified	136	5	xordepth/data/results/xordepth_full_mwsq_20261106/modular_24x40_seed456.json
+modular_40x64_seed123	6	verified	210	6	xordepth/data/results/xordepth_full_mwsq_20261106/modular_40x64_seed123.json
+modular_40x64_seed456	6	verified	227	6	xordepth/data/results/xordepth_full_merged_20261106/modular_40x64_seed456.json
+modular_64x96_seed123	6	verified	338	6	xordepth/data/results/xordepth_full_mwsq_20261106/modular_64x96_seed123.json
+modular_64x96_seed456	6	verified	335	6	xordepth/data/results/xordepth_full_merged_20261106/modular_64x96_seed456.json
+modular_100x100_seed123	7	verified	408	7	xordepth/data/results/xordepth_full_merged_20261106/modular_100x100_seed123.json
+modular_100x100_seed456	7	verified	409	7	xordepth/data/results/xordepth_full_merged_20261106/modular_100x100_seed456.json
+tiny_hand_2x5	4	verified	4	2	xordepth/data/results/xordepth_full_merged_20261106/tiny_hand_2x5.json
+dense_8x16_seed123	4	verified	31	4	xordepth/data/results/xordepth_full_merged_20261106/dense_8x16_seed123.json
+dense_16x32_seed123	5	verified	118	5	xordepth/data/results/xordepth_full_mwsq_20261106/dense_16x32_seed123.json
+blocks_32x64_seed123	6	verified	423	6	xordepth/data/results/xordepth_full_mwsq_20261106/blocks_32x64_seed123.json
+cauchy_7_4_direct	4	infeasible_by_lower_bound
+systematic_rs_7_4_direct	4	infeasible_by_lower_bound
+vandermonde_8to17_direct	4	infeasible_by_lower_bound
+vandermonde_8to17_direct_canonical	4	infeasible_by_lower_bound
+gf8_10x10_expanded	4	infeasible_by_lower_bound

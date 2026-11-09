@@ -1,0 +1,230 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 1,
+  "branch_width": 1,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 31,
+    "inputs": 16,
+    "ops": [
+      [
+        17,
+        3,
+        15
+      ],
+      [
+        18,
+        4,
+        7
+      ],
+      [
+        19,
+        8,
+        11
+      ],
+      [
+        20,
+        1,
+        14
+      ],
+      [
+        21,
+        5,
+        12
+      ],
+      [
+        22,
+        6,
+        17
+      ],
+      [
+        23,
+        10,
+        19
+      ],
+      [
+        24,
+        9,
+        13
+      ],
+      [
+        25,
+        0,
+        18
+      ],
+      [
+        26,
+        20,
+        24
+      ],
+      [
+        27,
+        23,
+        25
+      ],
+      [
+        28,
+        21,
+        22
+      ],
+      [
+        29,
+        27,
+        28
+      ],
+      [
+        30,
+        2,
+        18
+      ],
+      [
+        31,
+        21,
+        26
+      ],
+      [
+        32,
+        30,
+        31
+      ],
+      [
+        33,
+        3,
+        14
+      ],
+      [
+        34,
+        33,
+        23
+      ],
+      [
+        35,
+        13,
+        17
+      ],
+      [
+        36,
+        21,
+        35
+      ],
+      [
+        37,
+        1,
+        5
+      ],
+      [
+        38,
+        15,
+        37
+      ],
+      [
+        39,
+        38,
+        27
+      ],
+      [
+        40,
+        14,
+        18
+      ],
+      [
+        41,
+        22,
+        40
+      ],
+      [
+        42,
+        0,
+        7
+      ],
+      [
+        43,
+        8,
+        42
+      ],
+      [
+        44,
+        22,
+        26
+      ],
+      [
+        45,
+        43,
+        44
+      ],
+      [
+        46,
+        6,
+        19
+      ],
+      [
+        47,
+        20,
+        46
+      ]
+    ],
+    "outputs": [
+      29,
+      32,
+      34,
+      36,
+      39,
+      41,
+      45,
+      47
+    ],
+    "zero_node": 16
+  },
+  "cost": 31,
+  "depth": 4,
+  "depth_limit": 4,
+  "depth_lower_bound": 4,
+  "diversity_buckets": 1,
+  "explored_states": 1,
+  "greedy_restarts": 1,
+  "inputs": 16,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 3,
+  "max_representations": 2,
+  "max_rounds": 1,
+  "max_states": 1,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    4,
+    4,
+    3,
+    3,
+    4,
+    3,
+    4,
+    3
+  ],
+  "outputs": 8,
+  "pruned_bound": 0,
+  "pruned_depth": 0,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 1,
+  "rewrite_trials": 0,
+  "round_limit": 248,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/dense_8x16_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "40441",
+    "29366",
+    "19720",
+    "45096",
+    "36275",
+    "49368",
+    "58315",
+    "18754"
+  ],
+  "timeout_seconds": 5,
+  "toggle_candidates": 0
+}

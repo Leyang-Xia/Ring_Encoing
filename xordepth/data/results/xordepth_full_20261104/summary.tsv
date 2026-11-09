@@ -1,0 +1,58 @@
+matrix	D	status	cost	depth	explored_states	seconds	v1	v2
+dense_10x10_seed123	4	verified	20		222	0.02	20	20
+dense_10x10_seed456	4	verified	21		221	0.02	21	21
+dense_12x20_seed123	5	verified	56		256	0.06	56	56
+dense_12x20_seed456	5	verified	59		256	0.08	59	59
+dense_24x40_seed123	5	verified	208		256	0.44	208	208
+dense_24x40_seed456	5	verified	214		256	0.44	214	214
+dense_40x64_seed123	6	verified	515		256	1.97	515	515
+dense_40x64_seed456	6	verified	521		256	1.99	521	521
+dense_64x96_seed123	6	verified	1223		111	5.00	1223	1223
+dense_64x96_seed456	6	verified	1224		111	5.00	1224	1224
+dense_100x100_seed123	7	verified	1819		0	5.00	1819	1819
+dense_100x100_seed456	7	verified	1842		0	5.00	1842	1842
+sparse_10x10_seed123	4	verified	16		137	0.01	16	16
+sparse_10x10_seed456	4	verified	14		133	0.01	14	14
+sparse_12x20_seed123	5	verified	24		185	0.01	24	24
+sparse_12x20_seed456	5	verified	20		174	0.01	20	20
+sparse_24x40_seed123	5	verified	46		256	0.04	46	46
+sparse_24x40_seed456	5	verified	44		256	0.04	44	44
+sparse_40x64_seed123	6	verified	77		256	0.07	77	77
+sparse_40x64_seed456	6	verified	76		256	0.07	76	76
+sparse_64x96_seed123	6	verified	125		256	0.11	125	125
+sparse_64x96_seed456	6	verified	124		256	0.11	124	124
+sparse_100x100_seed123	7	verified	194		256	0.16	194	194
+sparse_100x100_seed456	7	verified	194		256	0.17	194	194
+blocks_10x10_seed123	4	verified	0		2	0.00	0	0
+blocks_10x10_seed456	4	verified	3		9	0.00	3	3
+blocks_12x20_seed123	5	verified	7		50	0.00	7	7
+blocks_12x20_seed456	5	verified	13		101	0.00	13	13
+blocks_24x40_seed123	5	verified	56		256	0.06	56	56
+blocks_24x40_seed456	5	verified	63		256	0.06	63	63
+blocks_40x64_seed123	6	verified	153		256	0.19	153	153
+blocks_40x64_seed456	6	verified	156		256	0.19	156	156
+blocks_64x96_seed123	6	verified	342		256	0.63	342	342
+blocks_64x96_seed456	6	verified	356		256	0.69	356	356
+blocks_100x100_seed123	7	verified	550		256	1.02	550	550
+blocks_100x100_seed456	7	verified	548		256	1.03	548	548
+modular_10x10_seed123	4	verified	22		231	0.02	22	22
+modular_10x10_seed456	4	verified	23		256	0.02	23	23
+modular_12x20_seed123	5	verified	58		256	0.06	58	58
+modular_12x20_seed456	5	verified	57		256	0.06	57	57
+modular_24x40_seed123	5	verified	134		256	0.41	134	134
+modular_24x40_seed456	5	verified	142		256	0.43	142	142
+modular_40x64_seed123	6	verified	215		256	1.66	215	215
+modular_40x64_seed456	6	verified	227		256	1.86	227	227
+modular_64x96_seed123	6	verified	340		206	5.00	340	340
+modular_64x96_seed456	6	verified	335		207	5.00	335	335
+modular_100x100_seed123	7	verified	408		120	5.01	408	408
+modular_100x100_seed456	7	verified	409		124	5.01	409	409
+tiny_hand_2x5	4	verified	4		18	0.00	4	4
+dense_8x16_seed123	4	verified	31		256	0.03	31	31
+dense_16x32_seed123	5	verified	121		256	0.21	121	121
+blocks_32x64_seed123	6	verified	430		256	1.78	430	430
+cauchy_7_4_direct	4	infeasible_by_lower_bound			0	0.00		
+systematic_rs_7_4_direct	4	infeasible_by_lower_bound			0	0.00		
+vandermonde_8to17_direct	4	infeasible_by_lower_bound			0	0.00		
+vandermonde_8to17_direct_canonical	4	infeasible_by_lower_bound			0	0.00		
+gf8_10x10_expanded	4	infeasible_by_lower_bound			0	0.00		

@@ -1,0 +1,13 @@
+matrix	D	status	cost	depth	seconds	best_source
+dense_10x10_seed123	4	verified	20	3	0.02	greedy
+dense_40x64_seed123	6	verified	510	6	2.89	greedy
+sparse_12x20_seed123	5	verified	24	2	0.01	cse_baseline
+sparse_100x100_seed123	7	verified	194	2	0.17	cse_baseline
+blocks_24x40_seed123	5	verified	55	3	0.06	greedy
+blocks_100x100_seed456	7	verified	545	6	1.45	greedy
+modular_10x10_seed456	4	verified	23	4	0.02	rewrite
+modular_64x96_seed456	6	verified	335	6	8.17	greedy
+cauchy_7_4_direct	4	infeasible_by_lower_bound			0.00	
+systematic_rs_7_4_direct	4	infeasible_by_lower_bound			0.00	
+vandermonde_8to17_direct	4	infeasible_by_lower_bound			0.00	
+gf8_10x10_expanded	4	infeasible_by_lower_bound			0.00	

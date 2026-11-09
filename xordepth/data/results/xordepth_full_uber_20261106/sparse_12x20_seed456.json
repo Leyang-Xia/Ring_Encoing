@@ -1,0 +1,187 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 20,
+    "inputs": 20,
+    "ops": [
+      [
+        21,
+        1,
+        15
+      ],
+      [
+        22,
+        3,
+        14
+      ],
+      [
+        23,
+        2,
+        8
+      ],
+      [
+        24,
+        6,
+        21
+      ],
+      [
+        25,
+        13,
+        21
+      ],
+      [
+        26,
+        16,
+        22
+      ],
+      [
+        27,
+        19,
+        22
+      ],
+      [
+        28,
+        18,
+        23
+      ],
+      [
+        29,
+        3,
+        5
+      ],
+      [
+        30,
+        10,
+        29
+      ],
+      [
+        31,
+        5,
+        15
+      ],
+      [
+        32,
+        18,
+        31
+      ],
+      [
+        33,
+        17,
+        21
+      ],
+      [
+        34,
+        2,
+        12
+      ],
+      [
+        35,
+        16,
+        34
+      ],
+      [
+        36,
+        1,
+        10
+      ],
+      [
+        37,
+        13,
+        36
+      ],
+      [
+        38,
+        9,
+        13
+      ],
+      [
+        39,
+        15,
+        38
+      ],
+      [
+        40,
+        10,
+        23
+      ]
+    ],
+    "outputs": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      30,
+      32,
+      33,
+      35,
+      37,
+      39,
+      40
+    ],
+    "zero_node": 20
+  },
+  "cost": 20,
+  "depth": 2,
+  "depth_limit": 5,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 15,
+  "explored_states": 167,
+  "greedy_restarts": 2,
+  "inputs": 20,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 3,
+  "max_representations": 4,
+  "max_rounds": 23,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "outputs": 12,
+  "pruned_bound": 51,
+  "pruned_depth": 0,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "round_limit": 756,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/sparse_12x20_seed456.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "32834",
+    "40962",
+    "81928",
+    "540680",
+    "262404",
+    "1064",
+    "294944",
+    "163842",
+    "69636",
+    "9218",
+    "41472",
+    "1284"
+  ],
+  "timeout_seconds": 5,
+  "toggle_candidates": 0
+}

@@ -1,0 +1,292 @@
+{
+  "cases": [
+    {
+      "matrix": "generated/dense_10x10_seed123.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 20,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_10x10_seed123.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 20,
+        "depth": 4,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_10x10_seed123.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/dense_40x64_seed123.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 501,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 1.91,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_40x64_seed123.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 501,
+        "depth": 7,
+        "seconds": 0.01,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_40x64_seed123.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/sparse_12x20_seed123.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 24,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_12x20_seed123.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 24,
+        "depth": 2,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_12x20_seed123.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/sparse_100x100_seed123.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 194,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.01,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_100x100_seed123.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 194,
+        "depth": 2,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_100x100_seed123.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/blocks_24x40_seed123.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 55,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.01,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_24x40_seed123.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 55,
+        "depth": 4,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_24x40_seed123.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/blocks_100x100_seed456.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 537,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.98,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_100x100_seed456.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 537,
+        "depth": 6,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_100x100_seed456.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/modular_10x10_seed456.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 23,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_10x10_seed456.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 23,
+        "depth": 4,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_10x10_seed456.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "generated/modular_64x96_seed456.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 312,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 1.69,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_64x96_seed456.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 312,
+        "depth": 8,
+        "seconds": 0.01,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_64x96_seed456.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "cauchy_7_4_direct.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 147,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.06,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/cauchy_7_4_direct.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 147,
+        "depth": 7,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/cauchy_7_4_direct.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "systematic_rs_7_4_direct.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 148,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.05,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/systematic_rs_7_4_direct.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 148,
+        "depth": 6,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/systematic_rs_7_4_direct.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "vandermonde_8to17_direct.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 220,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 0.11,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/vandermonde_8to17_direct.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 220,
+        "depth": 6,
+        "seconds": 0.00,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/vandermonde_8to17_direct.txt.mw_sq_fast_rebalanced.json"
+      }
+    },
+    {
+      "matrix": "gf8_10x10_expanded.txt",
+      "mw_sq": {
+        "status": "verified",
+        "cost": 1192,
+        "depth": null,
+        "exit_code": 0,
+        "params": [
+          0,
+          0,
+          0
+        ],
+        "timeout_seconds": 180,
+        "seconds": 32.56,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/gf8_10x10_expanded.txt.mw_sq_fast.json"
+      },
+      "mw_sq_rebalanced": {
+        "status": "verified",
+        "cost": 1192,
+        "depth": 7,
+        "seconds": 0.03,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/gf8_10x10_expanded.txt.mw_sq_fast_rebalanced.json"
+      }
+    }
+  ]
+}

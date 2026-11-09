@@ -1,0 +1,186 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 21,
+    "inputs": 10,
+    "ops": [
+      [
+        11,
+        0,
+        4
+      ],
+      [
+        12,
+        2,
+        3
+      ],
+      [
+        13,
+        1,
+        5
+      ],
+      [
+        14,
+        1,
+        8
+      ],
+      [
+        15,
+        9,
+        11
+      ],
+      [
+        16,
+        12,
+        13
+      ],
+      [
+        17,
+        2,
+        14
+      ],
+      [
+        18,
+        5,
+        15
+      ],
+      [
+        19,
+        0,
+        5
+      ],
+      [
+        20,
+        6,
+        19
+      ],
+      [
+        21,
+        8,
+        12
+      ],
+      [
+        22,
+        12,
+        14
+      ],
+      [
+        23,
+        7,
+        13
+      ],
+      [
+        24,
+        3,
+        6
+      ],
+      [
+        25,
+        14,
+        24
+      ],
+      [
+        26,
+        15,
+        25
+      ],
+      [
+        27,
+        6,
+        11
+      ],
+      [
+        28,
+        16,
+        27
+      ],
+      [
+        29,
+        4,
+        6
+      ],
+      [
+        30,
+        9,
+        29
+      ],
+      [
+        31,
+        16,
+        30
+      ]
+    ],
+    "outputs": [
+      17,
+      18,
+      20,
+      21,
+      22,
+      23,
+      26,
+      15,
+      28,
+      31
+    ],
+    "zero_node": 10
+  },
+  "cost": 21,
+  "depth": 3,
+  "depth_limit": 3,
+  "depth_lower_bound": 3,
+  "diversity_buckets": 16,
+  "explored_states": 197,
+  "greedy_restarts": 2,
+  "inputs": 10,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 4,
+  "max_representations": 4,
+  "max_rounds": 28,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    3,
+    2,
+    2,
+    2,
+    2,
+    3,
+    2,
+    3,
+    3
+  ],
+  "outputs": 10,
+  "pruned_bound": 98,
+  "pruned_depth": 0,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 0,
+  "round_limit": 150,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/matrices/generated/dense_10x10_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "262",
+    "561",
+    "97",
+    "268",
+    "270",
+    "162",
+    "859",
+    "529",
+    "127",
+    "638"
+  ],
+  "timeout_seconds": 0,
+  "toggle_candidates": 0
+}

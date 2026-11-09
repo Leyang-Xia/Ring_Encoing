@@ -1,0 +1,37 @@
+{
+  "candidates": [
+    {
+      "cost": 24,
+      "depth": 3,
+      "label": "CSE-chained",
+      "status": "verified"
+    },
+    {
+      "cost": 24,
+      "depth": 3,
+      "label": "CSE-chained-rebalanced",
+      "status": "verified"
+    },
+    {
+      "cost": 32,
+      "depth": 3,
+      "label": "CSE-noshare",
+      "status": "verified"
+    },
+    {
+      "cost": 23,
+      "depth": 4,
+      "label": "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit",
+      "status": "verified"
+    },
+    {
+      "cost": 23,
+      "depth": 4,
+      "label": "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit-rebalanced",
+      "status": "verified"
+    }
+  ],
+  "candidates_verified": 5,
+  "file": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_10x10_seed456.txt.mw_sq_fast_rebalanced.json",
+  "status": "verified"
+}

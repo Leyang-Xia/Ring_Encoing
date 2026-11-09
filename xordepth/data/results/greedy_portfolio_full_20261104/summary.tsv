@@ -1,0 +1,58 @@
+matrix	D	v1_status	v1_cost	v1_depth	v2_status	v2_cost	v2_depth
+dense_10x10_seed123	4	verified	20		verified	20	
+dense_10x10_seed456	4	verified	23		verified	22	
+dense_12x20_seed123	5	verified	56		verified	56	
+dense_12x20_seed456	5	verified	61		verified	59	
+dense_24x40_seed123	5	verified	208		verified	208	
+dense_24x40_seed456	5	verified	219		verified	214	
+dense_40x64_seed123	6	verified	530		verified	515	
+dense_40x64_seed456	6	verified	532		verified	521	
+dense_64x96_seed123	6	verified	1223		verified	1223	
+dense_64x96_seed456	6	verified	1236		verified	1224	
+dense_100x100_seed123	7	verified	1809		verified	1819	
+dense_100x100_seed456	7	verified	1842		verified	1842	
+sparse_10x10_seed123	4	verified	16		verified	16	
+sparse_10x10_seed456	4	verified	14		verified	14	
+sparse_12x20_seed123	5	verified	24		verified	24	
+sparse_12x20_seed456	5	verified	20		verified	20	
+sparse_24x40_seed123	5	verified	46		verified	46	
+sparse_24x40_seed456	5	verified	44		verified	44	
+sparse_40x64_seed123	6	verified	77		verified	77	
+sparse_40x64_seed456	6	verified	76		verified	76	
+sparse_64x96_seed123	6	verified	125		verified	125	
+sparse_64x96_seed456	6	verified	124		verified	124	
+sparse_100x100_seed123	7	verified	194		verified	194	
+sparse_100x100_seed456	7	verified	194		verified	194	
+blocks_10x10_seed123	4	verified	0		verified	0	
+blocks_10x10_seed456	4	verified	3		verified	3	
+blocks_12x20_seed123	5	verified	7		verified	7	
+blocks_12x20_seed456	5	verified	13		verified	13	
+blocks_24x40_seed123	5	verified	56		verified	56	
+blocks_24x40_seed456	5	verified	63		verified	63	
+blocks_40x64_seed123	6	verified	154		verified	153	
+blocks_40x64_seed456	6	verified	156		verified	156	
+blocks_64x96_seed123	6	verified	347		verified	342	
+blocks_64x96_seed456	6	verified	357		verified	357	
+blocks_100x100_seed123	7	verified	550		verified	550	
+blocks_100x100_seed456	7	verified	551		verified	550	
+modular_10x10_seed123	4	verified	22		verified	22	
+modular_10x10_seed456	4	verified	24		verified	24	
+modular_12x20_seed123	5	verified	58		verified	58	
+modular_12x20_seed456	5	verified	57		verified	57	
+modular_24x40_seed123	5	verified	136		verified	134	
+modular_24x40_seed456	5	verified	144		verified	142	
+modular_40x64_seed123	6	verified	215		verified	215	
+modular_40x64_seed456	6	verified	235		verified	227	
+modular_64x96_seed123	6	verified	344		verified	342	
+modular_64x96_seed456	6	verified	336		verified	336	
+modular_100x100_seed123	7	verified	411		verified	411	
+modular_100x100_seed456	7	verified	426		verified	411	
+tiny_hand_2x5	4	verified	4		verified	4	
+dense_8x16_seed123	4	verified	31		verified	31	
+dense_16x32_seed123	5	verified	123		verified	121	
+blocks_32x64_seed123	6	verified	437		verified	430	
+cauchy_7_4_direct	4	infeasible_by_lower_bound			infeasible_by_lower_bound		
+systematic_rs_7_4_direct	4	infeasible_by_lower_bound			infeasible_by_lower_bound		
+vandermonde_8to17_direct	4	infeasible_by_lower_bound			infeasible_by_lower_bound		
+vandermonde_8to17_direct_canonical	4	infeasible_by_lower_bound			infeasible_by_lower_bound		
+gf8_10x10_expanded	4	infeasible_by_lower_bound			infeasible_by_lower_bound		

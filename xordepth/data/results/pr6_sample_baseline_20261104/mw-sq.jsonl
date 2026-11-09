@@ -1,0 +1,24 @@
+{
+  "matrix": "generated/dense_10x10_seed123.txt",
+  "mw_sq": {
+    "status": "verified",
+    "cost": 18,
+    "depth": null,
+    "exit_code": 0,
+    "params": [
+      0,
+      3,
+      0
+    ],
+    "timeout_seconds": 180,
+    "seconds": 0.00,
+    "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_10x10_seed123.txt.mw_sq.json"
+  },
+  "mw_sq_rebalanced": {
+    "status": "verified",
+    "cost": 18,
+    "depth": 6,
+    "seconds": 0.00,
+    "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_10x10_seed123.txt.mw_sq_rebalanced.json"
+  }
+}

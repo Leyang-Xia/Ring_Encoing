@@ -1,0 +1,43 @@
+{
+  "backend_executable": "/Users/leyang/Projects/Ring_Encoing/./build/xsets",
+  "cost": 147,
+  "exit_code": 0,
+  "method": "MW_SQ",
+  "params": [
+    0,
+    0,
+    0
+  ],
+  "path": "direct",
+  "source_hash_scope": "bundled X-Sets source; a custom --backend is not authenticated",
+  "status": "verified",
+  "target_masks": [
+    4239066622,
+    4183231484,
+    235213575,
+    3785368304,
+    1072316447,
+    2144698431,
+    4289331583,
+    4266984191,
+    3657804546,
+    3037419269,
+    2954036489,
+    3139608593,
+    2906712608,
+    1535169856,
+    3053562496,
+    1828869377,
+    98237441,
+    196475138,
+    330305028,
+    582738184,
+    1085095696,
+    2153479968,
+    28770112,
+    40763008
+  ],
+  "timeout": 180,
+  "wall_seconds": 0.061139167000000001,
+  "xsets_source_sha256": "adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"
+}

@@ -1,0 +1,359 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "cse_baseline",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 46,
+    "inputs": 40,
+    "ops": [
+      [
+        41,
+        21,
+        28
+      ],
+      [
+        42,
+        31,
+        35
+      ],
+      [
+        43,
+        24,
+        42
+      ],
+      [
+        44,
+        16,
+        30
+      ],
+      [
+        45,
+        32,
+        44
+      ],
+      [
+        46,
+        8,
+        13
+      ],
+      [
+        47,
+        35,
+        46
+      ],
+      [
+        48,
+        0,
+        3
+      ],
+      [
+        49,
+        30,
+        48
+      ],
+      [
+        50,
+        6,
+        31
+      ],
+      [
+        51,
+        33,
+        50
+      ],
+      [
+        52,
+        9,
+        12
+      ],
+      [
+        53,
+        17,
+        52
+      ],
+      [
+        54,
+        16,
+        41
+      ],
+      [
+        55,
+        12,
+        22
+      ],
+      [
+        56,
+        24,
+        55
+      ],
+      [
+        57,
+        13,
+        20
+      ],
+      [
+        58,
+        25,
+        57
+      ],
+      [
+        59,
+        0,
+        18
+      ],
+      [
+        60,
+        34,
+        59
+      ],
+      [
+        61,
+        4,
+        5
+      ],
+      [
+        62,
+        32,
+        61
+      ],
+      [
+        63,
+        0,
+        41
+      ],
+      [
+        64,
+        26,
+        42
+      ],
+      [
+        65,
+        18,
+        21
+      ],
+      [
+        66,
+        31,
+        65
+      ],
+      [
+        67,
+        17,
+        19
+      ],
+      [
+        68,
+        26,
+        67
+      ],
+      [
+        69,
+        11,
+        12
+      ],
+      [
+        70,
+        32,
+        69
+      ],
+      [
+        71,
+        4,
+        12
+      ],
+      [
+        72,
+        23,
+        71
+      ],
+      [
+        73,
+        5,
+        28
+      ],
+      [
+        74,
+        34,
+        73
+      ],
+      [
+        75,
+        16,
+        24
+      ],
+      [
+        76,
+        26,
+        75
+      ],
+      [
+        77,
+        20,
+        24
+      ],
+      [
+        78,
+        33,
+        77
+      ],
+      [
+        79,
+        10,
+        22
+      ],
+      [
+        80,
+        33,
+        79
+      ],
+      [
+        81,
+        9,
+        20
+      ],
+      [
+        82,
+        34,
+        81
+      ],
+      [
+        83,
+        7,
+        18
+      ],
+      [
+        84,
+        29,
+        83
+      ],
+      [
+        85,
+        1,
+        18
+      ],
+      [
+        86,
+        32,
+        85
+      ]
+    ],
+    "outputs": [
+      43,
+      45,
+      47,
+      49,
+      51,
+      53,
+      54,
+      56,
+      58,
+      60,
+      62,
+      63,
+      64,
+      66,
+      68,
+      70,
+      72,
+      74,
+      76,
+      78,
+      80,
+      82,
+      84,
+      86
+    ],
+    "zero_node": 40
+  },
+  "cost": 46,
+  "depth": 2,
+  "depth_limit": 5,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 16,
+  "explored_states": 256,
+  "greedy_restarts": 2,
+  "incumbent_files": [],
+  "incumbents_skipped": 0,
+  "incumbents_used": 0,
+  "inputs": 40,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 4,
+  "max_representations": 4,
+  "max_rounds": 49,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "outputs": 24,
+  "pruned_bound": 20,
+  "pruned_depth": 0,
+  "published_candidates": 6,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 22,
+  "round_limit": 1512,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/sparse_24x40_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "36523999232",
+    "5368774656",
+    "34359746816",
+    "1073741833",
+    "10737418304",
+    "135680",
+    "270598144",
+    "20975616",
+    "34611200",
+    "17180131329",
+    "4294967344",
+    "270532609",
+    "36574330880",
+    "2149842944",
+    "67764224",
+    "4294973440",
+    "8392720",
+    "17448304672",
+    "83951616",
+    "8607760384",
+    "8594129920",
+    "17180918272",
+    "537133184",
+    "4295229442"
+  ],
+  "timeout_seconds": 5,
+  "toggle_candidates": 0
+}

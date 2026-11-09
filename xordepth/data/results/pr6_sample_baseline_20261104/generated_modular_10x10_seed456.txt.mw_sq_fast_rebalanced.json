@@ -1,0 +1,879 @@
+{
+  "candidates": [
+    {
+      "circuit": {
+        "cost": 24,
+        "inputs": 10,
+        "ops": [
+          [
+            11,
+            1,
+            9
+          ],
+          [
+            12,
+            0,
+            8
+          ],
+          [
+            13,
+            7,
+            11
+          ],
+          [
+            14,
+            2,
+            4
+          ],
+          [
+            15,
+            3,
+            9
+          ],
+          [
+            16,
+            6,
+            14
+          ],
+          [
+            17,
+            0,
+            6
+          ],
+          [
+            18,
+            17,
+            15
+          ],
+          [
+            19,
+            3,
+            4
+          ],
+          [
+            20,
+            19,
+            7
+          ],
+          [
+            21,
+            20,
+            12
+          ],
+          [
+            22,
+            3,
+            5
+          ],
+          [
+            23,
+            22,
+            13
+          ],
+          [
+            24,
+            12,
+            16
+          ],
+          [
+            25,
+            2,
+            5
+          ],
+          [
+            26,
+            25,
+            6
+          ],
+          [
+            27,
+            26,
+            11
+          ],
+          [
+            28,
+            11,
+            12
+          ],
+          [
+            29,
+            13,
+            16
+          ],
+          [
+            30,
+            8,
+            14
+          ],
+          [
+            31,
+            30,
+            15
+          ],
+          [
+            32,
+            4,
+            13
+          ],
+          [
+            33,
+            2,
+            12
+          ],
+          [
+            34,
+            33,
+            13
+          ]
+        ],
+        "outputs": [
+          18,
+          21,
+          23,
+          24,
+          27,
+          28,
+          29,
+          31,
+          32,
+          34
+        ],
+        "zero_node": 10
+      },
+      "cost": 24,
+      "depth": 3,
+      "depth_aware": false,
+      "label": "CSE-chained",
+      "max_fanout": 4,
+      "method": "CSE_CHAINED",
+      "output_depth": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3
+      ],
+      "pareto": true,
+      "share_threshold": 2,
+      "status": "verified"
+    },
+    {
+      "circuit": {
+        "cost": 24,
+        "inputs": 10,
+        "ops": [
+          [
+            11,
+            1,
+            9
+          ],
+          [
+            12,
+            0,
+            8
+          ],
+          [
+            13,
+            7,
+            11
+          ],
+          [
+            14,
+            2,
+            4
+          ],
+          [
+            15,
+            3,
+            9
+          ],
+          [
+            16,
+            6,
+            14
+          ],
+          [
+            17,
+            0,
+            6
+          ],
+          [
+            18,
+            15,
+            17
+          ],
+          [
+            19,
+            3,
+            4
+          ],
+          [
+            20,
+            7,
+            12
+          ],
+          [
+            21,
+            19,
+            20
+          ],
+          [
+            22,
+            3,
+            5
+          ],
+          [
+            23,
+            22,
+            13
+          ],
+          [
+            24,
+            12,
+            16
+          ],
+          [
+            25,
+            2,
+            5
+          ],
+          [
+            26,
+            6,
+            11
+          ],
+          [
+            27,
+            25,
+            26
+          ],
+          [
+            28,
+            11,
+            12
+          ],
+          [
+            29,
+            13,
+            16
+          ],
+          [
+            30,
+            8,
+            14
+          ],
+          [
+            31,
+            15,
+            30
+          ],
+          [
+            32,
+            4,
+            13
+          ],
+          [
+            33,
+            2,
+            12
+          ],
+          [
+            34,
+            13,
+            33
+          ]
+        ],
+        "outputs": [
+          18,
+          21,
+          23,
+          24,
+          27,
+          28,
+          29,
+          31,
+          32,
+          34
+        ],
+        "zero_node": 10
+      },
+      "cost": 24,
+      "depth": 3,
+      "depth_aware": false,
+      "label": "CSE-chained-rebalanced",
+      "max_fanout": 4,
+      "method": "REBALANCED",
+      "output_depth": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        3
+      ],
+      "pareto": true,
+      "share_threshold": 2,
+      "status": "verified"
+    },
+    {
+      "circuit": {
+        "cost": 32,
+        "inputs": 10,
+        "ops": [
+          [
+            11,
+            0,
+            3
+          ],
+          [
+            12,
+            6,
+            9
+          ],
+          [
+            13,
+            11,
+            12
+          ],
+          [
+            14,
+            4,
+            7
+          ],
+          [
+            15,
+            8,
+            11
+          ],
+          [
+            16,
+            14,
+            15
+          ],
+          [
+            17,
+            1,
+            3
+          ],
+          [
+            18,
+            5,
+            7
+          ],
+          [
+            19,
+            9,
+            17
+          ],
+          [
+            20,
+            18,
+            19
+          ],
+          [
+            21,
+            0,
+            2
+          ],
+          [
+            22,
+            4,
+            6
+          ],
+          [
+            23,
+            8,
+            21
+          ],
+          [
+            24,
+            22,
+            23
+          ],
+          [
+            25,
+            1,
+            2
+          ],
+          [
+            26,
+            5,
+            6
+          ],
+          [
+            27,
+            9,
+            25
+          ],
+          [
+            28,
+            26,
+            27
+          ],
+          [
+            29,
+            0,
+            1
+          ],
+          [
+            30,
+            8,
+            9
+          ],
+          [
+            31,
+            29,
+            30
+          ],
+          [
+            32,
+            7,
+            9
+          ],
+          [
+            33,
+            22,
+            25
+          ],
+          [
+            34,
+            32,
+            33
+          ],
+          [
+            35,
+            2,
+            3
+          ],
+          [
+            36,
+            4,
+            8
+          ],
+          [
+            37,
+            9,
+            35
+          ],
+          [
+            38,
+            36,
+            37
+          ],
+          [
+            39,
+            1,
+            4
+          ],
+          [
+            40,
+            32,
+            39
+          ],
+          [
+            41,
+            2,
+            7
+          ],
+          [
+            42,
+            41,
+            31
+          ]
+        ],
+        "outputs": [
+          13,
+          16,
+          20,
+          24,
+          28,
+          31,
+          34,
+          38,
+          40,
+          42
+        ],
+        "zero_node": 10
+      },
+      "cost": 32,
+      "depth": 3,
+      "depth_aware": false,
+      "label": "CSE-noshare",
+      "max_fanout": 6,
+      "method": "CSE",
+      "output_depth": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        3,
+        3,
+        2,
+        3
+      ],
+      "pareto": false,
+      "share_threshold": 0,
+      "status": "verified"
+    },
+    {
+      "circuit": {
+        "cost": 23,
+        "inputs": 10,
+        "ops": [
+          [
+            10,
+            9,
+            1
+          ],
+          [
+            11,
+            10,
+            7
+          ],
+          [
+            12,
+            4,
+            11
+          ],
+          [
+            13,
+            8,
+            0
+          ],
+          [
+            14,
+            10,
+            13
+          ],
+          [
+            15,
+            6,
+            2
+          ],
+          [
+            16,
+            12,
+            15
+          ],
+          [
+            17,
+            9,
+            3
+          ],
+          [
+            18,
+            13,
+            4
+          ],
+          [
+            19,
+            15,
+            18
+          ],
+          [
+            20,
+            8,
+            4
+          ],
+          [
+            21,
+            7,
+            3
+          ],
+          [
+            22,
+            18,
+            21
+          ],
+          [
+            23,
+            17,
+            6
+          ],
+          [
+            24,
+            0,
+            23
+          ],
+          [
+            25,
+            5,
+            3
+          ],
+          [
+            26,
+            11,
+            25
+          ],
+          [
+            27,
+            20,
+            17
+          ],
+          [
+            28,
+            2,
+            27
+          ],
+          [
+            29,
+            15,
+            5
+          ],
+          [
+            30,
+            10,
+            29
+          ],
+          [
+            31,
+            11,
+            2
+          ],
+          [
+            32,
+            13,
+            31
+          ]
+        ],
+        "outputs": [
+          24,
+          22,
+          26,
+          19,
+          30,
+          14,
+          16,
+          28,
+          12,
+          32
+        ],
+        "zero_node": -1
+      },
+      "cost": 23,
+      "depth": 4,
+      "depth_aware": false,
+      "label": "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit",
+      "max_fanout": 3,
+      "method": "STORED",
+      "output_depth": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        4,
+        3,
+        3,
+        4
+      ],
+      "pareto": true,
+      "share_threshold": null,
+      "status": "verified"
+    },
+    {
+      "circuit": {
+        "cost": 23,
+        "inputs": 10,
+        "ops": [
+          [
+            11,
+            1,
+            9
+          ],
+          [
+            12,
+            7,
+            11
+          ],
+          [
+            13,
+            4,
+            12
+          ],
+          [
+            14,
+            0,
+            8
+          ],
+          [
+            15,
+            11,
+            14
+          ],
+          [
+            16,
+            2,
+            6
+          ],
+          [
+            17,
+            16,
+            13
+          ],
+          [
+            18,
+            3,
+            9
+          ],
+          [
+            19,
+            4,
+            14
+          ],
+          [
+            20,
+            16,
+            19
+          ],
+          [
+            21,
+            3,
+            7
+          ],
+          [
+            22,
+            21,
+            19
+          ],
+          [
+            23,
+            0,
+            6
+          ],
+          [
+            24,
+            18,
+            23
+          ],
+          [
+            25,
+            3,
+            5
+          ],
+          [
+            26,
+            25,
+            12
+          ],
+          [
+            27,
+            2,
+            4
+          ],
+          [
+            28,
+            8,
+            18
+          ],
+          [
+            29,
+            27,
+            28
+          ],
+          [
+            30,
+            5,
+            11
+          ],
+          [
+            31,
+            16,
+            30
+          ],
+          [
+            32,
+            2,
+            14
+          ],
+          [
+            33,
+            12,
+            32
+          ]
+        ],
+        "outputs": [
+          24,
+          22,
+          26,
+          20,
+          31,
+          15,
+          17,
+          29,
+          13,
+          33
+        ],
+        "zero_node": 10
+      },
+      "cost": 23,
+      "depth": 4,
+      "depth_aware": false,
+      "label": "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit-rebalanced",
+      "max_fanout": 3,
+      "method": "REBALANCED",
+      "output_depth": [
+        2,
+        3,
+        3,
+        3,
+        3,
+        2,
+        4,
+        3,
+        3,
+        3
+      ],
+      "pareto": true,
+      "share_threshold": null,
+      "status": "verified"
+    }
+  ],
+  "depth_lower_bound": 3,
+  "inputs": 10,
+  "max_row_weight": 6,
+  "note": "Costs count live XOR gates. depth counts two-input XOR gates from a primary input to an output. Every entry is a heuristic upper bound; the frontier is not an optimality claim.",
+  "outputs": 10,
+  "pareto_front": [
+    "CSE-chained",
+    "CSE-chained-rebalanced",
+    "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit",
+    "generated_modular_10x10_seed456.txt.mw_sq_fast.json:/circuit-rebalanced"
+  ],
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "source": {
+    "matrix": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/matrices/generated/modular_10x10_seed456.txt"
+  },
+  "status": "verified",
+  "stored_candidates": [
+    {
+      "file": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_10x10_seed456.txt.mw_sq_fast.json",
+      "skipped": 0,
+      "used": 1
+    }
+  ],
+  "target_masks": [
+    "585",
+    "409",
+    "682",
+    "341",
+    "614",
+    "771",
+    "726",
+    "796",
+    "658",
+    "903"
+  ]
+}

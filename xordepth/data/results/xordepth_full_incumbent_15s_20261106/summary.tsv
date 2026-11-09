@@ -1,0 +1,58 @@
+matrix	D	status	cost	depth	explored_states	seconds	best_source	rewrite_trials_used
+dense_10x10_seed123	4	verified	20	4	232	0.02	greedy	21
+dense_10x10_seed456	4	verified	22	3	214	0.02	rewrite	18
+dense_12x20_seed123	5	verified	56	5	256	0.07	greedy	90
+dense_12x20_seed456	5	verified	59	5	256	0.08	greedy	96
+dense_24x40_seed123	5	verified	208	5	256	0.58	greedy	184
+dense_24x40_seed456	5	verified	214	5	256	0.60	greedy	385
+dense_40x64_seed123	6	verified	515	6	256	2.65	greedy	400
+dense_40x64_seed456	6	verified	521	6	256	2.68	greedy	400
+dense_64x96_seed123	6	verified	1223	6	256	10.51	greedy	400
+dense_64x96_seed456	6	verified	1224	6	256	10.63	greedy	400
+dense_100x100_seed123	7	verified	1809	7	200	15.02	cse_baseline	400
+dense_100x100_seed456	7	verified	1832	7	186	15.00	greedy	400
+sparse_10x10_seed123	4	verified	16	2	142	0.01	cse_baseline	6
+sparse_10x10_seed456	4	verified	14	2	133	0.01	cse_baseline	5
+sparse_12x20_seed123	5	verified	24	2	185	0.02	cse_baseline	12
+sparse_12x20_seed456	5	verified	20	2	167	0.01	cse_baseline	8
+sparse_24x40_seed123	5	verified	46	2	256	0.05	cse_baseline	22
+sparse_24x40_seed456	5	verified	44	2	256	0.05	cse_baseline	20
+sparse_40x64_seed123	6	verified	77	2	256	0.08	cse_baseline	37
+sparse_40x64_seed456	6	verified	76	2	256	0.08	cse_baseline	36
+sparse_64x96_seed123	6	verified	125	2	256	0.13	cse_baseline	61
+sparse_64x96_seed456	6	verified	124	2	256	0.12	cse_baseline	60
+sparse_100x100_seed123	7	verified	194	2	256	0.17	cse_baseline	94
+sparse_100x100_seed456	7	verified	194	2	256	0.17	cse_baseline	94
+blocks_10x10_seed123	4	verified	0	0	2	0.00	cse_baseline	0
+blocks_10x10_seed456	4	verified	3	1	9	0.00	cse_baseline	0
+blocks_12x20_seed123	5	verified	7	2	54	0.00	cse_baseline	0
+blocks_12x20_seed456	5	verified	13	2	108	0.01	cse_baseline	5
+blocks_24x40_seed123	5	verified	56	3	256	0.06	greedy	67
+blocks_24x40_seed456	5	verified	63	5	256	0.07	cse_baseline	39
+blocks_40x64_seed123	6	verified	153	5	256	0.26	greedy	338
+blocks_40x64_seed456	6	verified	156	5	256	0.24	cse_baseline	116
+blocks_64x96_seed123	6	verified	342	6	256	0.80	greedy	400
+blocks_64x96_seed456	6	verified	356	6	256	0.82	rewrite	371
+blocks_100x100_seed123	7	verified	550	6	256	1.25	cse_baseline	400
+blocks_100x100_seed456	7	verified	550	7	256	1.26	greedy	400
+modular_10x10_seed123	4	verified	22	3	256	0.02	greedy	28
+modular_10x10_seed456	4	verified	23	4	251	0.02	rewrite	20
+modular_12x20_seed123	5	verified	58	4	256	0.08	cse_baseline	46
+modular_12x20_seed456	5	verified	57	5	256	0.09	cse_baseline	45
+modular_24x40_seed123	5	verified	134	5	256	0.53	greedy	224
+modular_24x40_seed456	5	verified	142	5	256	0.57	greedy	238
+modular_40x64_seed123	6	verified	215	6	256	2.36	greedy	178
+modular_40x64_seed456	6	verified	227	6	256	2.40	greedy	384
+modular_64x96_seed123	6	verified	342	6	256	7.44	greedy	400
+modular_64x96_seed456	6	verified	335	6	256	7.62	rewrite	400
+modular_100x100_seed123	7	verified	408	7	256	11.37	rewrite	400
+modular_100x100_seed456	7	verified	411	7	256	11.60	greedy	400
+tiny_hand_2x5	4	verified	4	2	18	0.00	cse_baseline	2
+dense_8x16_seed123	4	verified	31	4	256	0.04	cse_baseline	23
+dense_16x32_seed123	5	verified	121	5	256	0.28	greedy	212
+blocks_32x64_seed123	6	verified	430	6	256	2.23	greedy	400
+cauchy_7_4_direct	4	infeasible_by_lower_bound	-	-	0	0.00		0
+systematic_rs_7_4_direct	4	infeasible_by_lower_bound	-	-	0	0.00		0
+vandermonde_8to17_direct	4	infeasible_by_lower_bound	-	-	0	0.00		0
+vandermonde_8to17_direct_canonical	4	infeasible_by_lower_bound	-	-	0	0.00		0
+gf8_10x10_expanded	4	infeasible_by_lower_bound	-	-	0	0.00		0

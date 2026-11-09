@@ -1,0 +1,13 @@
+name	cost	depth	status	wall_seconds
+dense_10x10_seed123	20	3	verified	0.383
+dense_40x64_seed123	510	6	verified	1.431
+sparse_12x20_seed123	24	2	verified	0.016
+sparse_100x100_seed123	194	2	verified	0.120
+blocks_24x40_seed123	55	3	verified	0.046
+blocks_100x100_seed456	546	5	verified	0.729
+modular_10x10_seed456	24	3	verified	0.019
+modular_64x96_seed456	335	6	verified	3.782
+cauchy_7_4_direct	150	5	verified	0.160
+systematic_rs_7_4_direct	148	5	verified	0.179
+vandermonde_8to17_direct	219	5	verified	0.357
+gf8_10x10_expanded	1238	6	verified	5.722

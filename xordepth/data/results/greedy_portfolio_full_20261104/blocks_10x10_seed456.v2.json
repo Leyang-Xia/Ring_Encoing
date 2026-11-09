@@ -1,0 +1,96 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 1,
+  "branch_width": 1,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 3,
+    "inputs": 10,
+    "ops": [
+      [
+        11,
+        0,
+        1
+      ],
+      [
+        12,
+        5,
+        6
+      ],
+      [
+        13,
+        8,
+        9
+      ]
+    ],
+    "outputs": [
+      11,
+      1,
+      1,
+      3,
+      2,
+      6,
+      6,
+      12,
+      13,
+      7
+    ],
+    "zero_node": 10
+  },
+  "cost": 3,
+  "depth": 1,
+  "depth_limit": 4,
+  "depth_lower_bound": 1,
+  "diversity_buckets": 1,
+  "explored_states": 1,
+  "greedy_restarts": 2,
+  "inputs": 10,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 1,
+  "max_representations": 2,
+  "max_rounds": 1,
+  "max_states": 1,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0
+  ],
+  "outputs": 10,
+  "pruned_bound": 0,
+  "pruned_depth": 0,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 1,
+  "rewrite_trials": 0,
+  "round_limit": 310,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/blocks_10x10_seed456.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "3",
+    "2",
+    "2",
+    "8",
+    "4",
+    "64",
+    "64",
+    "96",
+    "768",
+    "128"
+  ],
+  "timeout_seconds": 5,
+  "toggle_candidates": 0
+}

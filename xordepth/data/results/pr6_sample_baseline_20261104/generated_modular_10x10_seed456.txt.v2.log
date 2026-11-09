@@ -1,0 +1,27 @@
+{
+  "cost": 24,
+  "depth": 3,
+  "depth_limit": 3,
+  "initial_source": "own synthesis",
+  "lookahead": false,
+  "method": "OUR_DCCSE_V2",
+  "original_ours_cost": 24,
+  "refine": true,
+  "seed": 1,
+  "seeds": 1,
+  "standalone_cost": 24,
+  "status": "verified",
+  "target_masks": [
+    585,
+    409,
+    682,
+    341,
+    614,
+    771,
+    726,
+    796,
+    658,
+    903
+  ],
+  "total_synthesis_restarts": 2
+}

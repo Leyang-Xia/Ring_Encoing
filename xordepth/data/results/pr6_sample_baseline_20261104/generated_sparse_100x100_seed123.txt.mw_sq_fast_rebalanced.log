@@ -1,0 +1,82 @@
+{
+  "candidates": [
+    {
+      "cost": 194,
+      "depth": 2,
+      "depth_aware": false,
+      "label": "CSE-chained",
+      "max_fanout": 7,
+      "method": "CSE_CHAINED",
+      "pareto": true,
+      "share_threshold": 2,
+      "status": "verified"
+    },
+    {
+      "cost": 194,
+      "depth": 2,
+      "depth_aware": false,
+      "label": "CSE-chained-rebalanced",
+      "max_fanout": 7,
+      "method": "REBALANCED",
+      "pareto": true,
+      "share_threshold": 2,
+      "status": "verified"
+    },
+    {
+      "cost": 198,
+      "depth": 2,
+      "depth_aware": false,
+      "label": "CSE-noshare",
+      "max_fanout": 8,
+      "method": "CSE",
+      "pareto": false,
+      "share_threshold": 0,
+      "status": "verified"
+    },
+    {
+      "cost": 194,
+      "depth": 2,
+      "depth_aware": false,
+      "label": "generated_sparse_100x100_seed123.txt.mw_sq_fast.json:/circuit",
+      "max_fanout": 7,
+      "method": "STORED",
+      "pareto": true,
+      "share_threshold": null,
+      "status": "verified"
+    },
+    {
+      "cost": 194,
+      "depth": 2,
+      "depth_aware": false,
+      "label": "generated_sparse_100x100_seed123.txt.mw_sq_fast.json:/circuit-rebalanced",
+      "max_fanout": 7,
+      "method": "REBALANCED",
+      "pareto": true,
+      "share_threshold": null,
+      "status": "verified"
+    }
+  ],
+  "depth_lower_bound": 2,
+  "inputs": 100,
+  "max_row_weight": 3,
+  "note": "Costs count live XOR gates. depth counts two-input XOR gates from a primary input to an output. Every entry is a heuristic upper bound; the frontier is not an optimality claim.",
+  "outputs": 100,
+  "pareto_front": [
+    "CSE-chained",
+    "CSE-chained-rebalanced",
+    "generated_sparse_100x100_seed123.txt.mw_sq_fast.json:/circuit",
+    "generated_sparse_100x100_seed123.txt.mw_sq_fast.json:/circuit-rebalanced"
+  ],
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "source": {
+    "matrix": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/matrices/generated/sparse_100x100_seed123.txt"
+  },
+  "status": "verified",
+  "stored_candidates": [
+    {
+      "file": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_100x100_seed123.txt.mw_sq_fast.json",
+      "skipped": 0,
+      "used": 1
+    }
+  ]
+}

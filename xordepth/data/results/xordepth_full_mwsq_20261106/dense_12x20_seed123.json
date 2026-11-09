@@ -1,0 +1,364 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "greedy",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 54,
+    "inputs": 20,
+    "ops": [
+      [
+        21,
+        1,
+        14
+      ],
+      [
+        22,
+        4,
+        9
+      ],
+      [
+        23,
+        8,
+        10
+      ],
+      [
+        24,
+        5,
+        13
+      ],
+      [
+        25,
+        6,
+        16
+      ],
+      [
+        26,
+        12,
+        19
+      ],
+      [
+        27,
+        17,
+        22
+      ],
+      [
+        28,
+        2,
+        21
+      ],
+      [
+        29,
+        3,
+        15
+      ],
+      [
+        30,
+        25,
+        26
+      ],
+      [
+        31,
+        0,
+        24
+      ],
+      [
+        32,
+        1,
+        2
+      ],
+      [
+        33,
+        28,
+        30
+      ],
+      [
+        34,
+        8,
+        32
+      ],
+      [
+        35,
+        17,
+        29
+      ],
+      [
+        36,
+        19,
+        23
+      ],
+      [
+        37,
+        18,
+        23
+      ],
+      [
+        38,
+        5,
+        27
+      ],
+      [
+        39,
+        15,
+        28
+      ],
+      [
+        40,
+        36,
+        39
+      ],
+      [
+        41,
+        6,
+        12
+      ],
+      [
+        42,
+        18,
+        41
+      ],
+      [
+        43,
+        31,
+        42
+      ],
+      [
+        44,
+        11,
+        34
+      ],
+      [
+        45,
+        35,
+        44
+      ],
+      [
+        46,
+        0,
+        3
+      ],
+      [
+        47,
+        6,
+        21
+      ],
+      [
+        48,
+        22,
+        46
+      ],
+      [
+        49,
+        36,
+        47
+      ],
+      [
+        50,
+        48,
+        49
+      ],
+      [
+        51,
+        4,
+        11
+      ],
+      [
+        52,
+        29,
+        51
+      ],
+      [
+        53,
+        31,
+        52
+      ],
+      [
+        54,
+        33,
+        53
+      ],
+      [
+        55,
+        14,
+        30
+      ],
+      [
+        56,
+        38,
+        55
+      ],
+      [
+        57,
+        7,
+        10
+      ],
+      [
+        58,
+        21,
+        57
+      ],
+      [
+        59,
+        27,
+        58
+      ],
+      [
+        60,
+        11,
+        25
+      ],
+      [
+        61,
+        37,
+        60
+      ],
+      [
+        62,
+        38,
+        61
+      ],
+      [
+        63,
+        0,
+        27
+      ],
+      [
+        64,
+        34,
+        63
+      ],
+      [
+        65,
+        10,
+        17
+      ],
+      [
+        66,
+        65,
+        33
+      ],
+      [
+        67,
+        23,
+        26
+      ],
+      [
+        68,
+        31,
+        35
+      ],
+      [
+        69,
+        67,
+        68
+      ],
+      [
+        70,
+        3,
+        4
+      ],
+      [
+        71,
+        16,
+        24
+      ],
+      [
+        72,
+        70,
+        28
+      ],
+      [
+        73,
+        37,
+        71
+      ],
+      [
+        74,
+        72,
+        73
+      ]
+    ],
+    "outputs": [
+      40,
+      43,
+      45,
+      50,
+      54,
+      56,
+      59,
+      62,
+      64,
+      66,
+      69,
+      74
+    ],
+    "zero_node": 20
+  },
+  "cost": 54,
+  "depth": 4,
+  "depth_limit": 5,
+  "depth_lower_bound": 4,
+  "diversity_buckets": 16,
+  "explored_states": 256,
+  "greedy_mwsq": true,
+  "greedy_restarts": 2,
+  "incumbent_files": [],
+  "incumbents_skipped": 0,
+  "incumbents_used": 0,
+  "inputs": 20,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 3,
+  "max_representations": 4,
+  "max_rounds": 65,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    4,
+    3,
+    4,
+    4,
+    4,
+    4,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "outputs": 12,
+  "pruned_bound": 71,
+  "pruned_depth": 0,
+  "published_candidates": 7,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 130,
+  "round_limit": 756,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/dense_12x20_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "574726",
+    "274529",
+    "166158",
+    "542555",
+    "653439",
+    "742000",
+    "149138",
+    "462704",
+    "131863",
+    "742470",
+    "701737",
+    "353598"
+  ],
+  "timeout_seconds": 15,
+  "toggle_candidates": 0
+}

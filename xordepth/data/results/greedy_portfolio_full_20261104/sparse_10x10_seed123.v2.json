@@ -1,0 +1,161 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 1,
+  "branch_width": 1,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 16,
+    "inputs": 10,
+    "ops": [
+      [
+        11,
+        1,
+        6
+      ],
+      [
+        12,
+        7,
+        9
+      ],
+      [
+        13,
+        6,
+        8
+      ],
+      [
+        14,
+        0,
+        4
+      ],
+      [
+        15,
+        7,
+        14
+      ],
+      [
+        16,
+        6,
+        14
+      ],
+      [
+        17,
+        0,
+        7
+      ],
+      [
+        18,
+        8,
+        17
+      ],
+      [
+        19,
+        0,
+        13
+      ],
+      [
+        20,
+        7,
+        11
+      ],
+      [
+        21,
+        2,
+        12
+      ],
+      [
+        22,
+        6,
+        12
+      ],
+      [
+        23,
+        4,
+        11
+      ],
+      [
+        24,
+        0,
+        1
+      ],
+      [
+        25,
+        5,
+        24
+      ],
+      [
+        26,
+        2,
+        13
+      ]
+    ],
+    "outputs": [
+      15,
+      16,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      25,
+      26
+    ],
+    "zero_node": 10
+  },
+  "cost": 16,
+  "depth": 2,
+  "depth_limit": 4,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 1,
+  "explored_states": 1,
+  "greedy_restarts": 2,
+  "inputs": 10,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 4,
+  "max_representations": 2,
+  "max_rounds": 1,
+  "max_states": 1,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "outputs": 10,
+  "pruned_bound": 0,
+  "pruned_depth": 0,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 1,
+  "rewrite_trials": 0,
+  "round_limit": 310,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/sparse_10x10_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "145",
+    "81",
+    "385",
+    "321",
+    "194",
+    "644",
+    "704",
+    "82",
+    "35",
+    "324"
+  ],
+  "timeout_seconds": 5,
+  "toggle_candidates": 0
+}

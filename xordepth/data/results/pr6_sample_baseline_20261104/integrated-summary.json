@@ -1,0 +1,136 @@
+{
+  "cases": [
+    {
+      "matrix": "generated/dense_10x10_seed123.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 21,
+        "depth": 3,
+        "explored_states": 197,
+        "seconds": 0.02,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_10x10_seed123.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/dense_40x64_seed123.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 523,
+        "depth": 6,
+        "explored_states": 256,
+        "seconds": 1.79,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_dense_40x64_seed123.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/sparse_12x20_seed123.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 24,
+        "depth": 2,
+        "explored_states": 185,
+        "seconds": 0.01,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_12x20_seed123.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/sparse_100x100_seed123.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 194,
+        "depth": 2,
+        "explored_states": 256,
+        "seconds": 0.14,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_sparse_100x100_seed123.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/blocks_24x40_seed123.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 56,
+        "depth": 3,
+        "explored_states": 256,
+        "seconds": 0.05,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_24x40_seed123.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/blocks_100x100_seed456.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 557,
+        "depth": 5,
+        "explored_states": 256,
+        "seconds": 0.87,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_blocks_100x100_seed456.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/modular_10x10_seed456.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 24,
+        "depth": 3,
+        "explored_states": 256,
+        "seconds": 0.02,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_10x10_seed456.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "generated/modular_64x96_seed456.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 336,
+        "depth": 6,
+        "explored_states": 256,
+        "seconds": 5.42,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/generated_modular_64x96_seed456.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "cauchy_7_4_direct.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 150,
+        "depth": 5,
+        "explored_states": 256,
+        "seconds": 0.24,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/cauchy_7_4_direct.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "systematic_rs_7_4_direct.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 146,
+        "depth": 5,
+        "explored_states": 256,
+        "seconds": 0.25,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/systematic_rs_7_4_direct.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "vandermonde_8to17_direct.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 226,
+        "depth": 5,
+        "explored_states": 256,
+        "seconds": 0.50,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/vandermonde_8to17_direct.txt.integrated.json"
+      }
+    },
+    {
+      "matrix": "gf8_10x10_expanded.txt",
+      "integrated": {
+        "status": "verified",
+        "cost": 1244,
+        "depth": 6,
+        "explored_states": 256,
+        "seconds": 6.76,
+        "evidence": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/results/pr6_sample_baseline_20261104/gf8_10x10_expanded.txt.integrated.json"
+      }
+    }
+  ]
+}

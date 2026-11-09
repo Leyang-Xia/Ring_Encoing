@@ -1,0 +1,138 @@
+{
+  "backend_executable": "/Users/leyang/Projects/Ring_Encoing/./build/xsets",
+  "circuit": {
+    "cost": 18,
+    "inputs": 10,
+    "ops": [
+      [
+        10,
+        9,
+        4
+      ],
+      [
+        11,
+        0,
+        10
+      ],
+      [
+        12,
+        5,
+        11
+      ],
+      [
+        13,
+        3,
+        1
+      ],
+      [
+        14,
+        8,
+        2
+      ],
+      [
+        15,
+        3,
+        14
+      ],
+      [
+        16,
+        13,
+        15
+      ],
+      [
+        17,
+        13,
+        14
+      ],
+      [
+        18,
+        6,
+        12
+      ],
+      [
+        19,
+        10,
+        18
+      ],
+      [
+        20,
+        18,
+        8
+      ],
+      [
+        21,
+        20,
+        17
+      ],
+      [
+        22,
+        0,
+        21
+      ],
+      [
+        23,
+        9,
+        21
+      ],
+      [
+        24,
+        7,
+        5
+      ],
+      [
+        25,
+        1,
+        24
+      ],
+      [
+        26,
+        5,
+        14
+      ],
+      [
+        27,
+        21,
+        26
+      ]
+    ],
+    "outputs": [
+      16,
+      12,
+      19,
+      15,
+      17,
+      25,
+      27,
+      11,
+      23,
+      22
+    ],
+    "zero_node": -1
+  },
+  "cost": 18,
+  "exit_code": 0,
+  "method": "MW_SQ",
+  "params": [
+    0,
+    3,
+    0
+  ],
+  "path": "direct",
+  "source_hash_scope": "bundled X-Sets source; a custom --backend is not authenticated",
+  "status": "verified",
+  "target_masks": [
+    262,
+    561,
+    97,
+    268,
+    270,
+    162,
+    859,
+    529,
+    127,
+    638
+  ],
+  "timeout": 180,
+  "wall_seconds": 0.0037741250000000001,
+  "xsets_source_sha256": "adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"
+}

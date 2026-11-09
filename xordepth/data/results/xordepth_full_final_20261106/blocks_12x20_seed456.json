@@ -1,0 +1,161 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "xordepth/data/results/xordepth_full_merged_20261106/blocks_12x20_seed456.json",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 13,
+    "inputs": 20,
+    "ops": [
+      [
+        21,
+        7,
+        8
+      ],
+      [
+        22,
+        0,
+        1
+      ],
+      [
+        23,
+        3,
+        22
+      ],
+      [
+        24,
+        0,
+        4
+      ],
+      [
+        25,
+        5,
+        9
+      ],
+      [
+        26,
+        21,
+        25
+      ],
+      [
+        27,
+        6,
+        21
+      ],
+      [
+        28,
+        8,
+        9
+      ],
+      [
+        29,
+        10,
+        12
+      ],
+      [
+        30,
+        14,
+        29
+      ],
+      [
+        31,
+        17,
+        19
+      ],
+      [
+        32,
+        16,
+        18
+      ],
+      [
+        33,
+        19,
+        32
+      ]
+    ],
+    "outputs": [
+      23,
+      24,
+      0,
+      26,
+      27,
+      28,
+      30,
+      11,
+      14,
+      31,
+      33,
+      19
+    ],
+    "zero_node": 20
+  },
+  "cost": 13,
+  "depth": 2,
+  "depth_limit": 5,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 15,
+  "explored_states": 108,
+  "greedy_restarts": 2,
+  "incumbent_files": [
+    "xordepth/data/results/xordepth_full_merged_20261106/blocks_12x20_seed456.json",
+    "xordepth/data/results/xordepth_full_mwsq_20261106/blocks_12x20_seed456.json"
+  ],
+  "incumbents_skipped": 1,
+  "incumbents_used": 1,
+  "inputs": 20,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 2,
+  "max_representations": 4,
+  "max_rounds": 16,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    1,
+    0,
+    2,
+    2,
+    1,
+    2,
+    0,
+    0,
+    1,
+    2,
+    0
+  ],
+  "outputs": 12,
+  "pruned_bound": 50,
+  "pruned_depth": 0,
+  "published_candidates": 1,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 0,
+  "round_limit": 756,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/generated/blocks_12x20_seed456.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "11",
+    "17",
+    "1",
+    "928",
+    "448",
+    "768",
+    "21504",
+    "2048",
+    "16384",
+    "655360",
+    "851968",
+    "524288"
+  ],
+  "timeout_seconds": 15,
+  "toggle_candidates": 0
+}

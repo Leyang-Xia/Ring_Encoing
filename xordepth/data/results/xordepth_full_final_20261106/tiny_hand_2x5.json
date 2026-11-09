@@ -1,0 +1,86 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "xordepth/data/results/xordepth_full_merged_20261106/tiny_hand_2x5.json",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 4,
+    "inputs": 5,
+    "ops": [
+      [
+        6,
+        0,
+        2
+      ],
+      [
+        7,
+        4,
+        6
+      ],
+      [
+        8,
+        0,
+        1
+      ],
+      [
+        9,
+        3,
+        8
+      ]
+    ],
+    "outputs": [
+      7,
+      9
+    ],
+    "zero_node": 5
+  },
+  "cost": 4,
+  "depth": 2,
+  "depth_limit": 4,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 3,
+  "explored_states": 18,
+  "greedy_restarts": 2,
+  "incumbent_files": [
+    "xordepth/data/results/xordepth_full_merged_20261106/tiny_hand_2x5.json",
+    "xordepth/data/results/xordepth_full_mwsq_20261106/tiny_hand_2x5.json"
+  ],
+  "incumbents_skipped": 1,
+  "incumbents_used": 1,
+  "inputs": 5,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 2,
+  "max_representations": 4,
+  "max_rounds": 5,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2
+  ],
+  "outputs": 2,
+  "pruned_bound": 12,
+  "pruned_depth": 0,
+  "published_candidates": 1,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 0,
+  "round_limit": 62,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "xordepth/data/matrices/tiny_hand_2x5.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "21",
+    "11"
+  ],
+  "timeout_seconds": 15,
+  "toggle_candidates": 0
+}
