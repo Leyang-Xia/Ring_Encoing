@@ -1,0 +1,69 @@
+case,label,method,gates,depth,depth_limit,restarts,seed,pareto
+Vandermonde 8→17,CSE-chained,CSE_CHAINED,220,10,,,,False
+Vandermonde 8→17,CSE-chained-rebalanced,REBALANCED,220,6,,,,False
+Vandermonde 8→17,CSE-share2,CSE,220,6,,,,False
+Vandermonde 8→17,CSE-share3,CSE,243,6,,,,False
+Vandermonde 8→17,CSE-noshare,CSE,336,5,,,,False
+Vandermonde 8→17,OURS-D5,OUR_DCCSE,224,5,5,1,0,True
+Vandermonde 8→17,OURS-D6,OUR_DCCSE,222,6,6,1,0,False
+Vandermonde 8→17,structured_ring_example.json:/direct_cse,STORED,217,13,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_cse-rebalanced,REBALANCED,217,6,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/1/circuit,STORED,331,99,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/1/circuit-rebalanced,REBALANCED,312,10,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/2/circuit,STORED,283,75,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/2/circuit-rebalanced,REBALANCED,277,17,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/3/circuit,STORED,261,82,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_uber/3/circuit-rebalanced,REBALANCED,257,31,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_xsets/MW_SQ/circuit,STORED,219,12,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_xsets/MW_SQ/circuit-rebalanced,REBALANCED,219,6,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_xsets/UBER_XSET/circuit,STORED,212,15,,,,False
+Vandermonde 8→17,structured_ring_example.json:/direct_xsets/UBER_XSET/circuit-rebalanced,REBALANCED,212,8,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring,STORED,203,10,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring-rebalanced,REBALANCED,203,6,,,,True
+Vandermonde 8→17,structured_ring_example.json:/ring_cse,STORED,204,10,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring_cse-rebalanced,REBALANCED,204,6,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring_mw_pipeline/ring,STORED,203,10,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring_mw_pipeline/ring-rebalanced,REBALANCED,203,6,,,,True
+Vandermonde 8→17,structured_ring_example.json:/ring_uber_pipeline/ring,STORED,204,12,,,,False
+Vandermonde 8→17,structured_ring_example.json:/ring_uber_pipeline/ring-rebalanced,REBALANCED,203,8,,,,False
+"系统化 RS [7,4,4]",CSE-chained,CSE_CHAINED,149,8,,,,False
+"系统化 RS [7,4,4]",CSE-chained-rebalanced,REBALANCED,149,6,,,,False
+"系统化 RS [7,4,4]",CSE-share2,CSE,149,6,,,,False
+"系统化 RS [7,4,4]",CSE-share3,CSE,168,5,,,,False
+"系统化 RS [7,4,4]",CSE-noshare,CSE,247,5,,,,False
+"系统化 RS [7,4,4]",OURS-D5,OUR_DCCSE,152,5,5,1,0,True
+"系统化 RS [7,4,4]",OURS-D6,OUR_DCCSE,152,5,6,1,0,True
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/direct_cse,STORED,146,10,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/direct_cse-rebalanced,REBALANCED,146,6,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/4/circuit,STORED,126,12,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/4/circuit-rebalanced,REBALANCED,126,11,,,,True
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit,STORED,140,8,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit-rebalanced,REBALANCED,140,6,,,,True
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/6/circuit,STORED,141,10,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/6/circuit-rebalanced,REBALANCED,141,7,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/7/circuit,STORED,134,10,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/7/circuit-rebalanced,REBALANCED,132,9,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/8/circuit,STORED,129,15,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/8/circuit-rebalanced,REBALANCED,129,11,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/10/circuit,STORED,136,10,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/10/circuit-rebalanced,REBALANCED,136,7,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/11/circuit,STORED,133,11,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/11/circuit-rebalanced,REBALANCED,133,7,,,,True
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/ring,STORED,124,15,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4/ring-rebalanced,REBALANCED,124,14,,,,True
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4-ring12/ring,STORED,127,11,,,,False
+"系统化 RS [7,4,4]",practical_mds_examples.json:/examples/systematic-rs-7-4-ring12/ring-rebalanced,REBALANCED,127,9,,,,True
+Cauchy 7→4,CSE-chained,CSE_CHAINED,150,7,,,,False
+Cauchy 7→4,CSE-chained-rebalanced,REBALANCED,150,6,,,,False
+Cauchy 7→4,CSE-share2,CSE,150,6,,,,False
+Cauchy 7→4,CSE-share3,CSE,173,6,,,,False
+Cauchy 7→4,CSE-noshare,CSE,224,5,,,,False
+Cauchy 7→4,OURS-D5,OUR_DCCSE,151,5,5,1,0,True
+Cauchy 7→4,OURS-D6,OUR_DCCSE,148,6,6,1,0,True
+GF(2⁸) 10×10 展开,CSE-chained,CSE_CHAINED,1219,15,,,,False
+GF(2⁸) 10×10 展开,CSE-chained-rebalanced,REBALANCED,1219,7,,,,True
+GF(2⁸) 10×10 展开,CSE-share2,CSE,1219,7,,,,True
+GF(2⁸) 10×10 展开,CSE-share3,CSE,1376,7,,,,False
+GF(2⁸) 10×10 展开,CSE-noshare,CSE,1830,6,,,,False
+GF(2⁸) 10×10 展开,OURS-D6,OUR_DCCSE,1246,6,6,1,0,True
+GF(2⁸) 10×10 展开,OURS-D7,OUR_DCCSE,1226,7,7,1,0,False

@@ -1,0 +1,37 @@
+{
+  "candidates": [
+    {
+      "cost": 4285,
+      "depth": 18,
+      "label": "CSE-chained",
+      "status": "verified"
+    },
+    {
+      "cost": 4285,
+      "depth": 9,
+      "label": "CSE-chained-rebalanced",
+      "status": "verified"
+    },
+    {
+      "cost": 4285,
+      "depth": 9,
+      "label": "CSE-share2",
+      "status": "verified"
+    },
+    {
+      "cost": 4745,
+      "depth": 8,
+      "label": "CSE-share3",
+      "status": "verified"
+    },
+    {
+      "cost": 6726,
+      "depth": 7,
+      "label": "CSE-noshare",
+      "status": "verified"
+    }
+  ],
+  "candidates_verified": 5,
+  "file": "/workspace/scratch/14e94f4a5e35/large_scale/results_controlled/300x200_blocks_frontier.json",
+  "status": "verified"
+}

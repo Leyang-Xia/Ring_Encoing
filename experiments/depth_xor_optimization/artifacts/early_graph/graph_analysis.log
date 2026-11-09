@@ -1,0 +1,20 @@
+AUDIT 180 circuits; 36 spectra; maximum eigenvalue error 3.183231456205249e-12
+ZERO COMPLETED TRIALS 0
+16 sparse lambda2norm 0.2894 [('GlobalCSE', 19.33, 2.33, 128), ('RandomGroups', 19.33, 2.33, 128), ('SpectralGroups', 19.33, 2.33, 128), ('CommonBlocks', 19.33, 2.33, 128), ('LambdaGate', 19.33, 2.33, 128)]
+16 dense lambda2norm 0.8798 [('GlobalCSE', 55, 4, 128), ('RandomGroups', 57.33, 4, 128), ('SpectralGroups', 57, 4, 128), ('CommonBlocks', 58, 4, 128), ('LambdaGate', 55, 4, 128)]
+16 structured lambda2norm 0.6664 [('GlobalCSE', 24.67, 4, 128), ('RandomGroups', 25.67, 4, 128), ('SpectralGroups', 25.67, 4, 128), ('CommonBlocks', 24.67, 4, 128), ('LambdaGate', 24.67, 4, 128)]
+16 modular lambda2norm 0.0697 [('GlobalCSE', 40.33, 3, 128), ('RandomGroups', 39.67, 3, 128), ('SpectralGroups', 40.33, 3, 128), ('CommonBlocks', 41.67, 3, 128), ('LambdaGate', 40.33, 3, 128)]
+32 sparse lambda2norm 0.6163 [('GlobalCSE', 94.33, 3.67, 111.7), ('RandomGroups', 96, 3.67, 128), ('SpectralGroups', 97.33, 3.67, 128), ('CommonBlocks', 98.33, 3.67, 128), ('LambdaGate', 94.33, 3.67, 106)]
+32 dense lambda2norm 0.9488 [('GlobalCSE', 217.33, 5, 7), ('RandomGroups', 233.33, 5, 17), ('SpectralGroups', 224.33, 5, 22), ('CommonBlocks', 232, 5, 11.3), ('LambdaGate', 214.67, 5, 7.7)]
+32 structured lambda2norm 0.8009 [('GlobalCSE', 93.67, 5, 45.3), ('RandomGroups', 128, 5, 56.3), ('SpectralGroups', 99, 5, 109.7), ('CommonBlocks', 94.33, 5, 84.7), ('LambdaGate', 93.67, 5, 44)]
+32 modular lambda2norm 0.1162 [('GlobalCSE', 80.67, 4, 97.7), ('RandomGroups', 82.33, 4, 128), ('SpectralGroups', 81.33, 4, 126), ('CommonBlocks', 86, 4, 128), ('LambdaGate', 81.33, 4, 126.7)]
+64 sparse lambda2norm 0.7633 [('GlobalCSE', 367.67, 4.67, 23.7), ('RandomGroups', 381, 4.67, 41), ('SpectralGroups', 377, 4.67, 51.7), ('CommonBlocks', 375.33, 4.67, 34.3), ('LambdaGate', 367.67, 4.67, 24)]
+64 dense lambda2norm 0.9715 [('GlobalCSE', 795.67, 6, 1), ('RandomGroups', 875, 6, 4.3), ('SpectralGroups', 853.67, 6, 5.3), ('CommonBlocks', 868.67, 6, 2), ('LambdaGate', 795.67, 6, 1)]
+64 structured lambda2norm 0.8826 [('GlobalCSE', 345.67, 6, 13), ('RandomGroups', 556.67, 6, 10.3), ('SpectralGroups', 372.67, 6, 40.7), ('CommonBlocks', 358.33, 6, 17.3), ('LambdaGate', 345.67, 6, 13.7)]
+64 modular lambda2norm 0.1837 [('GlobalCSE', 197, 4, 104), ('RandomGroups', 206.33, 4, 128), ('SpectralGroups', 204.33, 4, 128), ('CommonBlocks', 207.67, 4, 123), ('LambdaGate', 204.33, 4, 128)]
+vs Global RandomGroups 2 5 29 net saved -1108
+vs Global SpectralGroups 0 10 26 net saved -362
+vs Global CommonBlocks 0 8 28 net saved -399
+vs Global LambdaGate 1 31 4 net saved -16
+PEARSON lambda2 vs spectral gain -0.6114571447192292
+GATE CHOICES Counter({'GlobalCSE': 26, 'SpectralGroups': 10})
