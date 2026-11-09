@@ -1,0 +1,406 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "greedy",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 55,
+    "inputs": 40,
+    "ops": [
+      [
+        41,
+        14,
+        19
+      ],
+      [
+        42,
+        16,
+        41
+      ],
+      [
+        43,
+        11,
+        13
+      ],
+      [
+        44,
+        24,
+        29
+      ],
+      [
+        45,
+        2,
+        8
+      ],
+      [
+        46,
+        33,
+        35
+      ],
+      [
+        47,
+        0,
+        5
+      ],
+      [
+        48,
+        37,
+        39
+      ],
+      [
+        49,
+        26,
+        28
+      ],
+      [
+        50,
+        20,
+        27
+      ],
+      [
+        51,
+        12,
+        15
+      ],
+      [
+        52,
+        31,
+        32
+      ],
+      [
+        53,
+        34,
+        36
+      ],
+      [
+        54,
+        30,
+        32
+      ],
+      [
+        55,
+        30,
+        38
+      ],
+      [
+        56,
+        48,
+        54
+      ],
+      [
+        57,
+        43,
+        51
+      ],
+      [
+        58,
+        21,
+        44
+      ],
+      [
+        59,
+        3,
+        45
+      ],
+      [
+        60,
+        1,
+        45
+      ],
+      [
+        61,
+        4,
+        9
+      ],
+      [
+        62,
+        47,
+        61
+      ],
+      [
+        63,
+        6,
+        47
+      ],
+      [
+        64,
+        1,
+        59
+      ],
+      [
+        65,
+        1,
+        5
+      ],
+      [
+        66,
+        7,
+        65
+      ],
+      [
+        67,
+        10,
+        18
+      ],
+      [
+        68,
+        43,
+        67
+      ],
+      [
+        69,
+        42,
+        68
+      ],
+      [
+        70,
+        10,
+        41
+      ],
+      [
+        71,
+        10,
+        14
+      ],
+      [
+        72,
+        16,
+        71
+      ],
+      [
+        73,
+        57,
+        72
+      ],
+      [
+        74,
+        42,
+        57
+      ],
+      [
+        75,
+        15,
+        42
+      ],
+      [
+        76,
+        12,
+        17
+      ],
+      [
+        77,
+        76,
+        42
+      ],
+      [
+        78,
+        27,
+        58
+      ],
+      [
+        79,
+        24,
+        50
+      ],
+      [
+        80,
+        25,
+        44
+      ],
+      [
+        81,
+        49,
+        80
+      ],
+      [
+        82,
+        21,
+        49
+      ],
+      [
+        83,
+        50,
+        82
+      ],
+      [
+        84,
+        20,
+        22
+      ],
+      [
+        85,
+        28,
+        84
+      ],
+      [
+        86,
+        58,
+        85
+      ],
+      [
+        87,
+        36,
+        52
+      ],
+      [
+        88,
+        53,
+        56
+      ],
+      [
+        89,
+        46,
+        55
+      ],
+      [
+        90,
+        46,
+        56
+      ],
+      [
+        91,
+        34,
+        38
+      ],
+      [
+        92,
+        46,
+        52
+      ],
+      [
+        93,
+        91,
+        92
+      ],
+      [
+        94,
+        33,
+        53
+      ],
+      [
+        95,
+        55,
+        94
+      ]
+    ],
+    "outputs": [
+      60,
+      62,
+      63,
+      59,
+      64,
+      66,
+      69,
+      70,
+      73,
+      74,
+      75,
+      77,
+      78,
+      79,
+      81,
+      83,
+      86,
+      27,
+      87,
+      88,
+      89,
+      90,
+      93,
+      95
+    ],
+    "zero_node": 40
+  },
+  "cost": 55,
+  "depth": 3,
+  "depth_limit": 3,
+  "depth_lower_bound": 3,
+  "diversity_buckets": 16,
+  "explored_states": 256,
+  "greedy_mwsq": true,
+  "greedy_restarts": 2,
+  "incumbent_files": [],
+  "incumbents_skipped": 0,
+  "incumbents_used": 0,
+  "inputs": 40,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 4,
+  "max_representations": 4,
+  "max_rounds": 65,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2,
+    2,
+    2,
+    3,
+    2,
+    3,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3,
+    2,
+    3,
+    3,
+    3,
+    0,
+    2,
+    3,
+    2,
+    3,
+    3,
+    3
+  ],
+  "outputs": 24,
+  "pruned_bound": 39,
+  "pruned_depth": 0,
+  "published_candidates": 3,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 32,
+  "round_limit": 360,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/matrices/generated/blocks_24x40_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "262",
+    "561",
+    "97",
+    "268",
+    "270",
+    "162",
+    "879616",
+    "541696",
+    "130048",
+    "653312",
+    "638976",
+    "741376",
+    "689963008",
+    "152043520",
+    "922746880",
+    "472907776",
+    "829423616",
+    "134217728",
+    "75161927680",
+    "778462822400",
+    "318901321728",
+    "735513149440",
+    "341449900032",
+    "370440929280"
+  ],
+  "threads": 4,
+  "timeout_seconds": 0,
+  "toggle_candidates": 0
+}

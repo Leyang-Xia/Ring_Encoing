@@ -1,0 +1,215 @@
+{
+  "allow_empty_toggle": false,
+  "beam_width": 4,
+  "best_source": "cse_baseline",
+  "branch_width": 4,
+  "bridge_candidates": 0,
+  "circuit": {
+    "cost": 24,
+    "inputs": 20,
+    "ops": [
+      [
+        21,
+        3,
+        4
+      ],
+      [
+        22,
+        13,
+        21
+      ],
+      [
+        23,
+        4,
+        10
+      ],
+      [
+        24,
+        17,
+        23
+      ],
+      [
+        25,
+        7,
+        8
+      ],
+      [
+        26,
+        10,
+        25
+      ],
+      [
+        27,
+        0,
+        2
+      ],
+      [
+        28,
+        16,
+        27
+      ],
+      [
+        29,
+        1,
+        6
+      ],
+      [
+        30,
+        15,
+        29
+      ],
+      [
+        31,
+        2,
+        17
+      ],
+      [
+        32,
+        18,
+        31
+      ],
+      [
+        33,
+        5,
+        6
+      ],
+      [
+        34,
+        16,
+        33
+      ],
+      [
+        35,
+        4,
+        9
+      ],
+      [
+        36,
+        16,
+        35
+      ],
+      [
+        37,
+        0,
+        5
+      ],
+      [
+        38,
+        13,
+        37
+      ],
+      [
+        39,
+        10,
+        11
+      ],
+      [
+        40,
+        18,
+        39
+      ],
+      [
+        41,
+        4,
+        8
+      ],
+      [
+        42,
+        19,
+        41
+      ],
+      [
+        43,
+        1,
+        8
+      ],
+      [
+        44,
+        14,
+        43
+      ]
+    ],
+    "outputs": [
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44
+    ],
+    "zero_node": 20
+  },
+  "cost": 24,
+  "depth": 2,
+  "depth_limit": 2,
+  "depth_lower_bound": 2,
+  "diversity_buckets": 16,
+  "explored_states": 185,
+  "greedy_mwsq": true,
+  "greedy_restarts": 2,
+  "incumbent_files": [],
+  "incumbents_skipped": 0,
+  "incumbents_used": 0,
+  "inputs": 20,
+  "lookahead_depth": 0,
+  "lookahead_width": 0,
+  "max_fanout": 4,
+  "max_representations": 4,
+  "max_rounds": 25,
+  "max_states": 256,
+  "method": "DEPTH_BOUNDED_XSET_BEAM",
+  "note": "Depth is a hard output constraint; verified results are heuristic upper bounds.",
+  "output_depth": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "outputs": 12,
+  "pruned_bound": 53,
+  "pruned_depth": 0,
+  "published_candidates": 7,
+  "residual_pairs": 0,
+  "residual_targets": 0,
+  "restarts": 2,
+  "rewrite_trials": 400,
+  "rewrite_trials_used": 12,
+  "round_limit": 84,
+  "scope": "fixed-input-to-fixed-output XOR network",
+  "seed": 1,
+  "source": {
+    "matrix": "/Users/leyang/Projects/Ring_Encoing/xordepth/data/matrices/generated/sparse_12x20_seed123.txt"
+  },
+  "status": "verified",
+  "target_masks": [
+    "8216",
+    "132112",
+    "1408",
+    "65541",
+    "32834",
+    "393220",
+    "65632",
+    "66064",
+    "8225",
+    "265216",
+    "524560",
+    "16642"
+  ],
+  "threads": 4,
+  "timeout_seconds": 0,
+  "toggle_candidates": 0
+}

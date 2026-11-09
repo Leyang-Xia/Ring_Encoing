@@ -14,7 +14,7 @@ CONFIG = [
 ]
 
 
-def main(out_dir):
+def main(out_dir, extra_args=()):
     os.makedirs(out_dir, exist_ok=True)
     ref_dir = os.path.join(ROOT, 'data', 'results', 'xordepth_full_mwsq_20261106')
     manifest = os.path.join(ROOT, 'data', 'matrices', 'full.manifest')
@@ -31,7 +31,7 @@ def main(out_dir):
         depth = json.load(open(ref_file)).get('depth_limit')
         out = os.path.join(out_dir, name + '.json')
         cmd = [XORDEPTH, 'bounded', mat, '--depth', str(depth)] + CONFIG \
-            + ['--no-timeout', '--output', out]
+            + list(extra_args) + ['--no-timeout', '--output', out]
         t0 = time.monotonic()
         proc = subprocess.run(cmd, capture_output=True, text=True)
         wall = time.monotonic() - t0
@@ -59,4 +59,4 @@ def main(out_dir):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2:])

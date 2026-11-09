@@ -4,7 +4,7 @@ BUILD ?= build
 
 CPPFLAGS += -I$(INCLUDE)
 CXXFLAGS ?= -O3 -DNDEBUG
-override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic
+override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -pthread
 
 CORE = src/xd_json.cpp src/xd_core_mask.cpp src/xd_core_circuit.cpp src/xd_core_network.cpp
 LOCAL = src/xd_depth.cpp src/xd_greedy.cpp src/xd_rebalance.cpp src/xd_rewrite.cpp src/xd_frontier.cpp src/xd_search.cpp

@@ -64,6 +64,12 @@ struct BoundedScheduleOptions {
     // Repeatable external incumbent files whose verified circuits join the
     // unified candidate pool with zero search time.
     std::vector<std::string> incumbent_paths;
+    // Worker threads for the greedy portfolio and per-layer Beam expansion.
+    // 1 keeps the historical sequential path bit-for-bit; larger values are
+    // deterministic as well: results are collected and merged in the same
+    // order the sequential path produces (wall-clock timeout runs excepted,
+    // as they already are machine-dependent).
+    int threads = 1;
     std::size_t max_states = 10000;
     std::uint64_t seed = 0;
     double timeout_seconds = 180.0;
@@ -118,7 +124,10 @@ Circuit synthesize_completable(
     CircuitObserver observer = {},
     // MW_SQ-style rescoring of tied greedy candidates; false keeps the
     // historical random choice among ties.
-    bool mwsq_tiebreak = false);
+    bool mwsq_tiebreak = false,
+    // Worker threads for independent restarts; attempts are published in
+    // restart order either way.
+    int threads = 1);
 
 // Plank-style common-subexpression scheduling with a depth-aware selection pass
 // and a balanced (Huffman by arrival time) final accumulation. Every output,

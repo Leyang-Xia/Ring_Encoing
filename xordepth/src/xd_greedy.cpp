@@ -1,11 +1,16 @@
 #include "xd/search.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <exception>
+#include <functional>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <random>
 #include <set>
+#include <thread>
 #include <tuple>
 #include <utility>
 
@@ -22,19 +27,18 @@ std::uint64_t mwsq_pair_key(int a, int b) {
            std::uint64_t(static_cast<std::uint32_t>(b));
 }
 
-// (max support, ties at max) over a flat multiset of pair keys. Equivalent to
-// counting a map from pair to multiplicity: a run of equal keys in the sorted
-// vector is exactly the map entry, so max/ties are identical by construction.
-std::pair<std::size_t, std::size_t> mwsq_summary_from_keys(
-    std::vector<std::uint64_t> &keys) {
-    if (keys.empty()) return {0, 0};
-    std::sort(keys.begin(), keys.end());
+// (max support, ties at max) over an already ascending-sorted multiset of
+// pair keys: a run of equal keys is exactly the map entry from pair to
+// multiplicity, so max/ties are identical to counting.
+std::pair<std::size_t, std::size_t> mwsq_summary_from_sorted(
+    const std::vector<std::uint64_t> &sorted) {
+    if (sorted.empty()) return {0, 0};
     std::size_t max_support = 0;
     std::size_t ties_at_max = 0;
     std::size_t i = 0;
-    while (i < keys.size()) {
+    while (i < sorted.size()) {
         std::size_t run = 1;
-        while (i + run < keys.size() && keys[i + run] == keys[i]) ++run;
+        while (i + run < sorted.size() && sorted[i + run] == sorted[i]) ++run;
         if (run > max_support) {
             max_support = run;
             ties_at_max = 1;
@@ -44,6 +48,16 @@ std::pair<std::size_t, std::size_t> mwsq_summary_from_keys(
         i += run;
     }
     return {max_support, ties_at_max};
+}
+
+// (max support, ties at max) over a flat multiset of pair keys. Equivalent to
+// counting a map from pair to multiplicity: a run of equal keys in the sorted
+// vector is exactly the map entry, so max/ties are identical by construction.
+std::pair<std::size_t, std::size_t> mwsq_summary_from_keys(
+    std::vector<std::uint64_t> &keys) {
+    if (keys.empty()) return {0, 0};
+    std::sort(keys.begin(), keys.end());
+    return mwsq_summary_from_sorted(keys);
 }
 
 } // namespace
@@ -287,7 +301,7 @@ std::vector<int> earliest_ready(const std::vector<Expression> &expressions, Node
 
 Circuit greedy_attempt(const BitRows &targets, int inputs, int max_depth,
                        bool lookahead, unsigned seed, Deadline deadline,
-                       bool mwsq_tiebreak) {
+                       bool mwsq_tiebreak, int threads) {
     NodeStore nodes(inputs);
     std::mt19937 random(seed);
     std::vector<Expression> expressions;
@@ -467,64 +481,181 @@ Circuit greedy_attempt(const BitRows &targets, int inputs, int max_depth,
             // is materialized) and measure the remaining shared structure.
             // The lexicographically largest (max_support, ties_at_max) wins;
             // a surviving tie keeps the seeded random choice.
+            //
+            // Scoring a tied candidate is a pure function of the key
+            // multiset, and the summary sorts the keys before scanning runs.
+            // With threads > 1 each tied candidate is therefore scored by
+            // generating its keys in parallel row chunks (each chunk sorted
+            // by its worker) and merging the chunks in fixed order on this
+            // thread; the sorted multiset — and hence the winner list, which
+            // is reduced in tied order — is identical to the sequential path
+            // for every thread count.
             const int virtual_node = static_cast<int>(nodes.masks.size());
-            std::vector<char> in_uses(expressions.size(), 0);
-            std::pair<std::size_t, std::size_t> best_score{0, 0};
-            std::vector<std::size_t> winners;
-            std::vector<std::uint64_t> keys;
-            std::vector<int> replaced_terms;
+            struct TiedInfo {
+                const Candidate *candidate;
+                int candidate_node;
+                std::vector<char> in_uses;
+            };
+            std::vector<TiedInfo> tied_info;
+            tied_info.reserve(tied.size());
             for (std::size_t index : tied) {
-                check_deadline(deadline);
                 const auto &candidate = candidates[index];
-                const int candidate_node =
+                TiedInfo info;
+                info.candidate = &candidate;
+                info.candidate_node =
                     candidate.node >= 0 ? candidate.node : virtual_node;
-                keys.clear();
-                for (int use : candidate.uses) in_uses[use] = 1;
-                for (std::size_t r = 0; r < expressions.size(); ++r) {
-                    check_deadline(deadline);
-                    if (in_uses[r]) {
-                        // Terms of expressions[r] after replacing
-                        // (left, right) with candidate_node: identical to
-                        // replaced() — drop left/right and the zero node,
-                        // then toggle candidate_node in or out.
-                        replaced_terms.clear();
-                        for (int term : expressions[r]) {
-                            if (term == candidate.left || term == candidate.right ||
-                                term == nodes.zero())
-                                continue;
-                            replaced_terms.push_back(term);
-                        }
-                        if (candidate_node != nodes.zero()) {
-                            auto it = std::find(replaced_terms.begin(),
-                                                replaced_terms.end(), candidate_node);
-                            if (it == replaced_terms.end())
-                                replaced_terms.push_back(candidate_node);
-                            else
-                                replaced_terms.erase(it);
-                        }
-                        for (std::size_t i = 0; i + 1 < replaced_terms.size(); ++i)
-                            for (std::size_t j = i + 1; j < replaced_terms.size(); ++j)
-                                keys.push_back(mwsq_pair_key(replaced_terms[i],
-                                                             replaced_terms[j]));
-                    } else {
-                        const auto &expr = expressions[r];
-                        for (auto a = expr.begin(); a != expr.end(); ++a)
-                            for (auto b = std::next(a); b != expr.end(); ++b)
-                                keys.push_back(mwsq_pair_key(*a, *b));
-                    }
-                }
-                for (int use : candidate.uses) in_uses[use] = 0;
-                check_deadline(deadline);
-                const auto score = mwsq_summary_from_keys(keys);
-                if (winners.empty() || score > best_score) {
-                    best_score = score;
-                    winners.clear();
-                    winners.push_back(index);
-                } else if (score == best_score) {
-                    winners.push_back(index);
-                }
+                info.in_uses.assign(expressions.size(), 0);
+                for (int use : candidate.uses) info.in_uses[use] = 1;
+                tied_info.push_back(std::move(info));
             }
-            choice = winners[random() % winners.size()];
+
+            // Emits the pair keys contributed by row r of tied slot `slot`
+            // into `keys`. Identical logic for the replaced and untouched
+            // branches as the sequential path.
+            auto row_keys = [&](std::size_t slot, std::size_t r,
+                                std::vector<std::uint64_t> &keys,
+                                std::vector<int> &replaced_terms) {
+                const auto &info = tied_info[slot];
+                const auto &candidate = *info.candidate;
+                if (info.in_uses[r]) {
+                    // Terms of expressions[r] after replacing
+                    // (left, right) with candidate_node: identical to
+                    // replaced() — drop left/right and the zero node,
+                    // then toggle candidate_node in or out.
+                    replaced_terms.clear();
+                    for (int term : expressions[r]) {
+                        if (term == candidate.left || term == candidate.right ||
+                            term == nodes.zero())
+                            continue;
+                        replaced_terms.push_back(term);
+                    }
+                    if (info.candidate_node != nodes.zero()) {
+                        auto it = std::find(replaced_terms.begin(),
+                                            replaced_terms.end(),
+                                            info.candidate_node);
+                        if (it == replaced_terms.end())
+                            replaced_terms.push_back(info.candidate_node);
+                        else
+                            replaced_terms.erase(it);
+                    }
+                    for (std::size_t i = 0; i + 1 < replaced_terms.size(); ++i)
+                        for (std::size_t j = i + 1; j < replaced_terms.size(); ++j)
+                            keys.push_back(mwsq_pair_key(replaced_terms[i],
+                                                         replaced_terms[j]));
+                } else {
+                    const auto &expr = expressions[r];
+                    for (auto a = expr.begin(); a != expr.end(); ++a)
+                        for (auto b = std::next(a); b != expr.end(); ++b)
+                            keys.push_back(mwsq_pair_key(*a, *b));
+                }
+            };
+
+            // Reduce every tied slot's sorted key multiset into the winner
+            // list, exactly like the sequential path: iterate tied slots in
+            // order, keep the lexicographically largest summary, collect ties.
+            auto reduce_winners =
+                [&](const std::function<std::pair<std::size_t, std::size_t>(
+                        std::size_t)> &score_of) {
+                    std::pair<std::size_t, std::size_t> best_score{0, 0};
+                    std::vector<std::size_t> winners;
+                    for (std::size_t slot = 0; slot < tied_info.size(); ++slot) {
+                        check_deadline(deadline);
+                        const auto score = score_of(slot);
+                        if (winners.empty() || score > best_score) {
+                            best_score = score;
+                            winners.clear();
+                            winners.push_back(tied[slot]);
+                        } else if (score == best_score) {
+                            winners.push_back(tied[slot]);
+                        }
+                    }
+                    return winners;
+                };
+
+            if (threads <= 1) {
+                std::vector<std::uint64_t> keys;
+                std::vector<int> replaced_terms;
+                const auto winners = reduce_winners([&](std::size_t slot) {
+                    keys.clear();
+                    for (std::size_t r = 0; r < expressions.size(); ++r) {
+                        check_deadline(deadline);
+                        row_keys(slot, r, keys, replaced_terms);
+                    }
+                    check_deadline(deadline);
+                    return mwsq_summary_from_keys(keys);
+                });
+                choice = winners[random() % winners.size()];
+            } else {
+                // Row-chunk task decomposition: chunk_count targets two tasks
+                // per worker for load balance; chunks partition rows in fixed
+                // order so the chunk-ordered merge is deterministic.
+                const std::size_t worker_target =
+                    static_cast<std::size_t>(threads) * 2;
+                const std::size_t chunk_count =
+                    std::max<std::size_t>(
+                        1, std::min(expressions.size(), worker_target));
+                const std::size_t chunk_size =
+                    (expressions.size() + chunk_count - 1) / chunk_count;
+                std::vector<std::vector<std::vector<std::uint64_t>>> buffers(
+                    tied_info.size());
+                for (auto &slot_buffers : buffers) slot_buffers.resize(chunk_count);
+                const std::size_t total_tasks = tied_info.size() * chunk_count;
+                std::atomic<std::size_t> next_task{0};
+                std::mutex error_mutex;
+                std::exception_ptr task_error;
+                auto run_task = [&](std::size_t task) {
+                    const std::size_t slot = task / chunk_count;
+                    const std::size_t chunk = task % chunk_count;
+                    try {
+                        auto &keys = buffers[slot][chunk];
+                        keys.clear();
+                        std::vector<int> replaced_terms;
+                        const std::size_t begin = chunk * chunk_size;
+                        const std::size_t end =
+                            std::min(expressions.size(), begin + chunk_size);
+                        for (std::size_t r = begin; r < end; ++r) {
+                            check_deadline(deadline);
+                            row_keys(slot, r, keys, replaced_terms);
+                        }
+                        std::sort(keys.begin(), keys.end());
+                    } catch (...) {
+                        std::lock_guard<std::mutex> lock(error_mutex);
+                        if (!task_error) task_error = std::current_exception();
+                    }
+                };
+                if (total_tasks == 1) {
+                    run_task(0);
+                } else {
+                    std::vector<std::thread> workers;
+                    const std::size_t worker_count =
+                        std::min<std::size_t>(static_cast<std::size_t>(threads),
+                                              total_tasks);
+                    workers.reserve(worker_count);
+                    for (std::size_t worker = 0; worker < worker_count; ++worker)
+                        workers.emplace_back([&] {
+                            for (;;) {
+                                const std::size_t task = next_task.fetch_add(1);
+                                if (task >= total_tasks) return;
+                                run_task(task);
+                            }
+                        });
+                    for (auto &worker : workers) worker.join();
+                }
+                if (task_error) std::rethrow_exception(task_error);
+                const auto winners = reduce_winners([&](std::size_t slot) {
+                    std::vector<std::uint64_t> merged;
+                    for (const auto &chunk_keys : buffers[slot]) {
+                        if (chunk_keys.empty()) continue;
+                        const std::size_t prev = merged.size();
+                        merged.insert(merged.end(), chunk_keys.begin(),
+                                      chunk_keys.end());
+                        std::inplace_merge(merged.begin(),
+                                           merged.begin() + prev, merged.end());
+                    }
+                    return mwsq_summary_from_sorted(merged);
+                });
+                choice = winners[random() % winners.size()];
+            }
         }
         const auto &selected = candidates[choice];
         const int node = nodes.get_node(selected.left, selected.right, deadline);
@@ -549,36 +680,98 @@ Circuit greedy_attempt(const BitRows &targets, int inputs, int max_depth,
 
 Circuit synthesize_completable(const BitRows &targets, int inputs, int max_depth,
                                int restarts, std::uint64_t seed, Deadline deadline,
-                               CircuitObserver observer, bool mwsq_tiebreak) {
+                               CircuitObserver observer, bool mwsq_tiebreak, int threads) {
     check_deadline(deadline);
     require(inputs > 0 && inputs < 1000000, "invalid greedy input count");
     require(max_depth >= 0 && restarts > 0, "invalid greedy options");
+    require(threads >= 1, "greedy worker count must be positive");
     validate_target_width(targets, inputs);
     require(max_depth >= depth_lower_bound(targets), "greedy depth below row-weight bound");
 
+    // Each restart is an independent greedy attempt (own NodeStore, own
+    // seed). Threads only change scheduling: attempts are executed possibly
+    // in parallel but collected and published in restart order, so the
+    // publication sequence — and with it the shared rewrite budget in the
+    // caller's pool — matches the sequential path exactly.
+    struct AttemptOutcome {
+        bool found = false;
+        bool deadline = false;
+        std::exception_ptr fatal;
+        Circuit circuit;
+        std::pair<int, int> metric{0, 0};
+    };
+    std::vector<AttemptOutcome> outcomes(static_cast<std::size_t>(restarts));
+    auto run_attempt = [&](std::size_t restart, int attempt_threads) {
+        auto &outcome = outcomes[restart];
+        try {
+            check_deadline(deadline);
+            auto candidate =
+                greedy_attempt(targets, inputs, max_depth, restart % 2 == 1,
+                               static_cast<unsigned>(seed + static_cast<std::uint64_t>(restart / 2)),
+                               deadline, mwsq_tiebreak, attempt_threads);
+            outcome.metric = {candidate.cost(), depth_profile(candidate).depth};
+            outcome.circuit = std::move(candidate);
+            outcome.found = true;
+        } catch (const SearchDeadlineExceeded &) {
+            outcome.deadline = true;
+        } catch (...) {
+            outcome.fatal = std::current_exception();
+        }
+    };
+    if (threads <= 1) {
+        for (std::size_t restart = 0; restart < outcomes.size(); ++restart)
+            run_attempt(restart, 1);
+    } else {
+        // One wave of at most `threads` workers pulling restart indices from
+        // an atomic counter; results land in their own slots so assignment
+        // order is irrelevant. Each attempt receives its share of the total
+        // budget for its internal MW_SQ scoring pool so parallel restarts and
+        // parallel scoring never oversubscribe the machine.
+        const int inner_threads =
+            std::max(1, threads / static_cast<int>(
+                                     std::min<std::size_t>(
+                                         static_cast<std::size_t>(threads),
+                                         outcomes.size())));
+        std::atomic<std::size_t> next_index{0};
+        const std::size_t worker_count =
+            std::min<std::size_t>(static_cast<std::size_t>(threads), outcomes.size());
+        std::vector<std::thread> workers;
+        workers.reserve(worker_count);
+        for (std::size_t worker = 0; worker < worker_count; ++worker)
+            workers.emplace_back([&] {
+                for (;;) {
+                    const std::size_t restart = next_index.fetch_add(1);
+                    if (restart >= outcomes.size()) return;
+                    run_attempt(restart, inner_threads);
+                }
+            });
+        for (auto &worker : workers) worker.join();
+    }
+
+    // Sequential-faithful publication: keep the first (lowest-index) attempt
+    // on metric ties, publish every success in restart order, stop at the
+    // first deadline hit after a success, and rethrow non-deadline failures
+    // at the point they would have surfaced.
     Circuit best;
     bool found = false;
     std::pair<int, int> best_metric{0, 0};
-    for (int restart = 0; restart < restarts; ++restart) {
-        try {
-            check_deadline(deadline);
-            auto candidate = greedy_attempt(targets, inputs, max_depth, restart % 2 == 1,
-                                            static_cast<unsigned>(seed + static_cast<std::uint64_t>(restart / 2)),
-                                            deadline, mwsq_tiebreak);
-            const std::pair<int, int> metric{candidate.cost(), depth_profile(candidate).depth};
-            if (!found || metric < best_metric) {
-                best = candidate;
-                best_metric = metric;
-                found = true;
-            }
-            // Publish each successful attempt immediately; a downstream rewrite
-            // may raise a deadline, which the enclosing try handles by keeping
-            // the already-found best.
-            if (observer) observer(candidate);
-        } catch (const SearchDeadlineExceeded &) {
-            if (!found) throw;
+    for (std::size_t restart = 0; restart < outcomes.size(); ++restart) {
+        const auto &outcome = outcomes[restart];
+        if (outcome.fatal) {
+            if (!found) std::rethrow_exception(outcome.fatal);
             break;
         }
+        if (outcome.deadline) {
+            if (!found) throw SearchDeadlineExceeded();
+            break;
+        }
+        if (!outcome.found) break;
+        if (!found || outcome.metric < best_metric) {
+            best = outcome.circuit;
+            best_metric = outcome.metric;
+            found = true;
+        }
+        if (observer) observer(outcome.circuit);
     }
     best.verify(targets);
     require(depth_profile(best).depth <= max_depth, "greedy result exceeds depth limit");

@@ -1,7 +1,10 @@
 #include "xd/search.hpp"
 #include "xd/experiments.hpp"
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <climits>
+#include <exception>
 #include <limits>
 #include <map>
 #include <numeric>
@@ -9,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 
 namespace xd {
@@ -240,7 +244,7 @@ SearchState SearchState::initial(const BitRows &targets, int inputs,
     require(inputs > 0, "invalid input count");
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.greedy_restarts >= 0 &&
+                options.greedy_restarts >= 0 && options.threads >= 1 &&
                 options.timeout_seconds >= 0 && options.lookahead_width >= 0 &&
                 options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
                 options.residual_targets >= 0 &&
@@ -1000,12 +1004,150 @@ Circuit SearchState::export_circuit() const {
     return result;
 }
 
+// One beam parent's expansion, split out of the layer loop so it can run on
+// a worker thread. Everything here touches only thread-local data: the
+// parent state is read-only, the candidate shuffle is seeded per state, and
+// the transposition-table interaction is deferred to the deterministic merge
+// phase. The incumbent bound is a snapshot taken when the parent was queued,
+// exactly the bound the sequential path would have used at that point.
+struct Expansion {
+    // Surviving children with their best_cost_lower_bound, so the merge
+    // phase can replay transposition checks without recomputing bounds.
+    std::vector<std::pair<SearchState, int>> children;
+    std::size_t pruned_depth = 0;
+    std::size_t pruned_bound = 0;
+    std::size_t toggle_candidates = 0;
+    std::size_t bridge_candidates = 0;
+};
+
+Expansion expand_state(const SearchState &state, const BoundedScheduleOptions &options,
+                       int restart, int bound_snapshot) {
+    Expansion out;
+    auto candidates = state.candidates();
+    if (options.residual_pairs > 0) {
+        auto toggles = state.toggle_candidates();
+        out.toggle_candidates += toggles.size();
+        candidates.insert(candidates.end(), toggles.begin(), toggles.end());
+        auto bridges = state.bridge_candidates();
+        out.bridge_candidates += bridges.size();
+        candidates.insert(candidates.end(), bridges.begin(), bridges.end());
+    }
+    SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
+    if (restart > 0 || options.seed != 0)
+        for (std::size_t i = candidates.size(); i > 1; --i)
+            std::swap(candidates[i - 1], candidates[random.below(i)]);
+    if (options.lookahead_width > 0 && options.lookahead_depth > 0 &&
+        candidates.size() > 1) {
+        struct Ranked {
+            Candidate candidate;
+            int bound;
+            std::size_t original;
+        };
+        const std::size_t width = std::min<std::size_t>(
+            candidates.size(), static_cast<std::size_t>(options.lookahead_width));
+        std::vector<Ranked> ranked;
+        ranked.reserve(width);
+        std::vector<bool> scored(candidates.size(), false);
+        for (std::size_t i = 0; i < width; ++i) {
+            auto probe = candidates[i].toggle
+                             ? state.apply_toggle(
+                                   candidates[i].left, candidates[i].right,
+                                   static_cast<std::size_t>(candidates[i].target),
+                                   static_cast<std::size_t>(candidates[i].representation),
+                                   candidates[i].future_support)
+                             : candidates[i].bridge
+                                 ? state.apply_bridge(
+                                       candidates[i].left, candidates[i].right,
+                                       static_cast<std::size_t>(candidates[i].target),
+                                       static_cast<std::size_t>(candidates[i].representation),
+                                       static_cast<std::size_t>(candidates[i].target2),
+                                       static_cast<std::size_t>(candidates[i].representation2))
+                                 : state.apply(candidates[i]);
+            if (!probe.valid()) continue;
+            int bound = probe.cost_priority();
+            for (int step = 1; step < options.lookahead_depth && !probe.complete(); ++step) {
+                auto next = probe.candidates();
+                if (options.residual_pairs > 0) {
+                    auto toggles = probe.toggle_candidates();
+                    next.insert(next.end(), toggles.begin(), toggles.end());
+                    auto bridges = probe.bridge_candidates();
+                    out.bridge_candidates += bridges.size();
+                    next.insert(next.end(), bridges.begin(), bridges.end());
+                }
+                if (next.empty()) break;
+                const auto &future = next.front();
+                probe = future.toggle
+                            ? probe.apply_toggle(
+                                  future.left, future.right,
+                                  static_cast<std::size_t>(future.target),
+                                  static_cast<std::size_t>(future.representation),
+                                  future.future_support)
+                            : future.bridge
+                                ? probe.apply_bridge(
+                                      future.left, future.right,
+                                      static_cast<std::size_t>(future.target),
+                                      static_cast<std::size_t>(future.representation),
+                                      static_cast<std::size_t>(future.target2),
+                                      static_cast<std::size_t>(future.representation2))
+                                : probe.apply(future);
+                if (!probe.valid()) break;
+                bound = probe.cost_priority();
+            }
+            ranked.push_back(Ranked{candidates[i], bound, i});
+            scored[i] = true;
+        }
+        std::sort(ranked.begin(), ranked.end(), [](const Ranked &a, const Ranked &b) {
+            if (a.bound != b.bound) return a.bound < b.bound;
+            if (a.candidate.support != b.candidate.support)
+                return a.candidate.support > b.candidate.support;
+            if (a.candidate.arrival_depth != b.candidate.arrival_depth)
+                return a.candidate.arrival_depth < b.candidate.arrival_depth;
+            return a.original < b.original;
+        });
+        std::vector<Candidate> ordered;
+        ordered.reserve(candidates.size());
+        for (const auto &entry : ranked) ordered.push_back(entry.candidate);
+        for (std::size_t i = 0; i < candidates.size(); ++i)
+            if (!scored[i]) ordered.push_back(candidates[i]);
+        candidates = std::move(ordered);
+    }
+    if (candidates.size() > static_cast<std::size_t>(options.branch_width))
+        candidates.resize(static_cast<std::size_t>(options.branch_width));
+    for (const auto &candidate : candidates) {
+        auto child = candidate.toggle
+                         ? state.apply_toggle(candidate.left, candidate.right,
+                                              static_cast<std::size_t>(candidate.target),
+                                              static_cast<std::size_t>(candidate.representation),
+                                              candidate.future_support)
+                         : candidate.bridge
+                             ? state.apply_bridge(candidate.left, candidate.right,
+                                                  static_cast<std::size_t>(candidate.target),
+                                                  static_cast<std::size_t>(candidate.representation),
+                                                  static_cast<std::size_t>(candidate.target2),
+                                                  static_cast<std::size_t>(candidate.representation2))
+                             : state.apply(candidate);
+        if (!child.valid()) {
+            ++out.pruned_depth;
+            continue;
+        }
+        // Branch-and-bound against the snapshot taken when this parent was
+        // queued; the transposition table is handled by the merge phase.
+        const int bound = child.best_cost_lower_bound();
+        if (bound_snapshot != std::numeric_limits<int>::max() && bound >= bound_snapshot) {
+            ++out.pruned_bound;
+            continue;
+        }
+        out.children.emplace_back(std::move(child), bound);
+    }
+    return out;
+}
+
 BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                                          const BoundedScheduleOptions &options) {
     validate_target_width(targets, inputs);
     require(options.max_depth >= 0 && options.beam_width > 0 && options.branch_width > 0 &&
                 options.max_representations > 0 && options.restarts > 0 &&
-                options.greedy_restarts >= 0 &&
+                options.greedy_restarts >= 0 && options.threads >= 1 &&
                 options.timeout_seconds >= 0 && options.lookahead_width >= 0 &&
                 options.lookahead_depth >= 0 && options.residual_pairs >= 0 &&
                 options.residual_targets >= 0 &&
@@ -1066,7 +1208,7 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
             };
             synthesize_completable(targets, inputs, options.max_depth,
                                    options.greedy_restarts, options.seed, deadline,
-                                   observer, options.greedy_mwsq);
+                                   observer, options.greedy_mwsq, options.threads);
         }
 
         // Phase 3: Beam. Building the initial state also observes the deadline.
@@ -1092,13 +1234,23 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
             if (rounds == result.round_limit) break;
             ++rounds;
             result.max_rounds = std::max(result.max_rounds, rounds);
-            std::vector<SearchState> next;
-            for (const auto &state : beam) {
+            // Phase 1 — sequential walk in beam order: publish complete
+            // states, apply the global budget checks, and snapshot the
+            // incumbent bound each expanding parent may prune against. This
+            // reproduces the sequential path's state-by-state interleaving of
+            // publications and child generation, which a parallel phase 2
+            // could not preserve on its own.
+            std::vector<std::size_t> expand_positions;
+            std::vector<int> parent_bounds;
+            bool interrupted = false;
+            for (std::size_t si = 0; si < beam.size(); ++si) {
                 if (result.explored_states == options.max_states) {
                     timed_out = true;
-                        break;
+                    interrupted = true;
+                    break;
                 }
                 ++result.explored_states;
+                const auto &state = beam[si];
                 if (state.complete()) {
                     auto circuit = state.export_circuit();
                     require(depth_profile(circuit).depth <= options.max_depth,
@@ -1107,127 +1259,65 @@ BoundedScheduleResult synthesize_bounded(const BitRows &targets, int inputs,
                     continue;
                 }
                 if (rounds == result.round_limit) continue;
-                auto candidates = state.candidates();
-                if (options.residual_pairs > 0) {
-                    auto toggles = state.toggle_candidates();
-                    result.toggle_candidates += toggles.size();
-                    candidates.insert(candidates.end(), toggles.begin(), toggles.end());
-                    auto bridges = state.bridge_candidates();
-                    result.bridge_candidates += bridges.size();
-                    candidates.insert(candidates.end(), bridges.begin(), bridges.end());
-                }
-                SeedRandom random(options.seed + static_cast<std::uint64_t>(restart));
-                if (restart > 0 || options.seed != 0)
-                    for (std::size_t i = candidates.size(); i > 1; --i)
-                        std::swap(candidates[i - 1], candidates[random.below(i)]);
-                if (options.lookahead_width > 0 && options.lookahead_depth > 0 &&
-                    candidates.size() > 1) {
-                    struct Ranked {
-                        Candidate candidate;
-                        int bound;
-                        std::size_t original;
-                    };
-                    const std::size_t width = std::min<std::size_t>(
-                        candidates.size(), static_cast<std::size_t>(options.lookahead_width));
-                    std::vector<Ranked> ranked;
-                    ranked.reserve(width);
-                    std::vector<bool> scored(candidates.size(), false);
-                    for (std::size_t i = 0; i < width; ++i) {
-                        auto probe = candidates[i].toggle
-                                         ? state.apply_toggle(
-                                               candidates[i].left, candidates[i].right,
-                                               static_cast<std::size_t>(candidates[i].target),
-                                               static_cast<std::size_t>(candidates[i].representation),
-                                               candidates[i].future_support)
-                                         : candidates[i].bridge
-                                             ? state.apply_bridge(
-                                                   candidates[i].left, candidates[i].right,
-                                                   static_cast<std::size_t>(candidates[i].target),
-                                                   static_cast<std::size_t>(candidates[i].representation),
-                                                   static_cast<std::size_t>(candidates[i].target2),
-                                                   static_cast<std::size_t>(candidates[i].representation2))
-                                             : state.apply(candidates[i]);
-                        if (!probe.valid()) continue;
-                        int bound = probe.cost_priority();
-                        for (int step = 1; step < options.lookahead_depth && !probe.complete();
-                             ++step) {
-                            auto next = probe.candidates();
-                            if (options.residual_pairs > 0) {
-                                auto toggles = probe.toggle_candidates();
-                                next.insert(next.end(), toggles.begin(), toggles.end());
-                                auto bridges = probe.bridge_candidates();
-                                result.bridge_candidates += bridges.size();
-                                next.insert(next.end(), bridges.begin(), bridges.end());
+                expand_positions.push_back(si);
+                parent_bounds.push_back(pool.found ? pool.best.cost()
+                                                   : std::numeric_limits<int>::max());
+            }
+            if (interrupted) break;
+
+            // Phase 2 — independent per-parent expansion (sequential or
+            // threaded). Tasks write disjoint slots, so worker assignment
+            // order cannot affect the result.
+            std::vector<Expansion> expansions(expand_positions.size());
+            if (options.threads <= 1 || expansions.size() <= 1) {
+                for (std::size_t t = 0; t < expansions.size(); ++t)
+                    expansions[t] = expand_state(beam[expand_positions[t]], options, restart,
+                                                 parent_bounds[t]);
+            } else {
+                std::atomic<std::size_t> cursor{0};
+                const std::size_t worker_count = std::min<std::size_t>(
+                    static_cast<std::size_t>(options.threads), expansions.size());
+                std::vector<std::thread> workers;
+                std::vector<std::exception_ptr> fatals(worker_count);
+                workers.reserve(worker_count);
+                for (std::size_t worker = 0; worker < worker_count; ++worker)
+                    workers.emplace_back([&, worker] {
+                        for (;;) {
+                            const std::size_t t = cursor.fetch_add(1);
+                            if (t >= expansions.size()) return;
+                            try {
+                                expansions[t] = expand_state(beam[expand_positions[t]], options,
+                                                             restart, parent_bounds[t]);
+                            } catch (...) {
+                                fatals[worker] = std::current_exception();
+                                return;
                             }
-                            if (next.empty()) break;
-                            const auto &future = next.front();
-                            probe = future.toggle
-                                        ? probe.apply_toggle(
-                                              future.left, future.right,
-                                              static_cast<std::size_t>(future.target),
-                                              static_cast<std::size_t>(future.representation),
-                                              future.future_support)
-                                        : future.bridge
-                                            ? probe.apply_bridge(
-                                                  future.left, future.right,
-                                                  static_cast<std::size_t>(future.target),
-                                                  static_cast<std::size_t>(future.representation),
-                                                  static_cast<std::size_t>(future.target2),
-                                                  static_cast<std::size_t>(future.representation2))
-                                            : probe.apply(future);
-                            if (!probe.valid()) break;
-                            bound = probe.cost_priority();
                         }
-                        ranked.push_back(Ranked{candidates[i], bound, i});
-                        scored[i] = true;
-                    }
-                    std::sort(ranked.begin(), ranked.end(), [](const Ranked &a, const Ranked &b) {
-                        if (a.bound != b.bound) return a.bound < b.bound;
-                        if (a.candidate.support != b.candidate.support)
-                            return a.candidate.support > b.candidate.support;
-                        if (a.candidate.arrival_depth != b.candidate.arrival_depth)
-                            return a.candidate.arrival_depth < b.candidate.arrival_depth;
-                        return a.original < b.original;
                     });
-                    std::vector<Candidate> ordered;
-                    ordered.reserve(candidates.size());
-                    for (const auto &entry : ranked) ordered.push_back(entry.candidate);
-                    for (std::size_t i = 0; i < candidates.size(); ++i)
-                        if (!scored[i]) ordered.push_back(candidates[i]);
-                    candidates = std::move(ordered);
-                }
-                if (candidates.size() > static_cast<std::size_t>(options.branch_width))
-                    candidates.resize(static_cast<std::size_t>(options.branch_width));
-                for (const auto &candidate : candidates) {
-                    auto child = candidate.toggle
-                                     ? state.apply_toggle(candidate.left, candidate.right,
-                                                          static_cast<std::size_t>(candidate.target),
-                                                          static_cast<std::size_t>(candidate.representation),
-                                                          candidate.future_support)
-                                     : candidate.bridge
-                                         ? state.apply_bridge(candidate.left, candidate.right,
-                                                              static_cast<std::size_t>(candidate.target),
-                                                              static_cast<std::size_t>(candidate.representation),
-                                                              static_cast<std::size_t>(candidate.target2),
-                                                              static_cast<std::size_t>(candidate.representation2))
-                                         : state.apply(candidate);
-                    if (!child.valid()) {
-                        ++result.pruned_depth;
-                        continue;
-                    }
-                    if (pool.found && child.best_cost_lower_bound() >= pool.best.cost()) {
-                        ++result.pruned_bound;
-                        continue;
-                    }
-                    auto key = child.signature();
-                    auto bound = child.best_cost_lower_bound();
+                for (auto &worker : workers) worker.join();
+                for (auto &fatal : fatals)
+                    if (fatal) std::rethrow_exception(fatal);
+            }
+
+            // Phase 3 — deterministic merge: replay the transposition checks
+            // in the exact sequential order (parents in beam order, candidates
+            // in generation order) and append survivors to the next layer.
+            std::vector<SearchState> next;
+            for (std::size_t t = 0; t < expansions.size(); ++t) {
+                result.pruned_depth += expansions[t].pruned_depth;
+                result.pruned_bound += expansions[t].pruned_bound;
+                result.toggle_candidates += expansions[t].toggle_candidates;
+                result.bridge_candidates += expansions[t].bridge_candidates;
+                for (auto &child : expansions[t].children) {
+                    auto key = child.first.signature();
+                    auto bound = child.second;
                     auto seen = transposition.find(key);
                     if (seen != transposition.end() && seen->second <= bound) {
                         ++result.pruned_bound;
                         continue;
                     }
                     transposition[key] = bound;
-                    next.push_back(std::move(child));
+                    next.push_back(std::move(child.first));
                 }
             }
             std::map<std::string, std::vector<SearchState>> buckets;

@@ -279,6 +279,70 @@ void exercise_dense100_5s() {
     std::cout << "dense100 5s: cost=" << result.circuit.cost()
               << " depth=" << profile.depth << " source=" << result.best_source << '\n';
 }
+void exercise_threaded_determinism() {
+    // Threaded execution is a scheduling change only: attempts run in
+    // parallel but are collected and published in restart/parent order, so
+    // every thread count must reproduce the sequential circuits exactly.
+    const auto no_deadline = std::chrono::steady_clock::time_point::max();
+    int inputs = 0;
+    auto rows = read_matrix("data/matrices/generated/dense_24x40_seed456.txt", inputs);
+    require(rows.size() == 24 && inputs == 40, "dense24 regression dimensions");
+
+    auto sequential = synthesize_completable(rows, inputs, 6, 4, 1, no_deadline, {}, false, 1);
+    for (int threads : {2, 3, 4}) {
+        auto parallel = synthesize_completable(rows, inputs, 6, 4, 1, no_deadline, {}, false,
+                                               threads);
+        require(sequential.cost() == parallel.cost(),
+                "greedy threads=" + std::to_string(threads) + " matches sequential cost");
+        require(sequential.json().dump() == parallel.json().dump(),
+                "greedy threads=" + std::to_string(threads) +
+                    " reproduces the sequential circuit exactly");
+    }
+
+    // Same lock for the MW_SQ tie-break, whose scoring loop is internally
+    // parallelized at higher thread counts: every thread count must reproduce
+    // the sequential MW_SQ circuit gate for gate.
+    auto sequential_mwsq =
+        synthesize_completable(rows, inputs, 6, 4, 1, no_deadline, {}, true, 1);
+    for (int threads : {2, 4}) {
+        auto parallel_mwsq =
+            synthesize_completable(rows, inputs, 6, 4, 1, no_deadline, {}, true, threads);
+        require(sequential_mwsq.json().dump() == parallel_mwsq.json().dump(),
+                "greedy mwsq threads=" + std::to_string(threads) +
+                    " reproduces the sequential circuit exactly");
+    }
+
+    BoundedScheduleOptions base;
+    base.max_depth = 6;
+    base.beam_width = 4;
+    base.branch_width = 4;
+    base.max_representations = 4;
+    base.restarts = 2;
+    base.greedy_restarts = 2;
+    base.greedy_mwsq = true;
+    base.rewrite_trials = 100;
+    base.seed = 1;
+    base.timeout_seconds = 0;
+    base.max_states = 256;
+    auto one = base;
+    one.threads = 1;
+    auto sequential_full = synthesize_bounded(rows, inputs, one);
+    require(sequential_full.status == "verified", "sequential bounded run verifies");
+    for (int threads : {2, 4}) {
+        auto many = base;
+        many.threads = threads;
+        auto parallel_full = synthesize_bounded(rows, inputs, many);
+        require(parallel_full.status == sequential_full.status &&
+                    parallel_full.circuit.cost() == sequential_full.circuit.cost(),
+                "bounded threads=" + std::to_string(threads) +
+                    " matches sequential status and cost");
+        require(parallel_full.circuit.json().dump() == sequential_full.circuit.json().dump(),
+                "bounded threads=" + std::to_string(threads) +
+                    " reproduces the sequential circuit exactly");
+    }
+    std::cout << "threaded determinism: greedy and bounded match sequential\n";
+}
+
 }
 int main() {
     exercise_json_uint64();
@@ -510,5 +574,6 @@ int main() {
     exercise_candidate_pool();
     exercise_preexpired_incumbent();
     exercise_dense100_5s();
+    exercise_threaded_determinism();
     std::cout << "xd search primitives passed\n";
 }

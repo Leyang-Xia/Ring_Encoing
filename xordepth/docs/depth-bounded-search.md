@@ -46,6 +46,12 @@ make -j4
 
 `--no-timeout` 只关闭墙钟截止，不关闭结构性预算。`--max-states N` 限制跨 restart 累计的 Beam 取状态数；每个 restart 还受 `outputs * (2^(D+1)-1)` 轮次上界约束，算术使用饱和无符号运算。预算或轮次耗尽不是不可行证明。若已经得到 verified incumbent，后续状态预算、墙钟或重写截止不会丢弃它。
 
+## 多线程（--threads N）
+
+`--threads N`（默认 1）为 greedy portfolio 的 restart 与 Beam 的层内扩展分配工作线程。确定性通过三段式层结构保持：顺序发布 complete 状态并快照 incumbent 剪枝阈值 → 各父状态独立并行扩展 → 按原顺序回放转移表查重。因此任意线程数的结果与串行逐门一致（`--timeout` 运行除外，其结果本就依赖机器速度）。sample-12 无时限 4 线程 11.35s → 6.83s（1.66×），全量 57 矩阵 64.73s → 42.59s（1.52×）；三方位相容校验（改动前 vs 新串行 vs 新 4 线程，含完整电路 ops）零失配，ThreadSanitizer 无竞态报告。单元测试 `exercise_threaded_determinism` 锁定该性质。
+
+注意：bounded 管线内部的 greedy 阶段最初漏传 `options.threads`（恒为 1 线程），修复后大矩阵加速明显提升。MW_SQ 并列重评分循环本身也已并行化：每个 tied 候选的评分只依赖 key 多重集，因此按行分块并行生成 key（各块由工作线程排序）后按固定块序归并、串行游程扫描，再按 tied 顺序归约出与串行一致的 winner 列表；`threads=1` 走原串行路径。为避免超额订阅，重启并行与评分内部并行共享线程预算（每个 attempt 分得 `threads/重启数` 个工作线程）。实测 6 个最大矩阵合计 47.95s（1 线程）→ 24.16s（4 线程，**1.98×**），全量 57 矩阵 64.73s → 38.63s（**1.68×**）。任意线程数输出与改动前串行逐门一致（6 大矩阵 t1–t10 相互一致；全量 57 对改动前基线 57/57 逐门相同），TSan 复验无警告（含 restarts×内部双层并行）。加速上限仍受 Amdahl 制约：Beam 的 Phase 1/3 与 CSE 基线为串行。
+
 2026-11-04 的 12 矩阵对照中，纯 Beam 仅 4/12 verified；加入 completable greedy 和 400 次重写预算后为 12/12，并在全部样本上达到 PR #6 V2 相同的 `(cost, depth)`。完整数据及 MW_SQ+重结合参照见 [PR sample 对比](pr6-sample-comparison.md)。
 
 ## 固定矩阵结果

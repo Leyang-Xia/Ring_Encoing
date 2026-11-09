@@ -32,6 +32,8 @@ Options:
   --allow-empty-toggle allow residual toggles with neither operand present
   --rewrite-trials N  bounded post-search shared-gate rewrite attempts
   --seed N           bounded candidate-order seed
+  --threads N        worker threads for greedy restarts and Beam expansion
+                     (default 1 = sequential; results are identical either way)
   --timeout SEC      bounded search budget
   --no-timeout       bounded search without a wall-clock deadline
   --max-states N     hard search-state budget (always finite)
@@ -135,6 +137,9 @@ int main(int argc, char **argv) {
                 bounded_options.allow_empty_toggle = true;
             } else if (key == "--rewrite-trials") {
                 bounded_options.rewrite_trials = parse_int(value());
+            } else if (key == "--threads") {
+                bounded_options.threads = parse_int(value());
+                require(bounded_options.threads >= 1, "--threads requires at least 1");
             } else if (key == "--seed") {
                 bounded_options.seed = std::stoull(value());
             } else if (key == "--timeout") {
