@@ -93,7 +93,7 @@ data/results/        测量结果（每条候选都带完整线路与目标掩�
 docs/                方法、证明与完整数据
 ```
 
-方法与完整结果见 [计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md)、[深度约束后的共享门重写](docs/rewrite-depth-gates.md)、[矩阵测试集合](docs/matrix-suite.md) 和 [PR/MW_SQ sample 对比](docs/pr6-sample-comparison.md)。
+方法与完整结果见 [技术手册](docs/technical-manual.md)、[计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md)、[深度约束后的共享门重写](docs/rewrite-depth-gates.md)、[矩阵测试集合](docs/matrix-suite.md) 和 [PR/MW_SQ sample 对比](docs/pr6-sample-comparison.md)。
 
 ## 边界
 
