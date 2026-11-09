@@ -952,11 +952,26 @@ void Schedule::Print()
   cout.flush();
 }
 
+static const char *Technique_Name()
+{
+  switch (Technique) {
+    case MW: return "MW";
+    case MW_SS: return "MW_SS";
+    case MW_SMALLEST_SUM: return "MW_SMALLEST_SUM";
+    case MW_SQ: return "MW_SQ";
+    case UBER_XSET: return "UBER_XSET";
+    case MW_MATCHING: return "MW_MATCHING";
+    case SUBEX: return "SUBEX";
+  }
+  return "UNKNOWN";
+}
+
 void Schedule::PrintMathematical()
 {
   int i, j;
   int max_depth = 0;
   vector<int> node_depth(sched.size(), 0);
+  vector <pair<int, int> > bindings;   /* (target_index, result_index) */
 
   VIT(i, computation_history) {
     XSetComputationStep& step = computation_history[i];
@@ -969,21 +984,31 @@ void Schedule::PrintMathematical()
       node_depth[step.result_index] =
           1 + max(node_depth[step.operand1_index], node_depth[step.operand2_index]);
     }
-    if (node_depth[step.result_index] > max_depth)
-      max_depth = node_depth[step.result_index];
+    if (step.is_target && step.target_index >= 0)
+      bindings.push_back(make_pair(step.target_index, step.result_index));
   }
-  
+
+  /* Bindings print in target order regardless of when each target finished,
+     so two runs of the same matrix diff cleanly. */
+  sort(bindings.begin(), bindings.end());
+
+  /* Depth counts the bound targets only: an intermediate deeper than every
+     target that consumes it would overstate the critical path. */
+  for (i = 0; i < bindings.size(); i++)
+    if (node_depth[bindings[i].second] > max_depth)
+      max_depth = node_depth[bindings[i].second];
+
   printf("Schedule:\n");
-  
+
   // Print initial data elements (s0 = x0, s1 = x1, etc.)
   for (i = 0; i < cols; i++) {
     printf("s%d = x%d\n", i, i);
   }
-  
+
   // Print computed intermediate elements
   for (i = 0; i < computation_history.size(); i++) {
     XSetComputationStep& step = computation_history[i];
-    
+
     if (step.operand1_index == -1) {
       // This shouldn't happen for computed elements
       continue;
@@ -995,17 +1020,18 @@ void Schedule::PrintMathematical()
       printf("s%d = s%d + s%d\n", step.result_index, step.operand1_index, step.operand2_index);
     }
   }
-  
-  // Print target assignments (bi = si)
-  for (i = 0; i < computation_history.size(); i++) {
-    XSetComputationStep& step = computation_history[i];
-    if (step.is_target && step.target_index >= 0) {
-      printf("b%d = s%d\n", step.target_index, step.result_index);
-    }
+
+  // Print target assignments (bi = si) in target order
+  for (i = 0; i < bindings.size(); i++) {
+    printf("b%d = s%d\n", bindings[i].first, bindings[i].second);
   }
-  
+
   printf("\nTotal XOR operations: %lu\n", computation_history.size());
   printf("Schedule Depth: %d\n", max_depth);
+  printf("# technique=%s thresh=%d nstart=%d giveup=%d rows=%lu cols=%d xor=%lu depth=%d\n",
+         Technique_Name(), Thresh, NStart, Give_Up_When,
+         (unsigned long) targets.size(), cols,
+         (unsigned long) computation_history.size(), max_depth);
 }
 
 void Schedule::Remove_Global_Edge_Weights(MXS *mx, XMit xptr)
@@ -1962,7 +1988,7 @@ int main(int argc, char **argv)
         S->Add_Element_From_GetBest(to_try[i]);
       }
     }
-    S->Print();
+    if (!Quiet) S->Print();
     S->PrintMathematical();
     printf("%lu\n", S->sched.size());
     exit(0);
@@ -1999,8 +2025,10 @@ int main(int argc, char **argv)
     }
   }
 
-  S->Print();
-  printf("\n");
+  if (!Quiet) {
+    S->Print();
+    printf("\n");
+  }
   S->PrintMathematical();
   // printf("%lu\n", S->sched.size());
   exit(0);
