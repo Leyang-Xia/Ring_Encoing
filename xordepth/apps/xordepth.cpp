@@ -1,4 +1,5 @@
 #include "xd/experiments.hpp"
+#include "xd/xsets.hpp"
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -10,6 +11,7 @@ const char *help = R"(xordepth: XOR count / critical-path depth frontier (C++17)
 
   xordepth frontier MATRIX.txt [options] --output FILE
   xordepth bounded MATRIX.txt --depth D [options] --output FILE
+  xordepth rebalance (XSETS_OUTPUT.txt|-) --matrix MATRIX.txt --output FILE
   xordepth merge BASE.json CANDIDATE.json... --output FILE
   xordepth audit FILE.json... [--output FILE]
   xordepth verify FILE.json
@@ -39,6 +41,8 @@ Options:
   --max-states N     hard search-state budget (always finite)
   --incumbent FILE   offer a verified circuit to the bounded candidate pool
                      (repeatable; zero search time)
+  --matrix FILE      01 matrix for 'rebalance'; the schedule is verified
+                     against it before and after re-association
   --output FILE      write the complete result
 
 MATRIX.txt holds one output per line and one input per column, 0/1 and whitespace only.
@@ -87,6 +91,8 @@ int main(int argc, char **argv) {
         Options o;
         BoundedScheduleOptions bounded_options;
         bool depth_set = false;
+        std::string matrix;
+        bool matrix_set = false;
         std::vector<std::string> positional;
         for (int i = 2; i < argc; ++i) {
             std::string key = argv[i];
@@ -154,6 +160,9 @@ int main(int argc, char **argv) {
                 require(parsed <= std::numeric_limits<std::size_t>::max(),
                         "max_states exceeds the supported size range");
                 bounded_options.max_states = static_cast<std::size_t>(parsed);
+            } else if (key == "--matrix") {
+                matrix = value();
+                matrix_set = true;
             } else if (key == "--output") {
                 o.output = value();
             } else if (key.rfind("--", 0) == 0) {
@@ -178,6 +187,18 @@ int main(int argc, char **argv) {
             auto rows = read_matrix(positional[0], inputs);
             result = bounded_result(rows, inputs,
                                     Json::object({{"matrix", positional[0]}}), bounded_options);
+        } else if (command == "rebalance") {
+            require(positional.size() == 1, "rebalance takes exactly one xsets schedule");
+            require(matrix_set, "rebalance requires --matrix");
+            require(!o.output.empty(), "rebalance requires --output");
+            if (positional[0] == "-") {
+                std::string piped_text(std::istreambuf_iterator<char>(std::cin),
+                                       std::istreambuf_iterator<char>{});
+                std::istringstream piped(piped_text);
+                result = rebalance_xsets(piped, "<stdin>", matrix);
+            } else {
+                result = rebalance_xsets(positional[0], matrix);
+            }
         } else if (command == "merge") {
             require(!positional.empty(), "merge needs a base result");
             require(!o.output.empty(), "merge requires --output");

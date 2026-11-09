@@ -546,10 +546,13 @@ y2 = x0 ⊕ x1 ⊕ x2 ⊕ x3
 cd xordepth && make -j4          # 生成 build/xordepth
 
 xordepth bounded MATRIX.txt --depth D [选项] --output OUT.json   # 主命令
+xordepth rebalance XSETS_OUTPUT.txt --matrix M.txt --output OUT.json  # X-Sets 调度导入 + 重结合
 xordepth verify OUT.json                                        # 复验功能/门数/深度
 xordepth merge BASE.json CAND.json... --output OUT.json         # 离线合并最优
 xordepth audit FILE.json...                                     # 证据审计
 ```
+
+`rebalance` 子命令解析 Plank X-Sets（UBER_XSET/MW_SQ）输出末尾的 `Schedule:` 段（`sK = xJ` 别名、`sK = sA + sB` 门、`bT = sK` 目标绑定），逐门校验其确实计算 `--matrix` 给出的矩阵，然后调用 `rebalanced()` 重结合并输出前后 `(cost, depth, max_output_depth)` 与完整线路 JSON。任何无法识别的行、先引用后定义、重复绑定或 trailer 门数不符都会报错拒绝。
 
 ### 7.2 bounded 选项与默认值
 

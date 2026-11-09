@@ -179,4 +179,39 @@ printf '{ malformed json' > "$tmp/bad-incumbent.json"
 expect_fail "$tool" bounded "$tmp/four.txt" --depth 2 --timeout 0.000000001 \
   --incumbent "$tmp/bad-incumbent.json" --output "$tmp/bad-inc.json"
 
+# --- rebalance: import an X-Sets schedule, verify, re-associate -------------
+cat > "$tmp/xsets.txt" <<'EOF'
+Targets Left 1.  New Element 1111 Edge Weight: 3
+1000
+0100
+0010
+0001
+Schedule:
+s0 = x0
+s1 = x1
+s2 = x2
+s3 = x3
+s4 = s0 + s1
+s5 = s4 + s2
+s6 = s5 + s3
+b0 = s6
+Total XOR operations: 3
+EOF
+"$tool" rebalance "$tmp/xsets.txt" --matrix "$tmp/four.txt" \
+  --output "$tmp/rebalanced.json" > /dev/null
+grep -q '"method": "XSETS_REBALANCE"' "$tmp/rebalanced.json"
+grep -q '"cost": 3' "$tmp/rebalanced.json"
+grep -q '"depth": 2' "$tmp/rebalanced.json"
+grep -q '"depth_histogram"' "$tmp/rebalanced.json"
+grep -q '"target_masks"' "$tmp/rebalanced.json"
+# "-" reads the schedule from standard input, for piping straight from X-Sets.
+cat "$tmp/xsets.txt" | "$tool" rebalance - --matrix "$tmp/four.txt" \
+  --output "$tmp/rebalanced-stdin.json" > /dev/null
+grep -q '"schedule": "<stdin>"' "$tmp/rebalanced-stdin.json"
+grep -q '"depth": 2' "$tmp/rebalanced-stdin.json"
+expect_fail "$tool" rebalance "$tmp/xsets.txt" --output "$tmp/bad.json"
+printf 'Schedule:\nb0 = x0\nb1 = x1\n' > "$tmp/short-schedule.txt"
+expect_fail "$tool" rebalance "$tmp/short-schedule.txt" --matrix "$tmp/four.txt" \
+  --output "$tmp/bad.json"
+
 printf 'CLI: frontier, verify, audit, incumbent, merge and error paths passed\n'

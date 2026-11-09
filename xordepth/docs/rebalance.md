@@ -3,6 +3,31 @@
 `rebalanced()` 是 xordepth 的独立后处理模块，实现在
 `src/xd_rebalance.cpp`，公开接口仍位于 `include/xd/depth.hpp`。它接收一条已经完成共享选择的 XOR circuit，重新安排可以安全展开的累加树，降低关键路径深度。
 
+除了库调用，CLI 也直接暴露该变换：
+
+```bash
+xordepth rebalance (XSETS_OUTPUT.txt|-) --matrix MATRIX.txt --output OUT.json
+# 或直接接管道（"-" 从 stdin 读，跳过中间文件）：
+./X-Sets 0 0 0 UBER_XSET < MATRIX.txt | xordepth rebalance - --matrix MATRIX.txt --output OUT.json
+```
+
+它解析 Plank X-Sets（UBER_XSET/MW_SQ）输出的 `Schedule:` 段
+（`src/xd_xsets.cpp` 的 `parse_xsets_schedule()`：`sK = xJ` 别名、
+`sK = sA + sB` 门、`bT = sK` 目标绑定，绑定行允许任意顺序，输出按 b 序），
+先 `verify()` 逐门校验其确实计算 `--matrix` 矩阵，再 `rebalanced()` 并在
+结果 JSON 中给出前后 `(cost, depth, max_output_depth, depth_histogram)`。
+直方图按层级统计每个输出的深度分布（KP4 300×200 的 UBER_XSET 000 档
+rebalance 后为 5 层 9 个 / 6 层 10 个 / 7 层 143 个 / 8 层 138 个）。
+先引用后定义、重复绑定、trailer 门数不符、无法识别的行、目标数与矩阵
+不符都会报错。输出线路与 `target_masks` 存在 JSON 中，供 `audit` 等
+后续工具读取。实测示例（KP4 300×200，UBER_XSET 000 档）：8713 门 /
+深度 34 → rebalance 后 8713 门 / 深度 8。
+
+对导入后的线路再跑 `rewrite_depth_gates()`（100/400 trials）实测无增益：
+X-Sets 的共享结构在 CSE 意义上已饱和，所有高频对都已物化为共享门，
+重写阶段找不到可删除的共享门。rebalance 不改共享决策，因此导入线路的
+门数已经接近该共享方案的 下限；要再降门数需换共享方案本身。
+
 ## 算法
 
 模块先逐门重建原线路的 GF(2) mask，并统计每个节点的消费者数量。一个内部节点满足以下条件时可以折叠：

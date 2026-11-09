@@ -1,5 +1,9 @@
 #include "xd/experiments.hpp"
+#include "xd/xsets.hpp"
+#include <cstdio>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 using namespace xd;
 
@@ -101,6 +105,139 @@ int main() {
         require(mwsq_support_summary({{1, 2}, {1, 3}, {2, 3}, {1, 2}}) ==
                     std::pair<std::size_t, std::size_t>{2, 1},
                 "triangle plus duplicate");
+
+        // X-Sets schedule import: the "Schedule:" trailer of a Plank X-Sets
+        // run parses into a Circuit, verifies against the matrix, and feeds
+        // rebalanced() directly.
+        {
+            const char *schedule_path = "/tmp/xd_xsets_test_schedule.txt";
+            const char *matrix_path = "/tmp/xd_xsets_test_matrix.txt";
+            {
+                std::ofstream out(schedule_path);
+                out << "Targets Left 300.  New Element 0111 Edge Weight: 2\n";
+                out << "1011\n1101\n";
+                out << "Schedule:\n";
+                out << "s0 = x0\n";
+                out << "s1 = x1\n";
+                out << "s2 = x2\n";
+                out << "s3 = x3\n";
+                out << "s4 = s0 + s1\n";
+                out << "s5 = s4 + s2\n";
+                out << "s6 = s5 + s3\n";
+                out << "b0 = s6\n";
+                out << "Total XOR operations: 3\n";
+            }
+            {
+                std::ofstream out(matrix_path);
+                out << "1111\n";
+            }
+            auto parsed = parse_xsets_schedule(schedule_path, 4);
+            require(parsed.circuit.inputs == 4, "xsets input count");
+            require(parsed.circuit.cost() == 3, "xsets gate count");
+            require(parsed.declared_xor == 3, "xsets declared xor trailer");
+            // b0 = s6 (node 6).
+            require(parsed.circuit.outputs == std::vector<int>{6},
+                    "xsets bindings in b order");
+            BitRows xsets_rows{BitMask(0xF)};
+            parsed.circuit.verify(xsets_rows);
+            require(depth_profile(parsed.circuit).depth == 3,
+                    "xsets chain keeps its original depth");
+            auto repaired = rebalanced(parsed.circuit);
+            repaired.verify(xsets_rows);
+            require(depth_profile(repaired).depth == 2,
+                    "rebalance shortens the imported chain");
+
+            // The one-shot command verifies before and after and reports both.
+            Json report = rebalance_xsets(schedule_path, matrix_path);
+            require(report["method"].string() == "XSETS_REBALANCE",
+                    "rebalance result method");
+            require(report["original"]["cost"].int32() == 3 &&
+                        report["original"]["depth"].int32() == 3,
+                    "rebalance report of the original");
+            require(report["rebalanced"]["cost"].int32() == 3 &&
+                        report["rebalanced"]["depth"].int32() == 2,
+                    "rebalance report after re-association");
+            require(report["original"]["depth_histogram"]["3"].int32() == 1,
+                    "original depth histogram");
+            require(report["rebalanced"]["depth_histogram"]["2"].int32() == 1,
+                    "rebalanced depth histogram");
+            auto from_report = Circuit::from_json(report["circuit"]);
+            from_report.verify(xsets_rows);
+
+            // The parser also consumes a raw stream, e.g. a piped X-Sets run.
+            {
+                std::istringstream piped(
+                    "Schedule:\ns0 = x0\ns1 = x1\ns2 = x2\ns3 = x3\n"
+                    "s4 = s0 + s1\ns5 = s4 + s2\ns6 = s5 + s3\nb0 = s6\n"
+                    "Total XOR operations: 3\nSchedule Depth: 3\n"
+                    "# technique=UBER_XSET thresh=0 nstart=0 giveup=0 rows=1 cols=4 xor=3 depth=3\n");
+                auto streamed = parse_xsets_schedule(piped, 4);
+                require(streamed.circuit.cost() == 3 && streamed.declared_xor == 3,
+                        "streamed xsets parse");
+                require(streamed.declared_depth == 3, "streamed depth trailer");
+                streamed.circuit.verify(xsets_rows);
+                // A disagreeing depth trailer is caught by the command.
+                {
+                    std::istringstream bad_stream(
+                        "Schedule:\nb0 = s1\nSchedule Depth: 9\n");
+                    rejects([&] {
+                        Json report = rebalance_xsets(bad_stream, "bad", matrix_path);
+                        (void)report;
+                    });
+                }
+            }
+
+            // An output gate is never folded away: a chain of two outputs
+            // keeps its depth even after re-association.
+            {
+                std::ofstream out(schedule_path);
+                out << "Schedule:\n";
+                out << "s0 = x0\ns1 = x1\ns2 = x2\ns3 = x3\n";
+                out << "s4 = s0 + s1\ns5 = s4 + s2\ns6 = s5 + s3\n";
+                out << "b0 = s6\nb1 = s5\n";
+            }
+            {
+                std::ofstream out(matrix_path);
+                out << "1111\n1110\n";
+            }
+            auto chained_outputs = parse_xsets_schedule(schedule_path, 4);
+            BitRows chain_rows{BitMask(0xF), BitMask(0x7)};
+            chained_outputs.circuit.verify(chain_rows);
+            auto kept = rebalanced(chained_outputs.circuit);
+            kept.verify(chain_rows);
+            require(depth_profile(kept).depth == 3,
+                    "rebalance keeps output-gate chains");
+
+            // Malformed schedules are rejected, not silently accepted.
+            auto bad = [&](const char *text) {
+                std::ofstream out(schedule_path);
+                out << text;
+                rejects([&] { parse_xsets_schedule(schedule_path, 4); });
+            };
+            bad("s0 = x0\n"); // no Schedule: header
+            bad("Schedule:\ns0 = s1 + s2\n"); // use before definition
+            bad("Schedule:\ns0 = x9\n"); // input index out of range
+            bad("Schedule:\ns0 = s0 + x0\n"); // self reference before definition
+            bad("Schedule:\ns0 = x0\ns0 = x1\n"); // redefinition
+            bad("Schedule:\nb0 = x0\nb0 = x1\n"); // duplicate binding
+            bad("Schedule:\ns0 = x0\ns0 = x0 ~ x1\n"); // unrecognized line
+            bad("Schedule:\ns0 = x0 + x1\nTotal XOR operations: 9\n"); // trailer mismatch
+            bad("Schedule:\nb1 = x0\n"); // binding gap: b0 missing
+
+            // Target count must match the matrix in the command wrapper.
+            {
+                std::ofstream out(matrix_path);
+                out << "1111\n1110\n0001\n";
+            }
+            {
+                std::ofstream out(schedule_path);
+                out << "Schedule:\nb0 = x0\nb1 = x1\n";
+            }
+            rejects([&] { rebalance_xsets(schedule_path, matrix_path); });
+
+            std::remove(schedule_path);
+            std::remove(matrix_path);
+        }
 
         std::cout << "xd: depth metrics, balanced scheduling and re-association passed\n";
         return 0;
