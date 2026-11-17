@@ -607,4 +607,4 @@ xordepth merge run1.json run2.json run3.json --output best.json
 
 ### 对照数据（摘要）
 
-57 矩阵全套件、与 PR #6（V1/V2 greedy）及各阶段自身的对比数据与复现脚本存于 `data/results/`（详见 [pr6-sample-comparison.md](pr6-sample-comparison.md)、[matrix-suite.md](matrix-suite.md)、[runtime-optimization-2026-11-09.md](runtime-optimization-2026-11-09.md)）。要点：统一池 + MW_SQ + 离线 merge 后，对 PR 最优版本 52 个可比矩阵 **26 优 26 平 0 劣（净 −140 门）**；同预算（5s）对比 **4 优 48 平 0 劣**；无时限模式经 2026-11-09 的分配优化提速 2.18×，全部 57 矩阵结果与优化前逐位一致。
+当前结果以全量 57 矩阵无时限运行为准：`data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/`（52 verified + 5 infeasible_by_lower_bound，4 线程合计 38.63s，复现脚本 `run_full_notimeout_bench.py`）。历史对比数据（PR #6 V1/V2 对比：52 个可比矩阵 **26 优 26 平 0 劣（净 −140 门）**；同预算 5s 对比 **4 优 48 平 0 劣**；运行时优化 2.18× 轨迹）已从 `data/results/` 清理，完整数据保留在 git 历史中；方法论详见 [matrix-suite.md](matrix-suite.md) 与 [runtime-optimization-2026-11-09.md](runtime-optimization-2026-11-09.md)。

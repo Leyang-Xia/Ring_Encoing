@@ -6,7 +6,7 @@
 using namespace xd;
 
 int main() {
-    const auto data = Json::read("data/results/mw_sq_vandermonde_8to17_p0_3_0.json");
+    const auto data = Json::read("tests/fixtures/mw_sq_vandermonde_8to17_p0_3_0.json");
     std::vector<std::set<int>> representations;
     for (const auto &mask : data["target_masks"].arr) {
         const auto value = std::stoull(mask.string());

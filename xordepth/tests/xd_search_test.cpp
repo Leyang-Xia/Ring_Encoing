@@ -242,14 +242,14 @@ void exercise_preexpired_incumbent() {
     o.greedy_restarts = 0;
     o.timeout_seconds = 1e-9;  // pre-expired deadline
     o.incumbent_paths = {
-        "data/results/greedy_portfolio_full_20261104/dense_100x100_seed123.v1.json"};
+        "data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/dense_100x100_seed123.json"};
     auto result = synthesize_bounded(rows, inputs, o);
-    require(result.status == "verified", "pre-expired deadline keeps V1 incumbent");
+    require(result.status == "verified", "pre-expired deadline keeps full-run incumbent");
     result.circuit.verify(rows);
-    require(result.circuit.cost() == 1809, "V1 incumbent cost is 1809");
-    require(depth_profile(result.circuit).depth <= 7, "V1 incumbent respects D=7");
-    require(result.incumbents_used >= 1, "V1 incumbent counted as used");
-    require(result.best_source == "incumbent", "V1 incumbent is the best source");
+    require(result.circuit.cost() == 1783, "full-run incumbent cost is 1783");
+    require(depth_profile(result.circuit).depth <= 7, "incumbent respects D=7");
+    require(result.incumbents_used >= 1, "incumbent counted as used");
+    require(result.best_source == "incumbent", "incumbent is the best source");
 }
 
 // Regression: the original 5s full-budget configuration must now publish the

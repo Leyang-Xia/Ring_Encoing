@@ -16,7 +16,8 @@ CONFIG = [
 
 def main(out_dir, extra_args=()):
     os.makedirs(out_dir, exist_ok=True)
-    ref_dir = os.path.join(ROOT, 'data', 'results', 'xordepth_full_mwsq_20261106')
+    ref_dir = os.path.join(ROOT, 'data', 'results',
+                           'xordepth_full_threads4_mwsqpar_rerun_20261109')
     manifest = os.path.join(ROOT, 'data', 'matrices', 'full.manifest')
     base = os.path.dirname(manifest)
     with open(manifest) as f:

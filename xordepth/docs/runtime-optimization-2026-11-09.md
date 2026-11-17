@@ -52,11 +52,10 @@ rewrite-trials=400、max-states=256）在 12 矩阵 sample 上耗时 25.30 秒�
 ## 验证（全部通过）
 
 - **sample 12 矩阵（无时限协议）位相容**：`(cost, depth, status)` 与优化前
-  基线逐位一致（基线 `notimeout_baseline_20261109` vs 最终
-  `notimeout_opt7_20261109`）。
-- **全量 57 矩阵位相容**：与 `xordepth_full_mwsq_20261106`（同配置、15s
-  上限）**57/57 (cost, depth) 完全一致**（旧运行从未触到 15s 截止，故
-  无时限等价）。结果目录 `xordepth_full_notimeout_20261109`。
+  基线逐位一致（基线与最终版本目录已清理，数据在 git 历史中）。
+- **全量 57 矩阵位相容**：与 2026-11-06 的同配置全量运行（15s 上限，旧运行
+  从未触到 15s 截止，故无时限等价）**57/57 (cost, depth) 完全一致**；
+  后续多线程版本与该基线亦逐门一致。
 - `make test`（xd/xd-search/trace-replay/matrix-suite/cli/independence）、
   xd_test 新增 `mwsq_support_summary` 金标准用例（含重复 id、空行、并列
   最大值等语义锁定）。
@@ -76,9 +75,10 @@ sample 12 矩阵无时限总时长：
 | +greedy 平坦化 + 闭包时间戳 + 跳过未受影响 target | **11.60s** | gf8 4.92s、modular_64x96 3.65s |
 
 净提速 **2.18×**（−54%）。全量 57 矩阵无时限合计 64.73s（含 5 个
-infeasible_by_lower_bound 的 D 配置问题矩阵，秒级完成）。结果仍严格
-支配 PR：sample 与 PR V2 12/12 一致，全量 26 优 26 平 0 劣。
+infeasible_by_lower_bound 的 D 配置问题矩阵，秒级完成）；多线程后同协议
+4 线程 38.63s。结果仍严格支配 PR：sample 与 PR V2 12/12 一致，全量
+26 优 26 平 0 劣。
 
-基准脚本：`data/results/run_notimeout_bench.py`（sample 协议）、
-`data/results/run_full_notimeout_bench.py`（全量、读参照 D 表）。
-中间版本目录 `notimeout_opt1..opt6_20261109` 保留作实验轨迹。
+基准脚本：`data/results/run_full_notimeout_bench.py`（全量、读参照 D 表）。
+中间版本基准目录已清理，完整轨迹保留在 git 历史中；当前结果目录为
+`data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/`。

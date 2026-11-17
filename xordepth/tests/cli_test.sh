@@ -112,7 +112,8 @@ test "$before" = "$(shasum "$tmp/frontier.json" | cut -d' ' -f1)"
 
 # A stored-circuit file may contribute candidates only when it computes the
 # same transform; unrelated circuits are skipped instead of failing.
-"$tool" frontier "$tmp/matrix.txt" --share 2 --also "$root/data/results/xd_frontier_cauchy_7_4.json" \
+"$tool" frontier "$tmp/matrix.txt" --share 2 \
+  --also "$root/data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/cauchy_7_4_direct.json" \
   --output "$tmp/also.json" > /dev/null
 grep -q '"skipped"' "$tmp/also.json"
 

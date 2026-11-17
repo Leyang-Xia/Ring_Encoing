@@ -61,21 +61,25 @@ make test-full    # 再运行 57 矩阵完整集合
 
 ## 主要结果
 
-`(门数, 深度)`，只列 Pareto 前沿；完整数据在 `data/results/`。
+当前基准结果：**57 矩阵全量套件无时限运行**（协议：seed=1、beam=4、branch=4、representations=4、restarts=2、greedy-restarts=2、`--greedy-mwsq`、rewrite-trials=400、max-states=256、4 线程）。完整数据与逐矩阵电路在 [`data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/`](data/results/xordepth_full_threads4_mwsqpar_rerun_20261109/bench.tsv)。
 
-| 矩阵 | 输入×输出 | 前沿 |
-|---|---|---|
-| Vandermonde 8→17 直接 | 64×24 | (203, 6)、(336, 5) |
-| 系统化 RS `[7,4,4]` 直接 | 32×24 | (124, 14)、(126, 11)、(127, 9)、(133, 7)、(140, 6)、(168, 5) |
-| Cauchy 7→4 直接 | 32×24 | (150, 6)、(224, 5) |
-| GF(2⁸) 10×10 展开 | 80×80 | (1219, 7)、(1830, 6) |
+- **52 个矩阵 `verified`**，合计 13,753 门，实际深度 2–7 层；**5 个 `infeasible_by_lower_bound`**（Vandermonde 8→17 ×2、系统化 RS `[7,4,4]`、Cauchy 7→4、GF(2⁸) 10×10 展开）——这些矩阵的深度配置 `D` 低于行权重深度下界，是数学不可行，不是搜索失败；
+- 总墙钟 **38.63 s**（串行 64.73 s，**1.68×**）；只有两个 dense 100×100 超过 5 s；
+- 每条结果都带完整电路与目标掩码，`xordepth verify` 可逐门复验；固定 seed 与预算参数下逐位可复现。
 
-两个与直觉相反的观察：
+| 最大的 verified 矩阵 | 门数 | 深度 |
+|---|---:|---:|
+| dense 100×100 (seed456) | 1814 | 7 |
+| dense 100×100 (seed123) | 1783 | 7 |
+| dense 64×96 (seed123) | 1222 | 6 |
+| dense 64×96 (seed456) | 1209 | 6 |
+| blocks 100×100 (seed456) | 545 | 6 |
+| blocks 100×100 (seed123) | 544 | 5 |
 
-- **门数最优不等于深度最优，但差距常常可以免费消掉。** 8→17 上 `UBER_XSET` 是 212 门/15 层，`MW_SQ` 是 219 门/12 层；对两者各做一次不改共享决策的重结合，变成 212/8 与 219/6。
-- **重结合之后的瓶颈换成共享结构。** 系统化 RS 上最强的 124 门线路只能从 15 层压到 14 层——它的深度卡在多消费者共享节点上，局部重排动不了，必须改共享决策。
+两个与直觉相反的观察（在历史对照中反复出现，数据在 git 历史中）：
 
-对 206 条已保存线路做审计：**178 条深度可降低，总门数还减少 59**。最强的 8→17 完整线路 `203` 门从 10 层降到 6 层，并在此过程中支配了同问题中所有计数不超过 220 门的候选（只有「完全不共享」的 336 门/5 层仍留在前沿上）。
+- **门数最优不等于深度最优，但差距常常可以免费消掉。** 门数最优的线路深度可能是短深线路的近两倍；一次不改共享决策的重结合通常能把深度大幅压低且门数不变。
+- **重结合之后的瓶颈换成共享结构。** 深度卡在多消费者共享节点上的线路，局部重排动不了，必须改共享决策。
 
 ## 目录
 
@@ -93,7 +97,7 @@ data/results/        测量结果（每条候选都带完整线路与目标掩�
 docs/                方法、证明与完整数据
 ```
 
-方法与完整结果见 [技术手册](docs/technical-manual.md)、[计数–深度前沿](docs/count-depth-frontier.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md)、[深度约束后的共享门重写](docs/rewrite-depth-gates.md)、[矩阵测试集合](docs/matrix-suite.md) 和 [PR/MW_SQ sample 对比](docs/pr6-sample-comparison.md)。
+方法与完整结果见 [技术手册](docs/technical-manual.md)、[深度硬约束搜索](docs/depth-bounded-search.md)、[rebalance 模块](docs/rebalance.md)、[深度约束后的共享门重写](docs/rewrite-depth-gates.md)、[矩阵测试集合](docs/matrix-suite.md) 和 [运行时优化记录](docs/runtime-optimization-2026-11-09.md)。
 
 ## 边界
 

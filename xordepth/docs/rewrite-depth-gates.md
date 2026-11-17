@@ -16,8 +16,7 @@
 
 ## 固定矩阵试验
 
-以下试验使用相同输入、相同深度、相同 bounded 参数、seed=1 和 25 秒预算，只有第二次开启 `--rewrite-trials 400`。完整目标、参数和两条完整 verified circuit 保存在
-`data/results/xd_rewrite_compare_20261104.json`。
+以下试验使用相同输入、相同深度、相同 bounded 参数、seed=1 和 25 秒预算，只有第二次开启 `--rewrite-trials 400`（完整对照数据保留在 git 历史中）。
 
 | 矩阵 | 原始 bounded | 加重写 | 变化 |
 |---|---:|---:|---:|
