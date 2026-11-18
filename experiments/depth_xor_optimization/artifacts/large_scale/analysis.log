@@ -1,0 +1,89 @@
+INPUTS 9 TASKS 63 INDEPENDENT_VERIFIED_CIRCUITS 62 TASK_STATUS {'verified': 28, 'timeout': 35}
+
+ 128x96_blocks D0 6 density 0.348
+no_share verified 1591 6 0.074
+cse_raw verified 974 11 0.074
+cse_rebalanced verified 974 8 0.074
+share3 verified 1085 7 0.074
+ours_min verified 1017 6 0.794
+ours_plus1 verified 996 7 0.703
+beam verified 975 7 10.25
+
+ 128x96_dense D0 6 density 0.502
+no_share verified 3285 6 0.512
+cse_raw verified 2223 17 0.512
+cse_rebalanced verified 2223 7 0.512
+share3 verified 2510 7 0.512
+ours_min verified 2301 6 7.841
+ours_plus1 verified 2214 7 8.639
+beam verified 2217 7 10.563
+
+ 128x96_sparse D0 5 density 0.153
+no_share verified 1465 5 0.058
+cse_raw verified 1097 10 0.058
+cse_rebalanced verified 1097 5 0.058
+share3 verified 1204 5 0.058
+ours_min verified 1100 5 0.767
+ours_plus1 verified 1100 5 0.671
+beam verified 1097 5 10.288
+
+ 192x128_blocks D0 7 density 0.353
+no_share verified 2945 7 0.269
+cse_raw verified 1851 14 0.269
+cse_rebalanced verified 1851 8 0.269
+share3 verified 2033 8 0.269
+ours_min verified 1871 7 3.411
+ours_plus1 verified 1868 8 3.408
+beam verified 1861 8 10.214
+
+ 192x128_dense D0 7 density 0.5
+no_share verified 6222 7 3.015
+cse_raw verified 4179 21 3.015
+cse_rebalanced verified 4179 7 3.015
+share3 verified 4699 7 3.015
+ours_min timeout None None 10.005
+ours_plus1 timeout None None 10.006
+beam timeout None None 12.013
+ours_min30 timeout None None 30.004
+ours_plus130 timeout None None 30.005
+
+ 192x128_sparse D0 5 density 0.15
+no_share verified 2778 5 0.229
+cse_raw verified 2064 12 0.229
+cse_rebalanced verified 2064 6 0.229
+share3 verified 2273 5 0.229
+ours_min verified 2085 5 3.435
+ours_plus1 verified 2084 6 3.435
+beam verified 2064 6 10.23
+
+ 300x200_blocks D0 7 density 0.351
+no_share verified 6726 7 2.558
+cse_raw verified 4285 18 2.558
+cse_rebalanced verified 4285 9 2.558
+share3 verified 4745 8 2.558
+ours_min timeout None None 10.006
+ours_plus1 timeout None None 10.003
+beam timeout None None 12.017
+ours_min30 verified 4431 7 25.216
+ours_plus130 verified 4308 8 26.579
+
+ 300x200_dense D0 7 density 0.502
+no_share verified 14305 7 7.524
+cse_raw verified 9721 30 7.524
+cse_rebalanced verified 9721 8 7.524
+ours_min timeout None None 10.006
+ours_plus1 timeout None None 10.007
+beam timeout None None 12.006
+ours_min30 timeout None None 30.004
+ours_plus130 timeout None None 30.003
+
+ 300x200_sparse D0 6 density 0.152
+no_share verified 6565 6 2.48
+cse_raw verified 4866 18 2.48
+cse_rebalanced verified 4866 6 2.48
+share3 verified 5404 6 2.48
+ours_min timeout None None 10.004
+ours_plus1 timeout None None 10.002
+beam timeout None None 12.009
+ours_min30 verified 4873 6 29.625
+ours_plus130 verified 4873 6 29.471

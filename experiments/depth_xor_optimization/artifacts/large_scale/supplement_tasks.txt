@@ -1,0 +1,8 @@
+192x128_dense ours_min30
+192x128_dense ours_plus130
+300x200_sparse ours_min30
+300x200_sparse ours_plus130
+300x200_dense ours_min30
+300x200_dense ours_plus130
+300x200_blocks ours_min30
+300x200_blocks ours_plus130

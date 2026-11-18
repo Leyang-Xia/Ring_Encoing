@@ -1,0 +1,26 @@
+{'matrix': 'vandermonde', 'outputs': 24, 'inputs': 64, 'depth_limit': 5, 'method': 'beam', 'status': 'timeout', 'gates': None, 'actual_depth': None, 'seconds': 180.48, 'explored_states': 4433}
+{'matrix': 'vandermonde', 'outputs': 24, 'inputs': 64, 'depth_limit': 5, 'method': 'ours', 'status': 'verified', 'gates': 221, 'actual_depth': 5, 'seconds': 0.201, 'explored_states': None}
+{'matrix': 'vandermonde', 'outputs': 24, 'inputs': 64, 'depth_limit': 6, 'method': 'beam', 'status': 'verified', 'gates': 221, 'actual_depth': 6, 'seconds': 182.028, 'explored_states': 4433}
+{'matrix': 'vandermonde', 'outputs': 24, 'inputs': 64, 'depth_limit': 6, 'method': 'ours', 'status': 'verified', 'gates': 218, 'actual_depth': 6, 'seconds': 0.203, 'explored_states': None}
+{'matrix': 'rs', 'outputs': 24, 'inputs': 32, 'depth_limit': 5, 'method': 'beam', 'status': 'timeout', 'gates': None, 'actual_depth': None, 'seconds': 180.187, 'explored_states': 7185}
+{'matrix': 'rs', 'outputs': 24, 'inputs': 32, 'depth_limit': 5, 'method': 'ours', 'status': 'verified', 'gates': 150, 'actual_depth': 5, 'seconds': 0.095, 'explored_states': None}
+{'matrix': 'rs', 'outputs': 24, 'inputs': 32, 'depth_limit': 6, 'method': 'beam', 'status': 'verified', 'gates': 149, 'actual_depth': 6, 'seconds': 180.899, 'explored_states': 7121}
+{'matrix': 'rs', 'outputs': 24, 'inputs': 32, 'depth_limit': 6, 'method': 'ours', 'status': 'verified', 'gates': 150, 'actual_depth': 5, 'seconds': 0.095, 'explored_states': None}
+{'matrix': 'cauchy', 'outputs': 24, 'inputs': 32, 'depth_limit': 5, 'method': 'beam', 'status': 'timeout', 'gates': None, 'actual_depth': None, 'seconds': 181.328, 'explored_states': 8593}
+{'matrix': 'cauchy', 'outputs': 24, 'inputs': 32, 'depth_limit': 5, 'method': 'ours', 'status': 'verified', 'gates': 147, 'actual_depth': 5, 'seconds': 0.117, 'explored_states': None}
+{'matrix': 'cauchy', 'outputs': 24, 'inputs': 32, 'depth_limit': 6, 'method': 'beam', 'status': 'verified', 'gates': 150, 'actual_depth': 6, 'seconds': 180.969, 'explored_states': 8017}
+{'matrix': 'cauchy', 'outputs': 24, 'inputs': 32, 'depth_limit': 6, 'method': 'ours', 'status': 'verified', 'gates': 147, 'actual_depth': 5, 'seconds': 0.112, 'explored_states': None}
+{'matrix': 'gf8', 'outputs': 80, 'inputs': 80, 'depth_limit': 6, 'method': 'beam', 'status': 'external_timeout_190s', 'gates': None, 'actual_depth': None, 'seconds': 190.04, 'explored_states': None}
+{'matrix': 'gf8', 'outputs': 80, 'inputs': 80, 'depth_limit': 6, 'method': 'ours', 'status': 'verified', 'gates': 1247, 'actual_depth': 6, 'seconds': 15.01, 'explored_states': None}
+{'matrix': 'gf8', 'outputs': 80, 'inputs': 80, 'depth_limit': 7, 'method': 'beam', 'status': 'verified', 'gates': 1219, 'actual_depth': 7, 'seconds': 189.301, 'explored_states': 657}
+{'matrix': 'gf8', 'outputs': 80, 'inputs': 80, 'depth_limit': 7, 'method': 'ours', 'status': 'verified', 'gates': 1224, 'actual_depth': 7, 'seconds': 15.157, 'explored_states': None}
+AUDITED 12
+BASELINE_AUDITED 60
+{'matrix': 'vandermonde', 'depth_limit': 5, 'native_best_gates': 336, 'native_best_depth': 5, 'native_best_label': 'CSE-noshare', 'beam_status': 'timeout', 'beam_gates': None, 'beam_depth': None, 'ours_gates': 221, 'ours_depth': 5, 'saving_vs_native_pct': 34.226190476190474}
+{'matrix': 'vandermonde', 'depth_limit': 6, 'native_best_gates': 203, 'native_best_depth': 6, 'native_best_label': 'structured_ring_example.json:/ring-rebalanced', 'beam_status': 'verified', 'beam_gates': 221, 'beam_depth': 6, 'ours_gates': 218, 'ours_depth': 6, 'saving_vs_native_pct': -7.389162561576355}
+{'matrix': 'rs', 'depth_limit': 5, 'native_best_gates': 168, 'native_best_depth': 5, 'native_best_label': 'CSE-share3', 'beam_status': 'timeout', 'beam_gates': None, 'beam_depth': None, 'ours_gates': 150, 'ours_depth': 5, 'saving_vs_native_pct': 10.714285714285714}
+{'matrix': 'rs', 'depth_limit': 6, 'native_best_gates': 140, 'native_best_depth': 6, 'native_best_label': 'practical_mds_examples.json:/examples/systematic-rs-7-4/measurements/5/circuit-rebalanced', 'beam_status': 'verified', 'beam_gates': 149, 'beam_depth': 6, 'ours_gates': 150, 'ours_depth': 5, 'saving_vs_native_pct': -7.142857142857143}
+{'matrix': 'cauchy', 'depth_limit': 5, 'native_best_gates': 224, 'native_best_depth': 5, 'native_best_label': 'CSE-noshare', 'beam_status': 'timeout', 'beam_gates': None, 'beam_depth': None, 'ours_gates': 147, 'ours_depth': 5, 'saving_vs_native_pct': 34.375}
+{'matrix': 'cauchy', 'depth_limit': 6, 'native_best_gates': 150, 'native_best_depth': 6, 'native_best_label': 'CSE-chained-rebalanced', 'beam_status': 'verified', 'beam_gates': 150, 'beam_depth': 6, 'ours_gates': 147, 'ours_depth': 5, 'saving_vs_native_pct': 2.0}
+{'matrix': 'gf8', 'depth_limit': 6, 'native_best_gates': 1830, 'native_best_depth': 6, 'native_best_label': 'CSE-noshare', 'beam_status': 'external_timeout_190s', 'beam_gates': None, 'beam_depth': None, 'ours_gates': 1247, 'ours_depth': 6, 'saving_vs_native_pct': 31.85792349726776}
+{'matrix': 'gf8', 'depth_limit': 7, 'native_best_gates': 1219, 'native_best_depth': 7, 'native_best_label': 'CSE-chained-rebalanced', 'beam_status': 'verified', 'beam_gates': 1219, 'beam_depth': 7, 'ours_gates': 1224, 'ours_depth': 7, 'saving_vs_native_pct': -0.41017227235438886}

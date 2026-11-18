@@ -1,0 +1,150 @@
+[
+  {
+    "case": "Vandermonde 8→17",
+    "matrix": "vandermonde_8to17_direct.txt",
+    "sha256": "b7ee58a550105f2815fc98f4258bdeadc9aed0d821b2c7afa4f08bbb8f4e9a11",
+    "baseline_matches_stored_metrics": true,
+    "unchanged_output_byte_identical": true,
+    "baseline_candidates": 25,
+    "integrated_candidates": 27,
+    "old_frontier": [
+      [
+        203,
+        6
+      ],
+      [
+        336,
+        5
+      ]
+    ],
+    "new_frontier": [
+      [
+        203,
+        6
+      ],
+      [
+        224,
+        5
+      ]
+    ]
+  },
+  {
+    "case": "系统化 RS [7,4,4]",
+    "matrix": "systematic_rs_7_4_direct.txt",
+    "sha256": "42ae88905264caa6b5d7e632d5c693ff47b5ca355f86a0b37869d417b379579f",
+    "baseline_matches_stored_metrics": true,
+    "unchanged_output_byte_identical": true,
+    "baseline_candidates": 25,
+    "integrated_candidates": 27,
+    "old_frontier": [
+      [
+        124,
+        14
+      ],
+      [
+        126,
+        11
+      ],
+      [
+        127,
+        9
+      ],
+      [
+        133,
+        7
+      ],
+      [
+        140,
+        6
+      ],
+      [
+        168,
+        5
+      ]
+    ],
+    "new_frontier": [
+      [
+        124,
+        14
+      ],
+      [
+        126,
+        11
+      ],
+      [
+        127,
+        9
+      ],
+      [
+        133,
+        7
+      ],
+      [
+        140,
+        6
+      ],
+      [
+        152,
+        5
+      ]
+    ]
+  },
+  {
+    "case": "Cauchy 7→4",
+    "matrix": "cauchy_7_4_direct.txt",
+    "sha256": "edd97e54441d583e338bc81a15e5cc494673c57bc6e48c24be82f99b5a9f262d",
+    "baseline_matches_stored_metrics": true,
+    "unchanged_output_byte_identical": true,
+    "baseline_candidates": 5,
+    "integrated_candidates": 7,
+    "old_frontier": [
+      [
+        150,
+        6
+      ],
+      [
+        224,
+        5
+      ]
+    ],
+    "new_frontier": [
+      [
+        148,
+        6
+      ],
+      [
+        151,
+        5
+      ]
+    ]
+  },
+  {
+    "case": "GF(2⁸) 10×10 展开",
+    "matrix": "gf8_10x10_expanded.txt",
+    "sha256": "45d6a2531ff7487f2a63dd15e63239bb7a18c9d6d5d8f2eac3ea9869e78098a6",
+    "baseline_matches_stored_metrics": true,
+    "unchanged_output_byte_identical": true,
+    "baseline_candidates": 5,
+    "integrated_candidates": 7,
+    "old_frontier": [
+      [
+        1219,
+        7
+      ],
+      [
+        1830,
+        6
+      ]
+    ],
+    "new_frontier": [
+      [
+        1219,
+        7
+      ],
+      [
+        1246,
+        6
+      ]
+    ]
+  }
+]

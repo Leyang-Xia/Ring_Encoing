@@ -1,0 +1,268 @@
+[
+  {
+    "matrix": "vandermonde",
+    "method": "V1",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V2",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V1",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V2",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V1",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V2",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V1",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "vandermonde",
+    "method": "V2",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 9,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 9,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 11,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 11,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V1",
+    "depth_limit": 14,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "rs",
+    "method": "V2",
+    "depth_limit": 14,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V1",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V2",
+    "depth_limit": 5,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V1",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V2",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V1",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V2",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V1",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "cauchy",
+    "method": "V2",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V1",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V2",
+    "depth_limit": 6,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V1",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V2",
+    "depth_limit": 7,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V1",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V2",
+    "depth_limit": 8,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V1",
+    "depth_limit": 9,
+    "status": "verified",
+    "exit_code": 0
+  },
+  {
+    "matrix": "gf8",
+    "method": "V2",
+    "depth_limit": 9,
+    "status": "verified",
+    "exit_code": 0
+  }
+]

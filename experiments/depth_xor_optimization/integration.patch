@@ -1,0 +1,807 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e6ba614..5cd272f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
+ if(NOT UNIX)
+   message(FATAL_ERROR "The optimizer process adapter currently requires POSIX (Linux/macOS).")
+ endif()
+-add_library(ringlab_core src/json.cpp src/bitvector.cpp src/field.cpp src/circuit.cpp src/cse.cpp)
++add_library(ringlab_core src/json.cpp src/bitvector.cpp src/field.cpp src/circuit.cpp src/cse.cpp src/depth_cse.cpp src/benchmark_inputs.cpp)
+ target_include_directories(ringlab_core PUBLIC include)
+ add_library(ringlab_experiments src/matrices.cpp src/verification.cpp src/search.cpp src/backend.cpp)
+ target_link_libraries(ringlab_experiments PUBLIC ringlab_core)
+@@ -36,3 +36,9 @@ if(BUILD_TESTING)
+   target_link_libraries(experiment-test PRIVATE ringlab_experiments)
+   add_test(NAME experiment-regressions COMMAND experiment-test "${CMAKE_CURRENT_SOURCE_DIR}/data/certificates")
+ endif()
++
++if(BUILD_TESTING)
++  add_executable(depth-cse-test tests/depth_cse_test.cpp)
++  target_link_libraries(depth-cse-test PRIVATE ringlab_core)
++  add_test(NAME depth-cse COMMAND depth-cse-test)
++endif()
+diff --git a/Makefile b/Makefile
+index a4ef124..e0d45f1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,7 +9,7 @@ endif
+ CPPFLAGS += -DRINGLAB_XSETS_SHA256='"$(XSETS_HASH)"'
+ CXXFLAGS ?= -O3 -DNDEBUG
+ override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic -pthread
+-CORE = $(BUILD)/json.o $(BUILD)/bitvector.o $(BUILD)/field.o $(BUILD)/circuit.o $(BUILD)/cse.o
++CORE = $(BUILD)/json.o $(BUILD)/bitvector.o $(BUILD)/field.o $(BUILD)/circuit.o $(BUILD)/cse.o $(BUILD)/depth_cse.o $(BUILD)/benchmark_inputs.o
+ LAB = $(CORE) $(BUILD)/matrices.o $(BUILD)/verification.o $(BUILD)/search.o $(BUILD)/backend.o
+ .PHONY: all test clean
+ all: $(BUILD)/ringlab $(BUILD)/xsets $(BUILD)/uber
+@@ -28,7 +28,10 @@ $(BUILD)/xsets: third_party/xsets/X-Sets.cpp | $(BUILD)
+ 	$(CXX) -std=c++17 -O3 -pthread $< -o $@
+ $(BUILD)/uber: third_party/uber/Uber.cpp | $(BUILD)
+ 	$(CXX) -std=c++17 -O3 $< -o $@
+-test: all $(BUILD)/core-test $(BUILD)/experiment-test
++$(BUILD)/depth-cse-test: tests/depth_cse_test.cpp $(CORE)
++	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
++test: all $(BUILD)/core-test $(BUILD)/experiment-test $(BUILD)/depth-cse-test
++	$(BUILD)/depth-cse-test
+ 	$(BUILD)/core-test data/certificates
+ 	$(BUILD)/experiment-test data/certificates
+ 	$(BUILD)/ringlab verify --exhaustive
+diff --git a/README.md b/README.md
+index a3b9648..682295a 100644
+--- a/README.md
++++ b/README.md
+@@ -93,3 +93,13 @@ legacy/                早期演示源码与其依赖、局限说明
+ ```
+ 
+ 新功能使用 C++，优先复用共享核心；开发和计数约定见 [AGENTS.md](AGENTS.md)。第三方来源及 Uber 的内存访问修复见 [third_party/README.md](third_party/README.md)。历史演示仍保留，推荐使用统一 CLI 开展后续实验。
++
++
++## 可选深度约束 CSE
++
++新增 `ringlab analyze --method OUR_DCCSE` 与 `xordepth frontier --include-ours`。默认命令行为不变；官方矩阵与验证流程上的复现、参数及边界见 [对齐实验说明](docs/aligned-depth-cse.md)。
++
++
++合成矩阵规模摸底可使用 `ringlab generate matrix.txt --rows 300 --columns 200 --pattern blocks --seed 123 --output manifest.json`，再通过原 `analyze` / `frontier` / `verify` 流程比较。
++
++深度约束门数优化新版：`--method OUR_DCCSE_V2 [--incumbent FILE]`，包含双策略组合与多使用者联合改写，详见 [V2 算法与预算说明](docs/depth-cse-v2.md)。
+diff --git a/apps/ringlab.cpp b/apps/ringlab.cpp
+index a196efa..4a6a01e 100644
+--- a/apps/ringlab.cpp
++++ b/apps/ringlab.cpp
+@@ -18,10 +18,17 @@ const char *help = R"(ringlab: finite-field / quotient-ring XOR experiments (C++
+   ringlab profile --input DEFINITION.json [optimizer options] --output FILE
+   ringlab search [--family vandermonde|all] [--limit N] --output FILE
+   ringlab compare --output FILE
+-  ringlab analyze MATRIX.txt [--method CSE|MW_SQ|UBER_XSET] [--seeds N]
++  ringlab analyze MATRIX.txt [--method CSE|OUR_DCCSE|OUR_DCCSE_V2|MW_SQ|UBER_XSET] [--seeds N]
++
++  ringlab generate MATRIX.txt --rows M --columns N --pattern sparse|dense|blocks
++                   --seed N --output manifest.json
+ 
+ Optimizer options: --method MW_SQ|UBER_XSET --params THRESH NSTART GIVEUP
+                    --timeout SECONDS --backend PATH
++Depth-CSE options (analyze --method OUR_DCCSE):
++                   --depth D --seeds N --seed N --lookahead --no-refine
++V2 options:        --incumbent FILE (verified circuit or same-target frontier)
++                   V2 runs both greedy variants: 2*N total restarts.
+ Common options:    --data-dir PATH --output FILE
+ 
+ NAME: original, small, or a named family / systematic RS / Cauchy certificate.
+@@ -85,6 +92,9 @@ int main(int argc, char **argv) {
+         RunOptions o;
+         std::string dir = std::string(RINGLAB_ROOT) + "/data/certificates";
+         int samples = 1000, seeds = 1;
++        DepthCseOptions depth_cse;
++        std::string incumbent;
++        int bench_rows=0,bench_columns=0;std::string bench_pattern="dense";
+         bool exhaustive = false;
+         fs::path executable = fs::absolute(argv[0]);
+         char resolved[4096];
+@@ -125,6 +135,22 @@ int main(int argc, char **argv) {
+                 o.limit = parse_int(value());
+             else if (key == "--seeds")
+                 seeds = parse_int(value());
++            else if (key == "--rows")
++                bench_rows=parse_int(value());
++            else if (key == "--columns")
++                bench_columns=parse_int(value());
++            else if (key == "--pattern")
++                bench_pattern=value();
++            else if (key == "--depth")
++                depth_cse.max_depth = parse_int(value());
++            else if (key == "--seed")
++                depth_cse.seed = std::uint64_t(parse_int(value()));
++            else if (key == "--incumbent")
++                incumbent=value();
++            else if (key == "--lookahead")
++                depth_cse.lookahead = true;
++            else if (key == "--no-refine")
++                depth_cse.refine = false;
+             else if (key == "--timeout") {
+                 auto s = value();
+                 std::size_t count = 0;
+@@ -146,8 +172,9 @@ int main(int argc, char **argv) {
+                 "family must be vandermonde or all");
+         require(o.path == "main" || o.path == "projection" || o.path == "direct", "invalid path");
+         require(o.method == "MW_SQ" || o.method == "UBER_XSET" ||
+-                    (command == "analyze" && o.method == "CSE"),
++                    (command == "analyze" && (o.method == "CSE" || o.method == "OUR_DCCSE" || o.method == "OUR_DCCSE_V2")),
+                 "invalid optimizer method");
++        require(incumbent.empty() || (command=="analyze" && o.method=="OUR_DCCSE_V2"),"--incumbent requires analyze --method OUR_DCCSE_V2");
+         Json result;
+         if (command == "verify") {
+             require(name.empty(), "verify accepts --input, not a positional argument");
+@@ -172,11 +199,55 @@ int main(int argc, char **argv) {
+             require(name.empty() && !o.output.empty(), "compare requires --output");
+             compare(Json::read(dir + "/ring_lift_example.json"), o);
+             return 0;
++        } else if (command == "generate") {
++            require(!name.empty(),"generate requires a matrix output path");
++            auto rows=benchmark_inputs(bench_rows,bench_columns,bench_pattern,depth_cse.seed);
++            std::ofstream file(name);require(bool(file),"cannot write benchmark matrix");
++            int ones=0;for(auto &row:rows){ones+=row.count();for(int j=0;j<bench_columns;++j)file<<(row.bit(j)?'1':'0');file<<'\n';}
++            require(bool(file),"benchmark matrix write failed");
++            result=Json::object({{"status","generated"},{"matrix",name},{"outputs",bench_rows},{"inputs",bench_columns},{"pattern",bench_pattern},{"seed",depth_cse.seed},{"ones",ones},{"depth_lower_bound",linear_depth_lower_bound(rows)},{"target_masks",to_json(rows)}});
+         } else if (command == "analyze") {
+             require(!name.empty(), "analyze requires a binary matrix file");
+             int inputs;
+             auto rows = read_matrix(name, inputs);
+-            if (o.method == "CSE") {
++            if (o.method == "OUR_DCCSE" || o.method == "OUR_DCCSE_V2") {
++                depth_cse.restarts=seeds;
++                auto c=synthesize_depth_cse(rows,inputs,depth_cse);
++                int limit=depth_cse.max_depth<0?linear_depth_lower_bound(rows):depth_cse.max_depth;
++                int original_cost=c.cost(), standalone_cost=c.cost();
++                std::string initial_source="own synthesis";
++                if(o.method=="OUR_DCCSE_V2") {
++                    auto alternate_options=depth_cse;
++                    alternate_options.lookahead=!depth_cse.lookahead;
++                    auto alternate=synthesize_depth_cse(rows,inputs,alternate_options);
++                    if(alternate.cost()<c.cost() || (alternate.cost()==c.cost() && circuit_depth(alternate)<circuit_depth(c))) c=alternate;
++                    c=optimize_depth_gates(c,rows,limit); standalone_cost=c.cost();
++                    if(!incumbent.empty()) {
++                        auto evidence=Json::read(incumbent);
++                        std::vector<Json> entries;
++                        if(evidence.has("candidates")) entries=evidence["candidates"].arr;
++                        else entries.push_back(evidence);
++                        for(auto &entry:entries) {
++                            require(entry.has("circuit"),"incumbent requires circuit or frontier candidates");
++                            auto candidate=Circuit::from_json(entry["circuit"]).pruned();
++                            require(candidate.inputs==inputs,"incumbent input mismatch");
++                            candidate.verify(rows);
++                            if(circuit_depth(candidate)<=limit && candidate.cost()<c.cost()) {
++                                c=candidate;initial_source=incumbent;
++                                if(entry.has("label")) initial_source+=":"+entry["label"].string();
++                            }
++                        }
++                        c=optimize_depth_gates(c,rows,limit);
++                    }
++                }
++                result=Json::object({{"original_ours_cost",original_cost},{"standalone_cost",standalone_cost},{"initial_source",initial_source},{"status","verified"},{"method",o.method},{"seeds",seeds},{"seed",depth_cse.seed},{"lookahead",depth_cse.lookahead},{"refine",depth_cse.refine},{"depth_limit",limit},{"depth",circuit_depth(c)},{"cost",c.cost()},{"circuit",c.json()}});
++                if(o.method=="OUR_DCCSE_V2") result["total_synthesis_restarts"]=2*seeds;
++                else {
++                    result.obj.erase("original_ours_cost");
++                    result.obj.erase("standalone_cost");
++                    result.obj.erase("initial_source");
++                }
++            } else if (o.method == "CSE") {
+                 auto c = synthesize(rows, inputs);
+                 for (int seed = 1; seed < seeds; ++seed) {
+                     auto candidate = synthesize(rows, inputs, seed);
+diff --git a/docs/aligned-depth-cse.md b/docs/aligned-depth-cse.md
+new file mode 100644
+index 0000000..e589c42
+--- /dev/null
++++ b/docs/aligned-depth-cse.md
+@@ -0,0 +1,48 @@
++# 仓库原流程复现与 OUR_DCCSE 接入
++
++## 范围与来源
++
++基准版本为 `Leyang-Xia/Ring_Encoing` 的 `4b6a4e83b00c2cd66cfd9798e41959ca0361a25a`，实验开始时也是远端 main。此次严格复现的是 `xordepth/docs/count-depth-frontier.md` 的四组正式矩阵和审计，以及 `depth-bounded-search.md` 的两组深度 6 搜索；另运行根 README 的 RS direct UBER_XSET profile。不是重新执行全部家族、环参数及专利研究搜索。
++
++- 输入逐字节使用 `xordepth/data/matrices/` 原文件，没有生成随机矩阵。
++- `frontier` 使用原 `--share 2,3,0`，Vandermonde/RS 使用原 `--also` 证据文件；完整输入到完整输出、不计接线与免费别名的成本口径不变。
++- 新算法直接进入共享核心 `src/depth_cse.cpp`；根 `ringlab analyze --method OUR_DCCSE` 和 `xordepth frontier --include-ours` 调用同一实现。
++- 不加 `--include-ours` 时，四组输出文件与未修改版本逐字节一致。原 60 条候选保留，新增 8 条候选与原候选共用 `candidate()`、Pareto 标记和 `verify_result()`。验证额外检查有声明时的深度上限。
++- 原有证据 JSON、第三方后端和矩阵均未改写。
++
++## 参数
++
++主比较新增候选为每矩阵 `D0` 和 `D0+1` 两档，`restarts=1, seed=0, lookahead=false, refine=true`。这与原 frontier 单次 seed0 的调用方式对齐，不将新增多重启最好结果伪装为同一基准。可选 `--ours-lookahead` 可启用前瞻，本次主比较没有启用谱方法。
++
++两条补充 `ringlab analyze` 使用 `depth=6, seeds=8, seed=1`，匹配 Beam 的深度、种子标签和重启次数。二者的搜索空间/每次工作量不同，不能据此声称等计算预算。Beam 完整保留 `beam=64, branch=16, representations=8, restarts=8, seed=1, timeout=180`。
++
++最小深度表的原基准是仓库原 frontier 中所有已验证候选在该深度约束下的最好值，包括导入、组合和重平衡的完整线路；不是对该深度下所有可能算法的最优性证明。历史保存候选经历的搜索预算不统一，因此比较是已有可实现上界的更新，而不是同运行时间排名。
++
++## 运行
++
++在指定 commit 上应用补丁后：
++
++```bash
++make -j3 test
++(cd xordepth && make -j3 test)
++bash docs/run-aligned-benchmark.sh /tmp/aligned-results
++```
++
++脚本默认也运行官方 180 秒 Beam 搜索及 60 秒 profile。若只重跑快速 frontier 部分，可显式设置 `RUN_BOUNDED=0 RUN_PROFILE=0`；此次交付中的两组 Beam 和 profile 已真实执行，没有用归档结果代替执行。
++
++单独分析自己的矩阵：
++
++```bash
++./build/ringlab analyze matrix.txt --method OUR_DCCSE --depth 6 --seeds 8 --seed 1 --output /tmp/ours.json
++./build/ringlab verify --input /tmp/ours.json --samples 0
++```
++
++## 实现边界
++
++OUR_DCCSE 是已讨论的深度可行公共子表达式提取，带相同 GF(2) mask 的等价信号复用、按到达深度合并剩余项，以及受限局部门重代入。不是完整 BP/DCLO、SAT 或全局最优算法；门级深度不包含扇出和布线时延。实现当前支持 0..60 的深度上限，系数 mask 使用原动态位向量，不受 64 位限制。
++
++共享正确性与功能验证采用原 `Circuit`；深度由核心和原 `xd::depth_profile` 两个路径交叉检查。新测试覆盖 200 输入 mask、零/单位/重复输出、固定种子重现、不可行深度拒绝和两种评分/细化开关。根 Make 和 xordepth Make 的全部测试通过；CMake 源列表/测试目标同步更新，当前运行环境缺少 cmake/ctest，未执行 CMake 构建。
++
++本次没有推送或修改远端仓库。完整补丁和原生 CLI 结果可独立审阅。
++
++补充检查：新增核心单元用 AddressSanitizer/UndefinedBehaviorSanitizer 运行通过；当前 ptrace 环境不支持 LeakSanitizer，因此该次检查使用 `ASAN_OPTIONS=detect_leaks=0`，不声称完成泄漏检测。
+diff --git a/docs/run-aligned-benchmark.sh b/docs/run-aligned-benchmark.sh
+new file mode 100644
+index 0000000..c63fe9b
+--- /dev/null
++++ b/docs/run-aligned-benchmark.sh
+@@ -0,0 +1,48 @@
++#!/usr/bin/env bash
++# Run from a checkout at 4b6a4e83... after applying the integration patch.
++set -euo pipefail
++repo_root="$(cd "$(dirname "$0")/.." && pwd)"
++out="${1:-$repo_root/data/results/aligned-depth-cse}"
++mkdir -p "$out"
++out="$(cd "$out" && pwd)"
++mkdir -p "$out/baseline" "$out/integrated"
++cd "$repo_root"
++make -j3
++make test > "$out/root-tests.log" 2>&1
++cd xordepth
++make -j3
++make test > "$out/xordepth-tests.log" 2>&1
++for case_name in vandermonde rs cauchy gf8; do
++ case "$case_name" in
++  vandermonde) matrix=data/matrices/vandermonde_8to17_direct.txt; extra=(--also ../data/certificates/structured_ring_example.json);;
++  rs) matrix=data/matrices/systematic_rs_7_4_direct.txt; extra=(--also ../data/certificates/practical_mds_examples.json);;
++  cauchy) matrix=data/matrices/cauchy_7_4_direct.txt; extra=();;
++  gf8) matrix=data/matrices/gf8_10x10_expanded.txt; extra=();;
++ esac
++ ./build/xordepth frontier "$matrix" --share 2,3,0 "${extra[@]}" --output "$out/baseline/$case_name.json" > "$out/baseline/$case_name.stdout.json"
++ ./build/xordepth verify "$out/baseline/$case_name.json" > "$out/baseline/$case_name.verify.json"
++ ./build/xordepth frontier "$matrix" --share 2,3,0 "${extra[@]}" --include-ours --ours-restarts 1 --ours-seed 0 --output "$out/integrated/$case_name.json" > "$out/integrated/$case_name.stdout.json"
++ ./build/xordepth verify "$out/integrated/$case_name.json" > "$out/integrated/$case_name.verify.json"
++done
++./build/xordepth audit ../data/certificates/*.json --output "$out/baseline/audit.json" > "$out/baseline/audit.stdout.json"
++if [[ "${RUN_BOUNDED:-1}" == 1 ]]; then
++ ./build/xordepth bounded data/matrices/vandermonde_8to17_direct.txt --depth 6 --beam 64 --branch 16 --representations 8 --restarts 8 --seed 1 --timeout 180 --output "$out/baseline/bounded_vandermonde.json" > "$out/baseline/bounded_vandermonde.stdout.json" &
++ first=$!
++ ./build/xordepth bounded data/matrices/systematic_rs_7_4_direct.txt --depth 6 --beam 64 --branch 16 --representations 8 --restarts 8 --seed 1 --timeout 180 --output "$out/baseline/bounded_rs.json" > "$out/baseline/bounded_rs.stdout.json" &
++ second=$!
++ wait "$first"
++ wait "$second"
++ ./build/xordepth verify "$out/baseline/bounded_vandermonde.json" > "$out/baseline/bounded_vandermonde.verify.json"
++ ./build/xordepth verify "$out/baseline/bounded_rs.json" > "$out/baseline/bounded_rs.verify.json"
++fi
++cd "$repo_root"
++for case_name in vandermonde rs; do
++ if [[ "$case_name" == vandermonde ]]; then matrix=xordepth/data/matrices/vandermonde_8to17_direct.txt; else matrix=xordepth/data/matrices/systematic_rs_7_4_direct.txt; fi
++ ./build/ringlab analyze "$matrix" --method OUR_DCCSE --depth 6 --seeds 8 --seed 1 --output "$out/integrated/ours_${case_name}_d6_r8.json" > "$out/integrated/ours_${case_name}_d6_r8.stdout.json"
++ ./build/ringlab verify --input "$out/integrated/ours_${case_name}_d6_r8.json" --samples 0 > "$out/integrated/ours_${case_name}_d6_r8.verify.json"
++done
++if [[ "${RUN_PROFILE:-1}" == 1 ]]; then
++ ./build/ringlab profile systematic-rs-7-4 --path direct --method UBER_XSET --params 0 3 0 --timeout 60 --output "$out/baseline/readme_rs_profile.json" > "$out/baseline/readme_rs_profile.stdout.json"
++ ./build/ringlab verify --input "$out/baseline/readme_rs_profile.json" --samples 0 > "$out/baseline/readme_rs_profile.verify.json"
++fi
++printf 'Aligned native CLI experiments and verification complete: %s\n' "$out"
+diff --git a/include/ringlab/core.hpp b/include/ringlab/core.hpp
+index 75f7110..d77a34c 100644
+--- a/include/ringlab/core.hpp
++++ b/include/ringlab/core.hpp
+@@ -98,6 +98,25 @@ class GreedyCircuit {
+     Circuit export_circuit(const std::vector<int> &outputs) const;
+ };
+ Circuit synthesize(const Rows &targets, int inputs, std::uint64_t seed = 0);
++
++// Depth-feasible common-subexpression heuristic; not an exact optimizer.
++struct DepthCseOptions {
++    int max_depth = -1; // -1 selects the row-weight minimum depth.
++    int restarts = 1;
++    std::uint64_t seed = 0;
++    bool lookahead = false;
++    bool refine = true;
++};
++int circuit_depth(const Circuit &circuit);
++int linear_depth_lower_bound(const Rows &rows);
++Circuit synthesize_depth_cse(const Rows &targets, int inputs,
++                             const DepthCseOptions &options = {});
++
++Circuit optimize_depth_gates(Circuit circuit, const Rows &targets, int max_depth,
++                             int max_trials = 400);
++
++Rows benchmark_inputs(int outputs, int inputs, const std::string &pattern, std::uint64_t seed);
++
+ struct Composed {
+     Circuit circuit;
+     int main_cost = 0;
+diff --git a/src/benchmark_inputs.cpp b/src/benchmark_inputs.cpp
+new file mode 100644
+index 0000000..50025e5
+--- /dev/null
++++ b/src/benchmark_inputs.cpp
+@@ -0,0 +1,22 @@
++#include "ringlab/core.hpp"
++namespace ringlab {
++Rows benchmark_inputs(int outputs,int inputs,const std::string&pattern,std::uint64_t seed) {
++    require(outputs>0&&inputs>0&&std::uint64_t(outputs)*inputs<=5000000,"invalid benchmark dimensions");
++    require(pattern=="sparse"||pattern=="dense"||pattern=="blocks","unknown benchmark pattern");
++    SeedRandom rng(seed);Rows rows;
++    for(int i=0;i<outputs;++i) {
++        Mask row;
++        if(pattern=="blocks") {
++            int boundary=(inputs/2/4)*4;
++            for(int a=0;a<boundary;a+=4) if(rng.below(10000)<5000)
++                for(int j=a;j<a+4;++j) row.toggle(j);
++            for(int j=boundary;j<inputs;++j) if(rng.below(10000)<2000) row.toggle(j);
++        } else {
++            auto threshold=pattern=="sparse"?1500U:5000U;
++            for(int j=0;j<inputs;++j) if(rng.below(10000)<threshold) row.toggle(j);
++        }
++        rows.push_back(row);
++    }
++    return rows;
++}
++} // namespace ringlab
+diff --git a/src/depth_cse.cpp b/src/depth_cse.cpp
+new file mode 100644
+index 0000000..ca65e4c
+--- /dev/null
++++ b/src/depth_cse.cpp
+@@ -0,0 +1,201 @@
++#include "ringlab/core.hpp"
++#include <algorithm>
++#include <map>
++#include <queue>
++#include <random>
++#include <set>
++#include <tuple>
++
++namespace ringlab {
++namespace {
++std::unordered_map<int,int> node_depths(const Circuit &c) {
++    std::unordered_map<int,int> depths;
++    for (int i=0;i<c.inputs;++i) depths[i]=0;
++    if(c.has_zero) depths[c.zero_node]=0;
++    for(auto &op:c.ops) {
++        require(!depths.count(op[0]) && depths.count(op[1]) && depths.count(op[2]), "invalid XOR dependency");
++        depths[op[0]]=1+std::max(depths.at(op[1]),depths.at(op[2]));
++    }
++    return depths;
++}
++} // namespace
++int circuit_depth(const Circuit &c) {
++    auto depths=node_depths(c);int result=0;
++    for(int output:c.outputs) result=std::max(result,depths.at(output));
++    return result;
++}
++int linear_depth_lower_bound(const Rows &rows) {
++    int result=0;
++    for(auto &row:rows) {int d=0;std::size_t cap=1;while(cap<std::size_t(row.count())){cap*=2;++d;}result=std::max(result,d);}
++    return result;
++}
++namespace {
++using Pair=std::pair<int,int>;
++struct Candidate {int a,b,t,dt,gain,count;long long delta;std::vector<int> uses;int score=0;};
++Circuit greedy_depth_cse(const Rows&rows,int n,int D,int variant,unsigned seed){
++ std::mt19937 rng(seed);Circuit c;c.inputs=n;c.zero_node=n;std::vector<Mask> masks;std::vector<int>d(n+1,0);
++ std::unordered_map<Mask,int,MaskHash> cache;
++ for(int j=0;j<n;++j){masks.push_back(Mask::unit(j));cache[masks.back()]=j;}masks.emplace_back();cache[masks.back()]=n;
++ std::vector<std::set<int>> expr;for(auto&r:rows){std::set<int> e;for(int j=0;j<n;++j)if(r.bit(j))e.insert(j);expr.push_back(e);}
++ auto getnode=[&](int a,int b){Mask m=masks[a]^masks[b];int depth=1+std::max(d[a],d[b]);auto it=cache.find(m);if(variant&&it!=cache.end()&&d[it->second]<=depth)return it->second;
++  int t=masks.size();masks.push_back(m);d.push_back(depth);c.ops.push_back({t,a,b});auto old=cache.find(m);if(old==cache.end()||depth<d[old->second])cache[m]=t;return t;};
++ // Preserve a feasible tree completion for every output after each replacement.
++ while(true){
++  std::map<Pair,std::vector<int>> counts;std::vector<long long> W(expr.size(),0);
++  for(size_t i=0;i<expr.size();++i){for(int a:expr[i])W[i]+=1LL<<d[a];for(auto ia=expr[i].begin();ia!=expr[i].end();++ia)for(auto ib=std::next(ia);ib!=expr[i].end();++ib){int a=*ia,b=*ib,dt=1+std::max(d[a],d[b]);auto it=cache.find(masks[a]^masks[b]);if(variant&&it!=cache.end()&&d[it->second]<=dt)dt=d[it->second];if(W[i]-(1LL<<d[a])-(1LL<<d[b])+(1LL<<dt)<=(1LL<<D))counts[{a,b}].push_back(i);}}
++  std::vector<Candidate> cand;int bestgain=0;
++  for(auto &kv:counts){auto [a,b]=kv.first;int dt=1+std::max(d[a],d[b]),t=-1;auto it=cache.find(masks[a]^masks[b]);if(variant&&it!=cache.end()&&d[it->second]<=dt){t=it->second;dt=d[t];}int gain=int(kv.second.size())-(t<0);if(gain<=0)continue;bestgain=std::max(bestgain,gain);Candidate q{a,b,t,dt,gain,int(kv.second.size()),(1LL<<dt)-(1LL<<d[a])-(1LL<<d[b]),kv.second};q.score=gain;cand.push_back(q);}
++  if(cand.empty())break;
++  auto immediate=[](const Candidate&a,const Candidate&b){return std::make_tuple(-a.gain,a.delta,a.dt,a.a,a.b)<std::make_tuple(-b.gain,b.delta,b.dt,b.a,b.b);};
++  std::sort(cand.begin(),cand.end(),immediate);
++  if(variant==2){
++   // Examine at most eight strong pairs, including equal-score candidates in random order.
++   std::shuffle(cand.begin(),cand.end(),rng);std::stable_sort(cand.begin(),cand.end(),[&](const Candidate&a,const Candidate&b){return std::make_tuple(-a.gain,a.delta,a.dt)<std::make_tuple(-b.gain,b.delta,b.dt);});
++   cand.erase(std::remove_if(cand.begin(),cand.end(),[&](const Candidate&q){return q.gain<bestgain-1;}),cand.end());if(cand.size()>8)cand.resize(8);
++   for(auto&q:cand){std::map<int,int> future;
++    for(int i:q.uses){long long wp=W[i]+q.delta;for(int z:expr[i])if(z!=q.a&&z!=q.b&&z!=q.t){int dt2=1+std::max(q.dt,d[z]);if(wp-(1LL<<q.dt)-(1LL<<d[z])+(1LL<<dt2)<=(1LL<<D))++future[z];}}
++    int h=0;for(auto &kv:future)h=std::max(h,kv.second);q.score=q.gain+std::max(0,h-1);
++   }
++  }
++  auto key=[](const Candidate&q){return std::make_tuple(q.score,q.gain,-q.delta,-q.dt);};
++  auto best=key(cand.front());for(auto&q:cand)best=std::max(best,key(q));std::vector<int> tied;for(int i=0;i<int(cand.size());++i)if(key(cand[i])==best)tied.push_back(i);
++  auto q=cand[tied[rng()%tied.size()]];int t=getnode(q.a,q.b);
++  for(int i:q.uses){expr[i].erase(q.a);expr[i].erase(q.b);if(expr[i].count(t))expr[i].erase(t);else expr[i].insert(t);}
++ }
++ for(auto&e:expr){std::priority_queue<Pair,std::vector<Pair>,std::greater<Pair>>h;for(int a:e)h.push({d[a],a});while(h.size()>1){int a=h.top().second;h.pop();int b=h.top().second;h.pop();int t=getnode(a,b);h.push({d[t],t});}c.outputs.push_back(h.empty()?n:h.top().second);}
++ auto p=c.pruned();p.verify(rows);require(circuit_depth(p)<=D,"depth constraint violated");return p;
++}
++std::pair<int,int> metric(const Circuit&c){return {c.cost(),circuit_depth(c)};}
++// Reconnect a gate only to earlier equivalent signals; accept a strict
++// (live gates, output depth) improvement after full-circuit verification.
++Circuit improve(Circuit c,const Rows&rows,int D,int&attempts,int&accepted){
++ attempts=accepted=0;
++ for(int pass=0;pass<12&&attempts<200;++pass){bool changed=false;auto vals=c.verify(rows);auto dep=node_depths(c);
++ std::vector<int> available;std::unordered_map<Mask,int,MaskHash> bymask;
++ auto add=[&](int id){available.push_back(id);auto it=bymask.find(vals.at(id));if(it==bymask.end()||dep.at(id)<dep.at(it->second))bymask[vals.at(id)]=id;};
++ for(int i=0;i<c.inputs;++i) { add(i); }
++ add(c.zero_node);
++ for(int k=0;k<int(c.ops.size())&&!changed&&attempts<200;++k){auto op=c.ops[k];int t=op[0];std::vector<std::array<int,3>> candidates;
++ for(int a:available){auto it=bymask.find(vals.at(a)^vals.at(t));if(it==bymask.end())continue;int b=it->second;if(a>b)continue;if((a==op[1]&&b==op[2])||(a==op[2]&&b==op[1]))continue;int d=1+std::max(dep.at(a),dep.at(b));if(d>D)continue;candidates.push_back({d,a,b});}
++ std::sort(candidates.begin(),candidates.end());if(candidates.size()>4)candidates.resize(4);
++ for(auto &q:candidates){++attempts;Circuit trial=c;trial.ops[k]={t,q[1],q[2]};trial=trial.pruned();auto mt=metric(trial);if(mt.second<=D&&mt<metric(c)){trial.verify(rows);c=trial;++accepted;changed=true;break;}}
++ if(!changed)add(t);
++ }
++ if(!changed)break;
++ }
++ c.verify(rows);require(circuit_depth(c)<=D,"resubstitution depth");return c;
++}
++
++} // namespace
++Circuit synthesize_depth_cse(const Rows &rows,int inputs,const DepthCseOptions &options) {
++    require(inputs>0 && inputs<1000000,"invalid depth-CSE input count");
++    require(!rows.empty(),"depth-CSE requires output rows");
++    for(auto &row:rows) require(row.bits()<=std::size_t(inputs),"target exceeds input width");
++    require(options.restarts>0 && options.restarts<=1000000,"depth-CSE restarts must be positive");
++    int lower=linear_depth_lower_bound(rows);
++    int D=options.max_depth<0?lower:options.max_depth;
++    require(D>=lower && D<=60,"depth-CSE limit must cover row-weight bound and be <=60");
++    Circuit best;bool found=false;
++    for(int k=0;k<options.restarts;++k) {
++        auto c=greedy_depth_cse(rows,inputs,D,options.lookahead?2:1,unsigned(options.seed+k));
++        if(!found || metric(c)<metric(best)) {best=c;found=true;}
++    }
++    if(options.refine) {int attempts=0,accepted=0;best=improve(best,rows,D,attempts,accepted);}
++    best.verify(rows);
++    require(circuit_depth(best)<=D,"depth-CSE final depth limit");
++    return best;
++}
++} // namespace ringlab
++
++namespace ringlab {
++// Remove a shared gate only when every consumer can be reconstructed from
++// earlier signals. Unlike single-gate hill climbing, all consumer rewrites
++// are committed together, allowing individually neutral rewrites to save a gate.
++Circuit optimize_depth_gates(Circuit circuit, const Rows &targets, int limit,
++                             int max_trials) {
++    circuit = circuit.pruned();
++    circuit.verify(targets);
++    require(circuit_depth(circuit) <= limit, "initial circuit exceeds depth limit");
++    require(max_trials >= 0, "negative rewrite budget");
++    int trials = 0;
++    for (int pass = 0; pass < 4 && trials < max_trials; ++pass) {
++        bool changed = false;
++        const auto values = circuit.verify(targets);
++        // Latest arrival times from output deadlines allow consuming slack
++        // away from the critical path while preserving the global hard bound.
++        std::unordered_map<int,int> latest;
++        for(int output:circuit.outputs) latest[output]=limit;
++        for(auto it=circuit.ops.rbegin();it!=circuit.ops.rend();++it) {
++            int deadline=latest.at((*it)[0])-1;
++            for(int parent:{(*it)[1],(*it)[2]}) {
++                auto old=latest.find(parent);
++                if(old==latest.end() || deadline<old->second) latest[parent]=deadline;
++            }
++        }
++        std::unordered_map<int,int> uses;
++        std::set<int> outputs(circuit.outputs.begin(), circuit.outputs.end());
++        for (auto op : circuit.ops) { ++uses[op[1]]; ++uses[op[2]]; }
++        // Low fanout first; attempt every consumer as one transaction.
++        std::vector<int> victims;
++        for (auto op : circuit.ops)
++            if (!outputs.count(op[0])) victims.push_back(op[0]);
++        std::stable_sort(victims.begin(), victims.end(), [&](int a,int b) {
++            return uses[a] < uses[b];
++        });
++        for (int victim : victims) {
++            if (trials++ >= max_trials) break;
++            Circuit next; next.inputs=circuit.inputs;
++            next.has_zero=circuit.has_zero; next.zero_node=circuit.zero_node;
++            std::unordered_map<int,int> alias, ready;
++            std::unordered_map<Mask,int,MaskHash> bymask;
++            std::vector<int> available;
++            auto add = [&](int id, int depth) {
++                alias[id]=id; ready[id]=depth; available.push_back(id);
++                auto it=bymask.find(values.at(id));
++                if (it==bymask.end() || depth<ready.at(it->second))
++                    bymask[values.at(id)]=id;
++            };
++            for (int i=0;i<circuit.inputs;++i) add(i,0);
++            if (circuit.has_zero) add(circuit.zero_node,0);
++            bool valid=true;
++            for (auto op : circuit.ops) {
++                int t=op[0]; if(t==victim) continue;
++                const Mask &target=values.at(t);
++                auto equal=bymask.find(target);
++                if(equal!=bymask.end() && ready.at(equal->second)<=latest.at(t)) {
++                    alias[t]=equal->second; continue;
++                }
++                int left=-1,right=-1,best_depth=latest.at(t)+1;
++                if(alias.count(op[1]) && alias.count(op[2])) {
++                    left=alias.at(op[1]);right=alias.at(op[2]);
++                    best_depth=1+std::max(ready.at(left),ready.at(right));
++                } else {
++                    for(int a:available) {
++                        auto it=bymask.find(values.at(a)^target);
++                        if(it==bymask.end()) continue;
++                        int b=it->second, depth=1+std::max(ready.at(a),ready.at(b));
++                        if(depth<best_depth) {left=a;right=b;best_depth=depth;}
++                    }
++                }
++                if(left<0 || best_depth>latest.at(t)) {valid=false;break;}
++                next.ops.push_back({t,left,right}); add(t,best_depth);
++            }
++            if(!valid) continue;
++            for(int output:circuit.outputs) {
++                if(!alias.count(output)) {valid=false;break;}
++                next.outputs.push_back(alias.at(output));
++            }
++            if(!valid) continue;
++            next=next.pruned(); next.verify(targets);
++            require(circuit_depth(next)<=limit,"rewrite exceeds depth limit");
++            if(next.cost()<circuit.cost()) {
++                circuit=std::move(next);changed=true;break;
++            }
++        }
++        if(!changed) break;
++    }
++    circuit.verify(targets);
++    require(circuit_depth(circuit)<=limit,"final rewrite depth limit");
++    return circuit;
++}
++} // namespace ringlab
+diff --git a/src/verification.cpp b/src/verification.cpp
+index e850054..8b2b5af 100644
+--- a/src/verification.cpp
++++ b/src/verification.cpp
+@@ -407,6 +407,10 @@ Json verify_file(const Json &data, int samples, const Json *original) {
+     }
+     if (data.has("target_masks") && data.has("status")) {
+         require(data["status"].string() == "verified", "matrix analysis was not completed");
++        if(data.has("depth_limit")) {
++            auto c=Circuit::from_json(data["circuit"]);
++            require(circuit_depth(c)==data["depth"].int32() && circuit_depth(c)<=data["depth_limit"].int32(),"matrix analysis depth mismatch");
++        }
+         Circuit::from_json(data["circuit"]).verify(rows_json(data["target_masks"]));
+         return Json::object({{"status", "verified"}, {"symbolic_verification", true}});
+     }
+diff --git a/tests/cli_test.sh b/tests/cli_test.sh
+index 109ae27..2f70027 100644
+--- a/tests/cli_test.sh
++++ b/tests/cli_test.sh
+@@ -54,3 +54,23 @@ test "$status" -eq 143
+ if kill -0 "$child" 2>/dev/null; then kill -KILL "$child"; exit 1; fi
+ grep -q '"status": "cancelled"' "$tmp/cancelled.json"
+ printf 'CLI: custom definitions and cancellation cleanup passed\n'
++
++"$lab" analyze "$tmp/matrix.txt" --method OUR_DCCSE --depth 1 --seeds 2 --seed 7 --output "$tmp/ours.json" > /dev/null
++"$lab" verify --input "$tmp/ours.json" --samples 0 > /dev/null
++grep -q '"cost": 1' "$tmp/ours.json"
++expect_fail "$lab" analyze "$tmp/matrix.txt" --method OUR_DCCSE --depth 0
++printf 'CLI: OUR_DCCSE analyze/verify and depth rejection passed\n'
++
++cp "$tmp/ours.json" "$tmp/ours-bad-depth.json"
++perl -0pi -e 's/"depth_limit":\s*1/"depth_limit": 0/' "$tmp/ours-bad-depth.json"
++expect_fail "$lab" verify --input "$tmp/ours-bad-depth.json" --samples 0
++"$lab" analyze "$tmp/matrix.txt" --method OUR_DCCSE_V2 --depth 1 --seeds 2 --seed 7 --incumbent "$tmp/ours.json" --output "$tmp/v2.json" > /dev/null
++"$lab" verify --input "$tmp/v2.json" --samples 0 > /dev/null
++grep -q '"total_synthesis_restarts": 4' "$tmp/v2.json"
++expect_fail "$lab" analyze "$tmp/matrix.txt" --method OUR_DCCSE_V2 --depth 0
++expect_fail "$lab" analyze "$tmp/matrix.txt" --method OUR_DCCSE_V2 --depth 1 --incumbent "$tmp/ours-bad-depth.json.invalid"
++printf 'CLI: V2 synthesis, incumbent verification and hard-depth rejection passed\n'
++
++printf '000\n100\n101\n101\n' > "$tmp/different-target.txt"
++expect_fail "$lab" analyze "$tmp/different-target.txt" --method OUR_DCCSE_V2 --depth 1 --incumbent "$tmp/ours.json"
++expect_fail "$lab" analyze "$tmp/matrix.txt" --method CSE --incumbent "$tmp/ours.json"
+diff --git a/tests/depth_cse_test.cpp b/tests/depth_cse_test.cpp
+new file mode 100644
+index 0000000..f86b551
+--- /dev/null
++++ b/tests/depth_cse_test.cpp
+@@ -0,0 +1,33 @@
++#include "ringlab/core.hpp"
++#include <iostream>
++#include <random>
++using namespace ringlab;
++int main(){try{
++ // Both consumers must be rewritten together: each rewrite alone saves no gate.
++ Circuit shared;shared.inputs=4;shared.zero_node=4;
++ shared.ops={{{5,0,1}},{{6,0,2}},{{7,0,3}},{{8,5,2}},{{9,5,3}}};
++ shared.outputs={6,7,8,9};Rows multi{Mask(5),Mask(9),Mask(7),Mask(11)};
++ shared.verify(multi);auto reduced=optimize_depth_gates(shared,multi,2);
++ require(reduced.cost()==4&&circuit_depth(reduced)==2,"transactional multi-consumer gate elimination");
++ require(shared.cost()==5,"optimizer preserves caller circuit");
++ bool invalid_initial=false;try{optimize_depth_gates(shared,multi,1);}catch(const std::exception&){invalid_initial=true;}
++ require(invalid_initial,"reject initial depth violation");
++ auto no_budget=optimize_depth_gates(shared,multi,2,0);require(no_budget.cost()==5,"zero rewrite budget");
++ Circuit slack;slack.inputs=5;slack.zero_node=5;
++ slack.ops={{{6,0,1}},{{7,0,4}},{{8,7,2}},{{9,7,3}},{{10,1,4}},{{11,6,2}},{{12,6,3}}};
++ slack.outputs={8,9,10,11,12};Rows slack_rows{Mask(21),Mask(25),Mask(18),Mask(7),Mask(11)};
++ auto slack_reduced=optimize_depth_gates(slack,slack_rows,3);
++ require(slack_reduced.cost()<slack.cost()&&circuit_depth(slack_reduced)<=3,"consume timing slack to save gates");
++ Rows example{Mask(15),Mask(51),Mask(60)};DepthCseOptions o;o.max_depth=2;
++ auto c=synthesize_depth_cse(example,6,o);c.verify(example);require(c.cost()==6&&circuit_depth(c)==2,"shared-pair example");
++ o.lookahead=true;o.restarts=3;o.seed=7;auto a=synthesize_depth_cse(example,6,o),b=synthesize_depth_cse(example,6,o);require(a.same(b),"fixed options deterministic");
++ Rows aliases{Mask(),Mask::unit(0),Mask::unit(0),Mask::unit(199)};o=DepthCseOptions{};auto alias=synthesize_depth_cse(aliases,200,o);require(alias.cost()==0&&circuit_depth(alias)==0,"zero/identity/repeated aliases");
++ Mask wide=Mask::unit(0)^Mask::unit(199);auto w=synthesize_depth_cse({wide,wide},200,o);require(w.cost()==1&&circuit_depth(w)==1,"wide masks and duplicate outputs");
++ bool rejected=false;o.max_depth=0;try{synthesize_depth_cse({wide},200,o);}catch(const std::exception&){rejected=true;}require(rejected,"reject impossible depth");
++ std::mt19937 rng(123);for(int k=0;k<20;++k){Rows rows;for(int i=0;i<9;++i){Mask m;for(int j=0;j<10;++j)if(rng()%2)m.toggle(j);rows.push_back(m);}for(bool look:{false,true})for(bool refine:{false,true}){o=DepthCseOptions{};o.lookahead=look;o.refine=refine;auto r=synthesize_depth_cse(rows,10,o);r.verify(rows);auto v2=optimize_depth_gates(r,rows,linear_depth_lower_bound(rows),40);v2.verify(rows);require(v2.cost()<=r.cost(),"rewrite gate count monotonicity");require(circuit_depth(v2)<=linear_depth_lower_bound(rows),"rewrite hard limit");require(circuit_depth(r)<=linear_depth_lower_bound(rows),"random case hard depth");}}
++ auto generated=benchmark_inputs(300,200,"blocks",123);require(generated.size()==300,"benchmark row count");
++ for(auto &row:generated)require(row.bits()<=200,"benchmark column count");
++ require(generated==benchmark_inputs(300,200,"blocks",123),"benchmark seed repeatability");
++ bool bad_pattern=false;try{benchmark_inputs(10,10,"invalid",0);}catch(const std::exception&){bad_pattern=true;}require(bad_pattern,"benchmark invalid pattern");
++ std::cout<<"depth-CSE: sharing, reproducibility, wide masks, aliases, hard limits and refinements passed\n";
++ }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
+diff --git a/xordepth/Makefile b/xordepth/Makefile
+index bc5e3d0..ca4cdfa 100644
+--- a/xordepth/Makefile
++++ b/xordepth/Makefile
+@@ -9,7 +9,7 @@ CPPFLAGS += -I$(INCLUDE) -Iinclude
+ CXXFLAGS ?= -O3 -DNDEBUG
+ override CXXFLAGS += -std=c++17 -Wall -Wextra -Wpedantic
+ 
+-SHARED = $(CORE)/json.cpp $(CORE)/bitvector.cpp $(CORE)/circuit.cpp $(CORE)/cse.cpp
++SHARED = $(CORE)/json.cpp $(CORE)/bitvector.cpp $(CORE)/circuit.cpp $(CORE)/cse.cpp $(CORE)/depth_cse.cpp
+ LOCAL = src/xd_depth.cpp src/xd_frontier.cpp src/xd_search.cpp
+ 
+ .PHONY: all test clean
+diff --git a/xordepth/README.md b/xordepth/README.md
+index 58e608b..f96ca8e 100644
+--- a/xordepth/README.md
++++ b/xordepth/README.md
+@@ -90,3 +90,8 @@ docs/                方法、证明与完整数据
+ - 所有数字都是启发式上界。`depth_lower_bound` 很弱（只看单行权重），`深度 = 下界 + 1` 不代表接近最优。
+ - 重结合不改变任何输出的功能、不增加门数，因此不会改变原有效果的任何计数结论。
+ - `cost` 不计输入/输出接线、补零与输出别名。
++
++
++## 可选候选：OUR_DCCSE
++
++在原 `frontier` 命令上增加 `--include-ours --ours-restarts 1 --ours-seed 0`，即可在同一结果和 Pareto 前沿中增加最小深度与最小深度加一的深度约束 CSE 候选。验证仍使用 `xordepth verify`。不加选项时原有结果不变。详见 [原流程接入说明](../docs/aligned-depth-cse.md)。
+diff --git a/xordepth/apps/xordepth.cpp b/xordepth/apps/xordepth.cpp
+index 55d3553..64c03c3 100644
+--- a/xordepth/apps/xordepth.cpp
++++ b/xordepth/apps/xordepth.cpp
+@@ -15,6 +15,10 @@ const char *help = R"(xordepth: XOR count / critical-path depth frontier (C++17)
+ Options:
+   --share LIST       share thresholds to sweep, e.g. 2,3,4,0 (0 = no sharing)
+   --depth-aware      break equal-frequency ties towards the earliest-ready pair
++  --include-ours     add OUR_DCCSE at minimum depth and minimum+1
++  --ours-restarts N  depth-CSE restarts (default 1)
++  --ours-seed N      depth-CSE seed (default 0)
++  --ours-lookahead   enable limited lookahead scoring
+   --also FILE.json   offer stored circuits that compute the same transform
+   --depth D          hard maximum output depth for bounded search
+   --beam N           bounded Beam width
+@@ -90,6 +94,14 @@ int main(int argc, char **argv) {
+                 ringlab::require(!o.shares.empty(), "--share requires at least one threshold");
+             } else if (key == "--depth-aware") {
+                 o.depth_aware = true;
++            } else if (key == "--include-ours") {
++                o.include_ours=true;
++            } else if (key == "--ours-restarts") {
++                o.ours_restarts=parse_int(value());
++            } else if (key == "--ours-seed") {
++                o.ours_seed=std::stoull(value());
++            } else if (key == "--ours-lookahead") {
++                o.ours_lookahead=true;
+             } else if (key == "--also") {
+                 o.also.push_back(value());
+             } else if (key == "--depth") {
+diff --git a/xordepth/include/xd/experiments.hpp b/xordepth/include/xd/experiments.hpp
+index 77ffbfa..303a0eb 100644
+--- a/xordepth/include/xd/experiments.hpp
++++ b/xordepth/include/xd/experiments.hpp
+@@ -11,6 +11,10 @@ struct Options {
+     // Share thresholds to sweep; 0 or 1 means "no sharing at all".
+     std::vector<int> shares{2, 3, 4, 0};
+     bool depth_aware = false;
++    bool include_ours = false;
++    int ours_restarts = 1;
++    std::uint64_t ours_seed = 0;
++    bool ours_lookahead = false;
+     // Stored result or certificate files whose circuits are offered as extra
+     // candidates when they compute the same transform as the matrix.
+     std::vector<std::string> also;
+diff --git a/xordepth/src/xd_frontier.cpp b/xordepth/src/xd_frontier.cpp
+index 33b2262..07e3ab3 100644
+--- a/xordepth/src/xd_frontier.cpp
++++ b/xordepth/src/xd_frontier.cpp
+@@ -156,6 +156,23 @@ Json frontier(const Rows &rows, int inputs, const Json &source, const Options &o
+         result["candidates"].arr.push_back(
+             candidate(share_label(share, o.depth_aware), c, "CSE", share, o.depth_aware));
+     }
++    if(o.include_ours) {
++        for(int slack=0;slack<=1;++slack) {
++            ringlab::DepthCseOptions options;
++            options.max_depth=depth_lower_bound(rows)+slack;
++            options.restarts=o.ours_restarts;
++            options.seed=o.ours_seed;
++            options.lookahead=o.ours_lookahead;
++            auto c=ringlab::synthesize_depth_cse(rows,inputs,options);
++            auto entry=candidate("OURS-D"+std::to_string(options.max_depth),c,"OUR_DCCSE",-1,false);
++            entry["depth_limit"]=options.max_depth;
++            entry["restarts"]=options.restarts;
++            entry["seed"]=options.seed;
++            entry["lookahead"]=options.lookahead;
++            entry["refine"]=options.refine;
++            result["candidates"].arr.push_back(entry);
++        }
++    }
+     Json also = Json::array();
+     for (const auto &path : o.also) {
+         auto value = Json::read(path);
+@@ -292,6 +309,8 @@ Json verify_result(const std::string &path) {
+         require(circuit.cost() == entry["cost"].integer(), "declared cost mismatch");
+         auto profile = depth_profile(circuit);
+         require(profile.depth == entry["depth"].integer(), "declared depth mismatch");
++        if(entry.has("depth_limit"))
++            require(profile.depth<=entry["depth_limit"].integer(),"candidate exceeds requested depth limit");
+         ++checked;
+         reports.arr.push_back(Json::object({{"label", label},
+                                             {"status", "verified"},
+diff --git a/xordepth/tests/cli_test.sh b/xordepth/tests/cli_test.sh
+index dfe92ba..64e1249 100644
+--- a/xordepth/tests/cli_test.sh
++++ b/xordepth/tests/cli_test.sh
+@@ -60,3 +60,13 @@ expect_fail "$tool" verify "$tmp/matrix.txt"
+ expect_fail "$tool" bogus-command
+ 
+ printf 'CLI: frontier, verify, audit and error paths passed\n'
++
++"$tool" frontier "$tmp/matrix.txt" --share 2,3,0 --include-ours --ours-restarts 2 --ours-seed 7 --output "$tmp/ours-frontier.json" > /dev/null
++"$tool" verify "$tmp/ours-frontier.json" > /dev/null
++grep -q '"method": "OUR_DCCSE"' "$tmp/ours-frontier.json"
++expect_fail "$tool" frontier "$tmp/matrix.txt" --include-ours --ours-restarts 0 --output "$tmp/invalid-ours.json"
++printf 'CLI: opt-in depth-CSE frontier candidates passed\n'
++
++cp "$tmp/ours-frontier.json" "$tmp/ours-frontier-bad-depth.json"
++perl -0pi -e 's/"depth_limit":\s*2/"depth_limit": 0/' "$tmp/ours-frontier-bad-depth.json"
++expect_fail "$tool" verify "$tmp/ours-frontier-bad-depth.json"
+diff --git a/docs/depth-cse-v2.md b/docs/depth-cse-v2.md
+new file mode 100644
+index 0000000..470f8a9
+--- /dev/null
++++ b/docs/depth-cse-v2.md
+@@ -0,0 +1,30 @@
++# 深度硬约束下的门数优化 V2
++
++目标：最小化实际存活 XOR2 门数，最大输出深度不超过 D。算法是有界启发式，不承诺全局最优。
++
++## 使用
++
++```sh
++make -j3
++./build/ringlab analyze xordepth/data/matrices/cauchy_7_4_direct.txt \
++  --method OUR_DCCSE_V2 --depth 5 --seeds 8 --seed 1 --output /tmp/v2.json
++./build/ringlab verify --input /tmp/v2.json --samples 0
++```
++
++可加 `--incumbent FILE`，FILE 为同一目标变换的完整线路 JSON 或 `xordepth frontier` 结果。每条载入线路均验证输入宽度、完整 GF(2) 目标和存活门数；只选择深度不超过 D 的候选。不同目标线路被拒绝，不会悄悄参与比较。历史线路优化预算不计入本次优化耗时，必须明确标注。
++
++## 算法
++
++1. 运行深度可行的共享提取，两种策略各运行 N 个种子：原贪心和已有有限前瞻。总计 **2N** 次，不是 N 次。两者仍进行原有局部替换；选最少门线路，平局优先较浅。
++2. 从所有输出的截止深度 D 逆向传播每个节点的最晚到达层数，允许非关键路径消耗剩余深度余量。
++3. 尝试删除一个非输出的共享门，并同时重建其全部使用者。每个受影响门以准确 GF(2) 掩码寻找较早可用的二输入等价表达式；整个事务可包含多个本身不省门的替换。重建时复用相同掩码节点，随后剪除无用门。
++4. 只有完整线路验证通过、实际门数严格减少且最大输出深度不超过 D 时才接受事务。最多400个删除尝试、4轮，搜索预算是有限的。不是任意片段精确综合，也没有使用 SAT。
++5. 若提供已有候选，在独立合成结果和所有可行候选中按门数选择，再进行相同改写。保留初始可行线路，门数不会因后处理变差。
++
++`original_ours_cost` 为当前参数下第一种策略结果；`standalone_cost` 为不载入历史线路的组合与改写结果；`initial_source` 记录选中的历史候选来源，或 own synthesis；`cost` 为最终门数。默认不加 `--lookahead` 时第一种策略即旧 OUR_DCCSE。V2 自动尝试另一种策略。`--no-refine` 只关闭旧策略内的单门优化，V2多使用者改写仍执行。
++
++## 限制与验证
++
++深度为 XOR2 拓扑深度，输入层为0，接线和别名免费，不计扇出和布线延迟。只搜索有限的双信号替代表达式与门删除，不穷尽 GF(2) 线路。外部 `timeout 180` 是本次实验墙钟保护；程序尚未实现中途保存 incumbent 的 anytime 接口。
++
++测试覆盖需联合改写两个使用者才能省门、使用额外深度余量换门数、零预算、输入深度拒绝、随机矩阵功能与单调门数、200位掩码以及CLI载入和验证。Make/CMake无需新增源文件：均已包含原 depth_cse.cpp。

@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Repository-aligned XOR comparison</title><style>body{font:16px system-ui;max-width:1150px;margin:40px auto;color:#243247}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}code{background:#eef2f6;padding:2px 5px}</style><h1>严格对齐仓库的 XOR 门数—深度比较</h1><p>源版本：4b6a4e83b00c2cd66cfd9798e41959ca0361a25a。原四组矩阵、原命令参数、原验证流程。原 60 条候选指标与归档一致；新增 8 条候选进入同一 frontier/Pareto/verify。全部 68 条验证通过。</p><p>OUR_DCCSE 主表参数：restarts=1、seed=0、lookahead=false、refine=true。原基准含所有适用的已保存完整线路；历史搜索预算不统一，所以这是已有候选前沿更新，不是等时间或全局最优性证明。</p><table><tr><th>矩阵（输出×输入）</th><th>深度上限</th><th>原最好门数/实际深度</th><th>OUR_DCCSE 门数/实际深度</th><th>门数变化</th></tr>
+<tr><td>Vandermonde 8→17 (24×64)</td><td>5</td><td>336 / 5</td><td>224 / 5</td><td>+33.33% 节省</td></tr>
+<tr><td>Vandermonde 8→17 (24×64)</td><td>6</td><td>203 / 6</td><td>222 / 6</td><td>-9.36% 节省</td></tr>
+<tr><td>系统化 RS [7,4,4] (24×32)</td><td>5</td><td>168 / 5</td><td>152 / 5</td><td>+9.52% 节省</td></tr>
+<tr><td>系统化 RS [7,4,4] (24×32)</td><td>6</td><td>140 / 6</td><td>152 / 5</td><td>-8.57% 节省</td></tr>
+<tr><td>Cauchy 7→4 (24×32)</td><td>5</td><td>224 / 5</td><td>151 / 5</td><td>+32.59% 节省</td></tr>
+<tr><td>Cauchy 7→4 (24×32)</td><td>6</td><td>150 / 6</td><td>148 / 6</td><td>+1.33% 节省</td></tr>
+<tr><td>GF(2⁸) 10×10 展开 (80×80)</td><td>6</td><td>1830 / 6</td><td>1246 / 6</td><td>+31.91% 节省</td></tr>
+<tr><td>GF(2⁸) 10×10 展开 (80×80)</td><td>7</td><td>1219 / 7</td><td>1226 / 7</td><td>-0.57% 节省</td></tr>
+</table><h2>完整 Pareto 前沿</h2><table><tr><th>矩阵</th><th>原前沿 (门数, 深度)</th><th>新增后前沿</th></tr>
+<tr><td>Vandermonde 8→17</td><td>[(203, 6), (336, 5)]</td><td>[(203, 6), (224, 5)]</td></tr>
+<tr><td>系统化 RS [7,4,4]</td><td>[(124, 14), (126, 11), (127, 9), (133, 7), (140, 6), (168, 5)]</td><td>[(124, 14), (126, 11), (127, 9), (133, 7), (140, 6), (152, 5)]</td></tr>
+<tr><td>Cauchy 7→4</td><td>[(150, 6), (224, 5)]</td><td>[(148, 6), (151, 5)]</td></tr>
+<tr><td>GF(2⁸) 10×10 展开</td><td>[(1219, 7), (1830, 6)]</td><td>[(1219, 7), (1246, 6)]</td></tr>
+</table><p>官方两组 Beam 参数完整重跑：depth=6、beam=64、branch=16、representations=8、restarts=8、seed=1、timeout=180 秒；复现 221/6 与 149/6。搜索状态数受机器与时间预算影响，与历史记录不完全相同。原 206 条电路审计复现 178 条深度改进、59 门减少。</p><p>原仓库与修改后的根 Make/xordepth Make 测试均通过；新增宽 mask、别名、深度限制和 CLI 验证测试通过。ASan/UBSan 检查通过（ptrace 环境禁用泄漏检测）。CMake 配置已同步，但环境未安装 cmake/ctest，未执行该构建方式。</p>

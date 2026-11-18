@@ -1,0 +1,26 @@
+make: Entering directory '/tmp/xor-depth-build.0nzna8'
+mkdir -p build
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/json.cpp -o build/json.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/bitvector.cpp -o build/bitvector.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/field.cpp -o build/field.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/circuit.cpp -o build/circuit.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/cse.cpp -o build/cse.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/depth_cse.cpp -o build/depth_cse.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/benchmark_inputs.cpp -o build/benchmark_inputs.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/matrices.cpp -o build/matrices.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/verification.cpp -o build/verification.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/search.cpp -o build/search.o
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread -MMD -MP -c src/backend.cpp -o build/backend.o
+g++ -std=c++17 -O3 -pthread third_party/xsets/X-Sets.cpp -o build/xsets
+third_party/xsets/X-Sets.cpp: In member function ‘void Schedule::Check()’:
+third_party/xsets/X-Sets.cpp:877:16: warning: too many arguments for format [-Wformat-extra-args]
+  877 |         printf("Problem MXS %s.  xptr->first %s doesn't equal xptr->second.id\n",
+      |                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/backend.cpp: In function ‘ringlab::ProcessResult ringlab::execute(const std::vector<std::__cxx11::basic_string<char> >&, const std::string&, double)’:
+src/backend.cpp:166:14: warning: ignoring return value of ‘ssize_t write(int, const void*, size_t)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  166 |         write(STDERR_FILENO, message, sizeof(message) - 1);
+      |         ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+g++ -std=c++17 -O3 third_party/uber/Uber.cpp -o build/uber
+g++ -Iinclude -DRINGLAB_ROOT='"/tmp/xor-depth-build.0nzna8"' -DRINGLAB_XSETS_SHA256='"adea0b44474a5f5c4943ca467803d3591ed22bd92a7cfda460e9b2ea91959643"' -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic -pthread apps/ringlab.cpp build/json.o build/bitvector.o build/field.o build/circuit.o build/cse.o build/depth_cse.o build/benchmark_inputs.o build/matrices.o build/verification.o build/search.o build/backend.o  -o build/ringlab
+make: Leaving directory '/tmp/xor-depth-build.0nzna8'
+Verified independent build: /tmp/xor-depth-build.0nzna8

@@ -1,0 +1,25 @@
+{
+  "candidates": [
+    {
+      "cost": 9721,
+      "depth": 30,
+      "label": "CSE-chained",
+      "status": "verified"
+    },
+    {
+      "cost": 9721,
+      "depth": 8,
+      "label": "CSE-chained-rebalanced",
+      "status": "verified"
+    },
+    {
+      "cost": 14305,
+      "depth": 7,
+      "label": "CSE-noshare",
+      "status": "verified"
+    }
+  ],
+  "candidates_verified": 3,
+  "file": "/workspace/scratch/14e94f4a5e35/large_scale/results_controlled/300x200_dense_frontier_basic.json",
+  "status": "verified"
+}

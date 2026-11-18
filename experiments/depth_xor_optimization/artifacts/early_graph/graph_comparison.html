@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><title>Graph and spectral XOR experiments</title><style>body{font:16px system-ui;max-width:1250px;margin:40px auto;color:#243247}table{border-collapse:collapse;width:100%;margin-bottom:24px}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}td:first-child,th:first-child{text-align:left}</style><h1>图论、谱分组与 λ₂：XOR 电路对比</h1><p>36 个矩阵、5 种策略，两轮共 360 条电路均通过独立逐门校验。所有方法均保持各矩阵的最小深度 D₀。每格为平均 XOR 门数 / 平均深度。</p><p>主要结论：λ₂能描述共现图的分块结构，但本次分组与公共块贪心没有稳定优于全局 CSE。谱分组一般优于随机分组，仍逊于全局搜索。本实验不足以得出所有谱方法都无效的结论。</p>
+<h2>相同时间上限：16/32 阶每方法每矩阵 0.15 秒，64 阶 0.8 秒，最多 128 次</h2><table><tr><th>规模／类型</th><th>归一化活跃图 λ₂</th><th>GlobalCSE</th><th>RandomGroups</th><th>SpectralGroups</th><th>CommonBlocks</th><th>LambdaGate</th></tr>
+<tr><td>16×16 sparse</td><td>0.2894</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td></tr>
+<tr><td>16×16 dense</td><td>0.8798</td><td>55.00 / 4.00</td><td>57.33 / 4.00</td><td>57.00 / 4.00</td><td>58.00 / 4.00</td><td>55.00 / 4.00</td></tr>
+<tr><td>16×16 structured</td><td>0.6664</td><td>24.67 / 4.00</td><td>25.67 / 4.00</td><td>25.67 / 4.00</td><td>24.67 / 4.00</td><td>24.67 / 4.00</td></tr>
+<tr><td>16×16 modular</td><td>0.0697</td><td>40.33 / 3.00</td><td>39.67 / 3.00</td><td>40.33 / 3.00</td><td>41.67 / 3.00</td><td>40.33 / 3.00</td></tr>
+<tr><td>32×32 sparse</td><td>0.6163</td><td>94.33 / 3.67</td><td>96.00 / 3.67</td><td>97.33 / 3.67</td><td>98.33 / 3.67</td><td>94.33 / 3.67</td></tr>
+<tr><td>32×32 dense</td><td>0.9488</td><td>217.33 / 5.00</td><td>233.33 / 5.00</td><td>224.33 / 5.00</td><td>232.00 / 5.00</td><td>214.67 / 5.00</td></tr>
+<tr><td>32×32 structured</td><td>0.8009</td><td>93.67 / 5.00</td><td>128.00 / 5.00</td><td>99.00 / 5.00</td><td>94.33 / 5.00</td><td>93.67 / 5.00</td></tr>
+<tr><td>32×32 modular</td><td>0.1162</td><td>80.67 / 4.00</td><td>82.33 / 4.00</td><td>81.33 / 4.00</td><td>86.00 / 4.00</td><td>81.33 / 4.00</td></tr>
+<tr><td>64×64 sparse</td><td>0.7633</td><td>367.67 / 4.67</td><td>381.00 / 4.67</td><td>377.00 / 4.67</td><td>375.33 / 4.67</td><td>367.67 / 4.67</td></tr>
+<tr><td>64×64 dense</td><td>0.9715</td><td>795.67 / 6.00</td><td>875.00 / 6.00</td><td>853.67 / 6.00</td><td>868.67 / 6.00</td><td>795.67 / 6.00</td></tr>
+<tr><td>64×64 structured</td><td>0.8826</td><td>345.67 / 6.00</td><td>556.67 / 6.00</td><td>372.67 / 6.00</td><td>358.33 / 6.00</td><td>345.67 / 6.00</td></tr>
+<tr><td>64×64 modular</td><td>0.1837</td><td>197.00 / 4.00</td><td>206.33 / 4.00</td><td>204.33 / 4.00</td><td>207.67 / 4.00</td><td>204.33 / 4.00</td></tr>
+</table>
+<h2>固定 3 次重启对照</h2><table><tr><th>规模／类型</th><th>归一化活跃图 λ₂</th><th>GlobalCSE</th><th>RandomGroups</th><th>SpectralGroups</th><th>CommonBlocks</th><th>LambdaGate</th></tr>
+<tr><td>16×16 sparse</td><td>0.2894</td><td>19.33 / 2.33</td><td>19.67 / 2.33</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td><td>19.33 / 2.33</td></tr>
+<tr><td>16×16 dense</td><td>0.8798</td><td>56.00 / 4.00</td><td>58.33 / 4.00</td><td>57.67 / 4.00</td><td>59.33 / 4.00</td><td>56.00 / 4.00</td></tr>
+<tr><td>16×16 structured</td><td>0.6664</td><td>24.67 / 4.00</td><td>27.33 / 4.00</td><td>25.67 / 4.00</td><td>24.67 / 4.00</td><td>24.67 / 4.00</td></tr>
+<tr><td>16×16 modular</td><td>0.0697</td><td>41.67 / 3.00</td><td>42.67 / 3.00</td><td>41.67 / 3.00</td><td>43.00 / 3.00</td><td>41.67 / 3.00</td></tr>
+<tr><td>32×32 sparse</td><td>0.6163</td><td>95.67 / 3.67</td><td>97.33 / 3.67</td><td>98.00 / 3.67</td><td>99.67 / 3.67</td><td>95.67 / 3.67</td></tr>
+<tr><td>32×32 dense</td><td>0.9488</td><td>218.00 / 5.00</td><td>237.00 / 5.00</td><td>228.33 / 5.00</td><td>233.00 / 5.00</td><td>218.00 / 5.00</td></tr>
+<tr><td>32×32 structured</td><td>0.8009</td><td>93.67 / 5.00</td><td>139.00 / 5.00</td><td>100.00 / 5.00</td><td>95.33 / 5.00</td><td>93.67 / 5.00</td></tr>
+<tr><td>32×32 modular</td><td>0.1162</td><td>82.33 / 4.00</td><td>88.33 / 4.00</td><td>82.67 / 4.00</td><td>86.33 / 4.00</td><td>82.67 / 4.00</td></tr>
+<tr><td>64×64 sparse</td><td>0.7633</td><td>369.67 / 4.67</td><td>389.67 / 4.67</td><td>382.33 / 4.67</td><td>379.67 / 4.67</td><td>369.67 / 4.67</td></tr>
+<tr><td>64×64 dense</td><td>0.9715</td><td>784.67 / 6.00</td><td>877.33 / 6.00</td><td>857.33 / 6.00</td><td>856.67 / 6.00</td><td>784.67 / 6.00</td></tr>
+<tr><td>64×64 structured</td><td>0.8826</td><td>349.33 / 6.00</td><td>556.67 / 6.00</td><td>374.67 / 6.00</td><td>360.33 / 6.00</td><td>349.33 / 6.00</td></tr>
+<tr><td>64×64 modular</td><td>0.1837</td><td>199.00 / 4.00</td><td>212.00 / 4.00</td><td>209.00 / 4.00</td><td>210.33 / 4.00</td><td>209.00 / 4.00</td></tr>
+</table>
+<p>LambdaGate 使用事先固定的阈值 0.25。小 λ₂并非 XOR 门数低或分组有收益的证明。非连通图中 λ₂=0，最小正特征值仍可能大于 0；原始和归一化全谱、连通分量和孤立点均已保存。详见 GRAPH_SPECTRAL_NOTES.md。</p>

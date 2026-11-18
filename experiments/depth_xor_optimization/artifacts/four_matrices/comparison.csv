@@ -1,0 +1,17 @@
+matrix,outputs,inputs,depth_limit,method,status,gates,actual_depth,seconds,explored_states
+vandermonde,24,64,5,beam,timeout,,,180.48,4433
+vandermonde,24,64,5,ours,verified,221,5,0.201,
+vandermonde,24,64,6,beam,verified,221,6,182.028,4433
+vandermonde,24,64,6,ours,verified,218,6,0.203,
+rs,24,32,5,beam,timeout,,,180.187,7185
+rs,24,32,5,ours,verified,150,5,0.095,
+rs,24,32,6,beam,verified,149,6,180.899,7121
+rs,24,32,6,ours,verified,150,5,0.095,
+cauchy,24,32,5,beam,timeout,,,181.328,8593
+cauchy,24,32,5,ours,verified,147,5,0.117,
+cauchy,24,32,6,beam,verified,150,6,180.969,8017
+cauchy,24,32,6,ours,verified,147,5,0.112,
+gf8,80,80,6,beam,external_timeout_190s,,,190.04,
+gf8,80,80,6,ours,verified,1247,6,15.01,
+gf8,80,80,7,beam,verified,1219,7,189.301,657
+gf8,80,80,7,ours,verified,1224,7,15.157,

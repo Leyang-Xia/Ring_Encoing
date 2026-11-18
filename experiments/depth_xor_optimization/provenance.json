@@ -1,0 +1,13 @@
+{
+  "repository": "Leyang-Xia/Ring_Encoing",
+  "experiment_source_commit": "4b6a4e83b00c2cd66cfd9798e41959ca0361a25a",
+  "observed_remote_main": "6fa526db4647d93570d41d9355c01a02e9c40e45",
+  "local_branch": "research/depth-xor-v2-20261103",
+  "date": "2026-11-03",
+  "scope": "Isolated research folder; root source and original certificates unchanged",
+  "standalone_methods": [
+    "OUR_DCCSE",
+    "OUR_DCCSE_V2"
+  ],
+  "historical_and_fresh_results_separated": true
+}

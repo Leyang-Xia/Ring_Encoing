@@ -1,0 +1,34 @@
+[
+  {
+    "case": "vandermonde",
+    "upstream_file": "vandermonde_8to17_direct.txt",
+    "sha256": "b7ee58a550105f2815fc98f4258bdeadc9aed0d821b2c7afa4f08bbb8f4e9a11",
+    "outputs": 24,
+    "inputs": 64,
+    "D0": 5
+  },
+  {
+    "case": "rs",
+    "upstream_file": "systematic_rs_7_4_direct.txt",
+    "sha256": "42ae88905264caa6b5d7e632d5c693ff47b5ca355f86a0b37869d417b379579f",
+    "outputs": 24,
+    "inputs": 32,
+    "D0": 5
+  },
+  {
+    "case": "cauchy",
+    "upstream_file": "cauchy_7_4_direct.txt",
+    "sha256": "edd97e54441d583e338bc81a15e5cc494673c57bc6e48c24be82f99b5a9f262d",
+    "outputs": 24,
+    "inputs": 32,
+    "D0": 5
+  },
+  {
+    "case": "gf8",
+    "upstream_file": "gf8_10x10_expanded.txt",
+    "sha256": "45d6a2531ff7487f2a63dd15e63239bb7a18c9d6d5d8f2eac3ea9869e78098a6",
+    "outputs": 80,
+    "inputs": 80,
+    "D0": 6
+  }
+]

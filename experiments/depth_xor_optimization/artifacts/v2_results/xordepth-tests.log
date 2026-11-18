@@ -1,0 +1,9 @@
+make: Entering directory '/workspace/scratch/14e94f4a5e35/strict_alignment/repo/xordepth'
+g++ -I../include -Iinclude -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic apps/xordepth.cpp src/xd_depth.cpp src/xd_frontier.cpp src/xd_search.cpp ../src/json.cpp ../src/bitvector.cpp ../src/circuit.cpp ../src/cse.cpp ../src/depth_cse.cpp  -o build/xordepth
+g++ -I../include -Iinclude -O3 -DNDEBUG -std=c++17 -Wall -Wextra -Wpedantic tests/xd_test.cpp src/xd_depth.cpp src/xd_frontier.cpp src/xd_search.cpp ../src/json.cpp ../src/bitvector.cpp ../src/circuit.cpp ../src/cse.cpp ../src/depth_cse.cpp  -o build/xd-test
+build/xd-test
+xd: depth metrics, balanced scheduling and re-association passed
+bash tests/cli_test.sh build/xordepth
+CLI: frontier, verify, audit and error paths passed
+CLI: opt-in depth-CSE frontier candidates passed
+make: Leaving directory '/workspace/scratch/14e94f4a5e35/strict_alignment/repo/xordepth'
