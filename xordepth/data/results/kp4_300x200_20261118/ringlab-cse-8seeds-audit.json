@@ -1,0 +1,24 @@
+{
+  "circuits": 1,
+  "depth_improved": 1,
+  "files": [
+    {
+      "circuits": 1,
+      "entries": [
+        {
+          "cost": 8486,
+          "depth": 30,
+          "max_fanout": 16,
+          "path": "/circuit",
+          "rebalanced_cost": 8486,
+          "rebalanced_depth": 8
+        }
+      ],
+      "file": "xordepth/data/results/kp4_300x200_20261118/ringlab-cse-8seeds.json"
+    }
+  ],
+  "gates_removed": 0,
+  "note": "rebalanced_depth is the exact result of rebalanced(): every output mask is compared and the gate count never increases.",
+  "scope": "depth audit of stored circuits; no file is rewritten",
+  "status": "verified"
+}

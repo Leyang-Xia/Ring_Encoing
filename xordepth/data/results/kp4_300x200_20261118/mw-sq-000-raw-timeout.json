@@ -1,0 +1,20 @@
+{
+  "matrix": "xordepth/data/matrices/generated/kp4_300x200.txt",
+  "matrix_sha256": "40761ee587f563f08f27983afb43e3e5cbea6f5d992ab7989e8840c0240f1ca5",
+  "method": "MW_SQ",
+  "path": "direct_raw_matrix_order",
+  "params": [0, 0, 0],
+  "xsets_threads": 4,
+  "backend_executable": "build/xsets",
+  "xsets_source_sha256": "c74eb083e88e9f0d4cb28f2b0a25f2787d3dbe77893b0460ffeab3e84ebb77f7",
+  "timeout_seconds": 600,
+  "wall_seconds": 600.05,
+  "exit_code": 142,
+  "termination_signal": "SIGALRM",
+  "status": "timeout",
+  "progress_lines": 399,
+  "schedule_sections": 0,
+  "cost": null,
+  "depth": null,
+  "rebalanced_depth": null
+}
